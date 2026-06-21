@@ -2,6 +2,7 @@ This project is using the following setup:
 - React
 - TypeScript
 - NextJS
+- shadcn for UI
 
 <!-- BEGIN:nextjs-agent-rules -->
 # This is NOT the Next.js you know
