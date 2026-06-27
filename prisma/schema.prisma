@@ -1,0 +1,65 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+model ward {
+  id         String   @id @default(uuid())
+  name       String
+  type       String   @default("ward") // 'ward' | 'branch'
+  created_at DateTime @default(now())
+  updated_at DateTime @default(now())
+
+  user   user[]
+  member member[]
+}
+
+model user {
+  id         String   @id @default(uuid())
+  ward_id    String
+  email      String
+  name       String
+  created_at DateTime @default(now())
+  updated_at DateTime @default(now())
+
+  ward  ward   @relation(fields: [ward_id], references: [id], onDelete: Cascade)
+  login login?
+
+  @@unique([email])
+  @@index([ward_id])
+}
+
+model login {
+  user_id    String
+  token      String
+  code       String
+  attempts   Int      @default(0)
+  created_at DateTime @default(now())
+
+  user user @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@id([user_id])
+  @@unique([token])
+  @@index([created_at])
+}
+
+model member {
+  id         String   @id @default(uuid())
+  ward_id    String
+  first_name String
+  last_name  String
+  birth_date String?
+  email      String?
+  status     String   @default("active") // 'active' | 'moved' | 'unknown' | 'unknown_address' | 'no_contact'
+  created_at DateTime @default(now())
+  updated_at DateTime @default(now())
+
+  ward ward @relation(fields: [ward_id], references: [id], onDelete: Cascade)
+
+  @@index([ward_id])
+  @@index([ward_id, status])
+}
