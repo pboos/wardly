@@ -1,0 +1,16 @@
+node_modules
+.next
+.git
+.env
+.env.*
+!.env.example
+prisma/dev.db
+prisma/dev.db-journal
+generated
+*.tsbuildinfo
+
+# Docker / CI files — not needed inside the build context
+Dockerfile
+docker-compose.yml
+.dockerignore
+entrypoint.sh

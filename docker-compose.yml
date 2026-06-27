@@ -1,0 +1,14 @@
+services:
+  wardly:
+    build: .
+    ports:
+      - "3000:3000"
+    volumes:
+      - wardly-data:/data
+    environment:
+      - DATABASE_URL=file:/data/wardly.db
+      # - NEXT_SERVER_ACTIONS_ENCRYPTION_KEY=...
+    restart: unless-stopped
+
+volumes:
+  wardly-data:
