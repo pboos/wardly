@@ -4,6 +4,10 @@ This project is using the following setup:
 - NextJS
 - shadcn for UI
 
+## Database
+- SQLite
+- Table names are **singular** (e.g. `ward`, `user`, `member`). This applies across code, API routes, and database references.
+
 <!-- BEGIN:nextjs-agent-rules -->
 # This is NOT the Next.js you know
 
