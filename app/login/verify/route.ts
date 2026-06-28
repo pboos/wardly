@@ -41,11 +41,11 @@ export async function GET(req: Request) {
 }
 
 function errorResponse(message: string) {
-  const html = `<!doctype html><html><body style="font-family:system-ui,sans-serif;line-height:1.5;display:flex;min-height:100vh;align-items:center;justify-content:center;margin:0;padding:1rem">
-    <div style="width:100%;max-width:24rem;text-align:center;display:flex;flex-direction:column;gap:1rem">
+  const html = `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head><body style="font-family:system-ui,sans-serif;line-height:1.5;display:flex;min-height:100vh;align-items:center;justify-content:center;margin:0;padding:1rem;background:#ffffff;color:#0c0a09">
+    <div style="width:100%;max-width:24rem;display:flex;flex-direction:column;gap:1rem;padding:1.5rem;border:1px solid #e7e5e4;border-radius:0.5rem;background:#ffffff;box-shadow:0 1px 2px 0 rgba(0,0,0,0.05)">
       <h1 style="font-size:1.5rem;font-weight:600;margin:0">Log in</h1>
-      <p style="font-size:0.875rem;color:#dc2626">${message}</p>
-      <a href="/login" style="display:inline-flex;align-items:center;justify-content:center;border:1px solid #e5e7eb;border-radius:0.375rem;padding:0.5rem 0.625rem;font-size:0.875rem;font-weight:500;text-decoration:none;color:inherit">Back to login</a>
+      <p style="font-size:0.875rem;color:#dc2626;margin:0">${message}</p>
+      <a href="/login" style="display:inline-flex;align-items:center;justify-content:center;height:2.25rem;border:1px solid #e7e5e4;border-radius:0.375rem;padding:0 0.75rem;font-size:0.875rem;font-weight:500;text-decoration:none;color:inherit">Back to login</a>
     </div>
   </body></html>`;
   return new NextResponse(html, {
