@@ -18,7 +18,7 @@ export default async function Home() {
     <main className="flex min-h-svh flex-col items-center justify-center px-4">
       <Card className="w-full max-w-sm">
         <CardHeader className="text-center">
-          <CardTitle className="text-3xl font-heading">
+          <CardTitle className="text-3xl">
             {payload ? `Hello ${payload[CLAIM_NAME]}` : "Wardly"}
           </CardTitle>
           {payload && (

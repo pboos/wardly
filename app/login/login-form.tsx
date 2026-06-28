@@ -34,7 +34,7 @@ export function LoginForm() {
   return (
     <Card className="w-full max-w-sm">
       <CardHeader>
-        <CardTitle className="text-2xl font-heading">Log in</CardTitle>
+        <CardTitle className="text-2xl">Log in</CardTitle>
         <CardDescription>
           {showCode
             ? "Enter the code we sent to your email."

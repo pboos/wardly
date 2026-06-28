@@ -27,7 +27,7 @@ export default async function SetupPage() {
     <main className="flex min-h-svh items-center justify-center px-4">
       <Card className="w-full max-w-sm">
         <CardHeader>
-          <CardTitle className="text-2xl font-heading">
+          <CardTitle className="text-2xl">
             Set up your ward
           </CardTitle>
           <CardDescription>
