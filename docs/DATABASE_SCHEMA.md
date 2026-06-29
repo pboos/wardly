@@ -92,15 +92,17 @@ Status
 
 ```sql
 CREATE TABLE member (
-  id          TEXT PRIMARY KEY,
-  ward_id     TEXT NOT NULL REFERENCES ward (id) ON DELETE CASCADE,
-  first_name  TEXT NOT NULL,
-  last_name   TEXT NOT NULL,
-  birth_date  TEXT,
-  email       TEXT,
-  status      TEXT NOT NULL DEFAULT 'active',  -- 'active' | 'moved' | 'unknown' | 'unknown_address' | 'no_contact'
-  created_at  TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  updated_at  TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+  id           TEXT PRIMARY KEY,
+  ward_id      TEXT NOT NULL REFERENCES ward (id) ON DELETE CASCADE,
+  first_name   TEXT NOT NULL,
+  last_name    TEXT NOT NULL,
+  gender       TEXT NOT NULL,
+  birth_date   TEXT,
+  email        TEXT,
+  is_baptized  BOOLEAN NOT NULL CHECK (is_baptized IN (0, 1)),
+  status       TEXT NOT NULL DEFAULT 'active',  -- 'active' | 'moved' | 'unknown' | 'unknown_address' | 'no_contact'
+  created_at   TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at   TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 ```
 

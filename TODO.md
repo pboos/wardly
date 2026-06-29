@@ -1,8 +1,11 @@
 # Next features
-- Tasks
 - Member list
-  - Script that I can paste into console on lcr -> loads all members and returns json that I can copy
-  - Form to paste json that will then update member list accordingly (if member doesn't exist anymore -> moved)
+  - List members
+    - Show only active (default)
+    - Show all except status `moved`
+    - Show all
+  - Allow updating STATE of member
+- Tasks
 
 # Future Improvements
 

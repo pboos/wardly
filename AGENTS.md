@@ -9,6 +9,7 @@ See [docs/DATABASE.md](docs/DATABASE.md) for anything related to the database.
 
 ## Design / UX
 See [docs/DESIGN.md](docs/DESIGN.md) for anything related to design and ux guidelines.
+Always make it responsive & support mobile devices.
 
 ## Environment variables
 - Copy `.env.example` to `.env` and fill in the values. `.env.example` is committed to git; all other `.env*` files are gitignored and must **never** be committed.

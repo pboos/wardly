@@ -4,6 +4,11 @@ This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-
 
 First, run the development server:
 
+Generate prisma code:
+```bash
+bun prisma generate
+```
+
 Create db & run migrations
 ```bash
 bun prisma migrate dev
