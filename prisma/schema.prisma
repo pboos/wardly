@@ -48,15 +48,17 @@ model login {
 }
 
 model member {
-  id         String   @id @default(uuid())
-  ward_id    String
-  first_name String
-  last_name  String
-  birth_date String?
-  email      String?
-  status     String   @default("active") // 'active' | 'moved' | 'unknown' | 'unknown_address' | 'no_contact'
-  created_at DateTime @default(now())
-  updated_at DateTime @default(now())
+  id          String   @id @default(uuid())
+  ward_id     String
+  first_name  String
+  last_name   String
+  gender      String
+  birth_date  String?
+  email       String?
+  is_baptized Boolean
+  status      String   @default("active") // 'active' | 'moved' | 'unknown' | 'unknown_address' | 'no_contact'
+  created_at  DateTime @default(now())
+  updated_at  DateTime @default(now())
 
   ward ward @relation(fields: [ward_id], references: [id], onDelete: Cascade)
 
