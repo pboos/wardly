@@ -51,6 +51,14 @@ export async function verifyJwt(
   }
 }
 
+export const sessionCookieOptions = {
+  httpOnly: true,
+  secure: process.env.NODE_ENV === "production",
+  sameSite: "lax" as const,
+  path: "/",
+  maxAge: SESSION_COOKIE_MAX_AGE_S,
+};
+
 export async function createSession(user: {
   id: string;
   email: string;
@@ -65,13 +73,7 @@ export async function createSession(user: {
     [CLAIM_WARD_ID]: user.ward_id,
   });
   const cookieStore = await cookies();
-  cookieStore.set(SESSION_COOKIE_NAME, token, {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: "lax",
-    path: "/",
-    maxAge: SESSION_COOKIE_MAX_AGE_S,
-  });
+  cookieStore.set(SESSION_COOKIE_NAME, token, sessionCookieOptions);
 }
 
 export async function deleteSession() {
@@ -79,20 +81,23 @@ export async function deleteSession() {
   cookieStore.delete(SESSION_COOKIE_NAME);
 }
 
-// Refresh if the token expires within the next hour. Called from the DAL on
-// every authenticated request.
-export async function maybeRefreshSession(
+// Refresh if the token expires within the next hour. Returns a fresh JWT
+// string when a refresh is needed, or `null` otherwise. This is a pure
+// helper — it only signs a new token and never touches cookies, so it is
+// safe to call from the proxy (which sets the response cookie) without
+// running into the "cookies can only be modified in a Server Action or
+// Route Handler" restriction that applies during Server Component render.
+export async function refreshTokenIfNeeded(
   payload: SessionPayload,
-): Promise<SessionPayload> {
-  if (!payload.exp) return payload;
+): Promise<string | null> {
+  if (!payload.exp) return null;
   const msLeft = payload.exp * 1000 - Date.now();
-  if (msLeft > JWT_REFRESH_THRESHOLD_MS) return payload;
-  // Re-issue a fresh token
-  await createSession({
-    id: payload[CLAIM_USER_ID],
-    email: payload[CLAIM_EMAIL],
-    name: payload[CLAIM_NAME],
-    ward_id: payload[CLAIM_WARD_ID],
+  if (msLeft > JWT_REFRESH_THRESHOLD_MS) return null;
+  return signJwt({
+    sub: payload.sub,
+    [CLAIM_USER_ID]: payload[CLAIM_USER_ID],
+    [CLAIM_EMAIL]: payload[CLAIM_EMAIL],
+    [CLAIM_NAME]: payload[CLAIM_NAME],
+    [CLAIM_WARD_ID]: payload[CLAIM_WARD_ID],
   });
-  return payload;
 }
