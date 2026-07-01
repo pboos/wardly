@@ -89,6 +89,7 @@ Status
 - `unknown` — member is not known in the ward. Might have also moved.
 - `unknown_address` — the address the member lives at is not correct anymore.
 - `no_contact` — member requested to not get contacted by the church.
+- `hidden` — member is hidden for other reasons.
 
 ```sql
 CREATE TABLE member (

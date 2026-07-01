@@ -56,7 +56,7 @@ model member {
   birth_date  String?
   email       String?
   is_baptized Boolean
-  status      String   @default("active") // 'active' | 'moved' | 'unknown' | 'unknown_address' | 'no_contact'
+  status      String   @default("active") // 'active' | 'moved' | 'unknown' | 'unknown_address' | 'no_contact' | 'hidden'
   created_at  DateTime @default(now())
   updated_at  DateTime @default(now())
 
