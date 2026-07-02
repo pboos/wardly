@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { isExpired } from "@/lib/auth/tokens";
 import { createSession } from "@/lib/auth/session";
 import { deleteExpiredLogins } from "@/lib/auth/cleanup";
+import { verifyRouteTarget } from "@/lib/auth/redirect";
 
 export async function GET(req: Request) {
   const url = new URL(req.url);
@@ -30,6 +31,8 @@ export async function GET(req: Request) {
   });
   if (!user) return errorResponse("Invalid link.");
 
+  const target = verifyRouteTarget(login);
+
   await prisma.login.delete({ where: { user_id: login.user_id } });
   await createSession({
     id: user.id,
@@ -37,7 +40,7 @@ export async function GET(req: Request) {
     name: user.name,
     ward_id: user.ward_id,
   });
-  return NextResponse.redirect(new URL("/", req.url));
+  return NextResponse.redirect(new URL(target, req.url));
 }
 
 function errorResponse(message: string) {

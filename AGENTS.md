@@ -24,6 +24,7 @@ Always make it responsive & support mobile devices.
 - Code attempts are capped at `MAX_LOGIN_ATTEMPTS` (3); on exhaustion all login rows for that user are deleted.
 - The main page (`/`) reads the name from the JWT payload (`CLAIM_NAME`) and renders `Hello {name}` — no DB call.
 - Route protection: `proxy.ts` does an optimistic cookie-only check (no DB calls) and redirects unauthenticated users to `/login`; real authorization happens in the DAL (`verifySession` / `getCurrentUser`).
+- Redirect-after-login: when an unauthenticated user is bounced to `/login` by `proxy.ts`, the original path is preserved as a `?redirect=` query param (via `buildLoginUrl`). The login form carries it through a hidden input; `requestLogin` stores the sanitized value in `login.redirect_path`; after successful login (code flow via `verifyCode` or magic link via `/login/verify`), the user is redirected back to that path. Validation lives in `lib/auth/redirect.ts` (`sanitizeRedirect`) — it blocks open-redirect vectors (protocol-relative `//`, backslash, absolute URLs, control chars) and login/logout loop paths, and is applied at both write and read time.
 
 ## Auth constants
 - All cookie names, JWT claim keys, and lifetimes live in [`lib/auth/constants.ts`](lib/auth/constants.ts) — never inline these literals elsewhere.

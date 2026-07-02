@@ -2,6 +2,7 @@
 
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
+import { sanitizeRedirect, verifyRouteTarget } from "@/lib/auth/redirect";
 import { generateToken, generateCode, isExpired } from "@/lib/auth/tokens";
 import { sendLoginEmail } from "@/lib/email";
 import { createSession } from "@/lib/auth/session";
@@ -19,6 +20,7 @@ export async function requestLogin(
   formData: FormData,
 ): Promise<LoginState> {
   const email = String(formData.get("email") ?? "").trim().toLowerCase();
+  const redirect = sanitizeRedirect(String(formData.get("redirect") ?? ""));
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
     return { status: "error", message: "Please enter a valid email address." };
   }
@@ -33,8 +35,8 @@ export async function requestLogin(
     // upsert because login PK is user_id (one active login per user)
     await prisma.login.upsert({
       where: { user_id: user.id },
-      create: { user_id: user.id, token, code },
-      update: { token, code, attempts: 0, created_at: new Date() },
+      create: { user_id: user.id, token, code, redirect_path: redirect },
+      update: { token, code, attempts: 0, created_at: new Date(), redirect_path: redirect },
     });
     try {
       await sendLoginEmail({ to: user.email, name: user.name, token, code });
@@ -91,6 +93,7 @@ export async function verifyCode(
   }
 
   // Success: delete the login row and issue a session.
+  const target = verifyRouteTarget(login);
   await prisma.login.delete({ where: { user_id: user.id } });
   await createSession({
     id: user.id,
@@ -98,5 +101,5 @@ export async function verifyCode(
     name: user.name,
     ward_id: user.ward_id,
   });
-  redirect("/");
+  redirect(target);
 }

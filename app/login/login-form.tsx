@@ -18,7 +18,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { requestLogin, verifyCode, type LoginState } from "./actions";
 
-export function LoginForm() {
+export function LoginForm({ redirect }: { redirect: string }) {
   const [state, dispatch, pending] = useActionState<LoginState, FormData>(
     async (prev, fd) => {
       // Route to the right action based on current state.
@@ -43,6 +43,7 @@ export function LoginForm() {
       </CardHeader>
       <CardContent>
         <form action={dispatch} className="w-full">
+          <input type="hidden" name="redirect" value={redirect} />
           <FieldGroup>
             {!showCode && (
               <Field data-invalid={!!errorMessage}>

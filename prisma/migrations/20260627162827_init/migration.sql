@@ -24,6 +24,7 @@ CREATE TABLE "login" (
     "token" TEXT NOT NULL,
     "code" TEXT NOT NULL,
     "attempts" INTEGER NOT NULL DEFAULT 0,
+    "redirect_path" TEXT,
     "created_at" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT "login_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "user" ("id") ON DELETE CASCADE ON UPDATE CASCADE
 );

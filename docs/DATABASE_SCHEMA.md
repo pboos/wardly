@@ -57,16 +57,18 @@ Magic‑link / code login session. Created when a user requests a login.
 - `token` — random token sent as a link in the email (immediate login).
 - `code` — 6‑character human‑readable code (uppercase, no ambiguous chars like `0`, `O`, `1`, `I`) that can be entered on the login page.
 - `attempts` — counter for failed code attempts; after 3 the entry is invalidated.
+- redirect_path TEXT — the sanitized original path to return to after login; null = fall back to /.
 - Both token and code expire 5 minutes after `created_at`. A cleanup job deletes rows older than 5 minutes.
 - Once used successfully (or failed, or expired) the row should be deleted.
 
 ```sql
 CREATE TABLE login (
-  user_id     TEXT PRIMARY KEY REFERENCES user (id) ON DELETE CASCADE,
-  token       TEXT NOT NULL,
-  code        TEXT NOT NULL,
-  attempts    INTEGER NOT NULL DEFAULT 0,
-  created_at  TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+  user_id       TEXT PRIMARY KEY REFERENCES user (id) ON DELETE CASCADE,
+  token         TEXT NOT NULL,
+  code          TEXT NOT NULL,
+  attempts      INTEGER NOT NULL DEFAULT 0,
+  redirect_path TEXT,  -- sanitized original path; null = fall back to /
+  created_at    TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 ```
 

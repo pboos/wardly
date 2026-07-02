@@ -1,6 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { verifyJwt, refreshTokenIfNeeded, sessionCookieOptions } from "@/lib/auth/session";
 import { SESSION_COOKIE_NAME } from "@/lib/auth/constants";
+import { buildLoginUrl, getPostLoginRedirect } from "@/lib/auth/redirect";
 
 const PUBLIC_ROUTES = ["/login", "/login/verify", "/logout", "/setup", "/api/cron"];
 
@@ -14,11 +15,13 @@ export default async function proxy(req: NextRequest) {
   const session = await verifyJwt(token);
 
   if (!isPublic && !session) {
-    return NextResponse.redirect(new URL("/login", req.nextUrl));
+    const originalPathAndSearch = req.nextUrl.pathname + req.nextUrl.search;
+    return NextResponse.redirect(new URL(buildLoginUrl(originalPathAndSearch), req.nextUrl));
   }
-  // Authenticated users visiting /login are sent to /.
+  // Authenticated users visiting /login are sent to their redirect target, or /.
   if (isPublic && session && path === "/login") {
-    return NextResponse.redirect(new URL("/", req.nextUrl));
+    const redirectTarget = getPostLoginRedirect(req.nextUrl.searchParams);
+    return NextResponse.redirect(new URL(redirectTarget, req.nextUrl));
   }
 
   const response = NextResponse.next();
