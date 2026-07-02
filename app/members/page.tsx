@@ -25,8 +25,8 @@ export default async function MembersPage() {
   const totalMembers = members.filter((m) => m.status !== "moved").length;
 
   return (
-    <main className="mx-auto flex w-full max-w-5xl flex-col gap-6 px-4 py-8">
+    <div className="flex flex-col gap-6">
       <MembersView members={members} totalMembers={totalMembers} />
-    </main>
+    </div>
   );
 }

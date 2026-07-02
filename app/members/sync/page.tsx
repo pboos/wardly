@@ -13,8 +13,8 @@ export default async function MembersSyncPage() {
   await getCurrentUser();
 
   return (
-    <main className="flex min-h-svh flex-col items-center px-4 py-8">
-      <Card className="w-full max-w-2xl">
+    <div className="flex flex-col gap-6">
+      <Card>
         <CardHeader>
           <CardTitle className="text-2xl">Sync members from LCR</CardTitle>
           <CardDescription>
@@ -90,6 +90,6 @@ export default async function MembersSyncPage() {
           </div>
         </CardContent>
       </Card>
-    </main>
+    </div>
   );
 }
