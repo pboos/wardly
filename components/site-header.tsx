@@ -65,7 +65,7 @@ export function SiteHeader({ userName }: { userName: string }) {
           className="flex shrink-0 items-center gap-2 font-semibold text-foreground"
         >
           <Image
-            src="/logo3.png"
+            src="/logo.svg"
             alt="Wardly"
             width={28}
             height={28}
