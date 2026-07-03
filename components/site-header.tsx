@@ -19,27 +19,32 @@ import {
 import { cn } from "@/lib/utils";
 import { IconChevronDown, IconLogout } from "@tabler/icons-react";
 
+type NavChild = {
+  label: string;
+  href: string;
+};
+
 type NavItem = {
   label: string;
   href: string;
   /** Prefix used to detect the active section. */
   match: string;
+  children?: NavChild[];
 };
 
 const NAV_ITEMS: NavItem[] = [
   { label: "Members", href: "/members", match: "/members" },
   { label: "Tasks", href: "/tasks", match: "/tasks" },
+  {
+    label: "Meetings",
+    href: "/meetings",
+    match: "/meetings",
+    children: [
+      { label: "Bishopric", href: "/meetings/bishopric" },
+      { label: "Ward council", href: "/meetings/ward-council" },
+    ],
+  },
   { label: "Sync", href: "/sync", match: "/sync" },
-];
-
-type MeetingLink = {
-  label: string;
-  href: string;
-};
-
-const MEETING_LINKS: MeetingLink[] = [
-  { label: "Bishopric", href: "/meetings/bishopric" },
-  { label: "Ward council", href: "/meetings/ward-council" },
 ];
 
 function getInitials(name: string): string {
@@ -77,6 +82,42 @@ export function SiteHeader({ userName }: { userName: string }) {
         <nav className="flex flex-1 items-center gap-1 overflow-x-auto">
           {NAV_ITEMS.map((item) => {
             const active = isActive(pathname, item);
+            if (item.children) {
+              return (
+                <DropdownMenu key={item.label}>
+                  <DropdownMenuTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className={cn(
+                        "flex items-center gap-1 text-muted-foreground hover:text-foreground",
+                        active && "text-foreground",
+                      )}
+                    >
+                      {item.label}
+                      <IconChevronDown className="size-4" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="start">
+                    {item.children.map((child) => {
+                      const childActive =
+                        pathname === child.href ||
+                        pathname.startsWith(child.href + "/");
+                      return (
+                        <DropdownMenuItem key={child.href} asChild>
+                          <Link
+                            href={child.href}
+                            className={cn(childActive && "font-medium")}
+                          >
+                            {child.label}
+                          </Link>
+                        </DropdownMenuItem>
+                      );
+                    })}
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              );
+            }
             return (
               <Button
                 key={item.label}
@@ -92,40 +133,6 @@ export function SiteHeader({ userName }: { userName: string }) {
               </Button>
             );
           })}
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button
-                variant="ghost"
-                size="sm"
-                className={cn(
-                  "flex items-center gap-1 text-muted-foreground hover:text-foreground",
-                  (pathname === "/meetings" ||
-                    pathname.startsWith("/meetings/")) &&
-                    "text-foreground",
-                )}
-              >
-                Meetings
-                <IconChevronDown className="size-4" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="start">
-              {MEETING_LINKS.map((meeting) => {
-                const active =
-                  pathname === meeting.href ||
-                  pathname.startsWith(meeting.href + "/");
-                return (
-                  <DropdownMenuItem key={meeting.href} asChild>
-                    <Link
-                      href={meeting.href}
-                      className={cn(active && "font-medium")}
-                    >
-                      {meeting.label}
-                    </Link>
-                  </DropdownMenuItem>
-                );
-              })}
-            </DropdownMenuContent>
-          </DropdownMenu>
         </nav>
 
         <DropdownMenu>
