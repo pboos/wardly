@@ -17,7 +17,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
-import { IconLogout } from "@tabler/icons-react";
+import { IconChevronDown, IconLogout } from "@tabler/icons-react";
 
 type NavItem = {
   label: string;
@@ -28,9 +28,18 @@ type NavItem = {
 
 const NAV_ITEMS: NavItem[] = [
   { label: "Members", href: "/members", match: "/members" },
-  { label: "Meetings", href: "/", match: "/" },
   { label: "Tasks", href: "/", match: "/" },
   { label: "Sync", href: "/members/sync", match: "/members/sync" },
+];
+
+type MeetingLink = {
+  label: string;
+  href: string;
+};
+
+const MEETING_LINKS: MeetingLink[] = [
+  { label: "Bishopric", href: "/meetings/bishopric" },
+  { label: "Ward council", href: "/meetings/ward-council" },
 ];
 
 function getInitials(name: string): string {
@@ -56,7 +65,7 @@ export function SiteHeader({ userName }: { userName: string }) {
           className="flex shrink-0 items-center gap-2 font-semibold text-foreground"
         >
           <Image
-            src="/logo.svg"
+            src="/logo3.png"
             alt="Wardly"
             width={28}
             height={28}
@@ -83,6 +92,40 @@ export function SiteHeader({ userName }: { userName: string }) {
               </Button>
             );
           })}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                variant="ghost"
+                size="sm"
+                className={cn(
+                  "flex items-center gap-1 text-muted-foreground hover:text-foreground",
+                  (pathname === "/meetings" ||
+                    pathname.startsWith("/meetings/")) &&
+                    "text-foreground",
+                )}
+              >
+                Meetings
+                <IconChevronDown className="size-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="start">
+              {MEETING_LINKS.map((meeting) => {
+                const active =
+                  pathname === meeting.href ||
+                  pathname.startsWith(meeting.href + "/");
+                return (
+                  <DropdownMenuItem key={meeting.href} asChild>
+                    <Link
+                      href={meeting.href}
+                      className={cn(active && "font-medium")}
+                    >
+                      {meeting.label}
+                    </Link>
+                  </DropdownMenuItem>
+                );
+              })}
+            </DropdownMenuContent>
+          </DropdownMenu>
         </nav>
 
         <DropdownMenu>
@@ -106,10 +149,10 @@ export function SiteHeader({ userName }: { userName: string }) {
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
             <DropdownMenuItem asChild>
-              <Link href="/logout">
+              <a href="/logout" >
                 <IconLogout />
                 Log out
-              </Link>
+              </a>
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
