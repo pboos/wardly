@@ -12,7 +12,7 @@ export default async function Home() {
         {payload ? `Hello, ${payload[CLAIM_NAME]}` : "Welcome to Wardly"}
       </h1>
       <p className="text-muted-foreground">
-        The assistant to any ward or branch.
+        This is wardly, the assistant to any ward or branch.
       </p>
     </div>
   );

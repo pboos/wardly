@@ -28,8 +28,8 @@ type NavItem = {
 
 const NAV_ITEMS: NavItem[] = [
   { label: "Members", href: "/members", match: "/members" },
-  { label: "Tasks", href: "/", match: "/" },
-  { label: "Sync", href: "/members/sync", match: "/members/sync" },
+  { label: "Tasks", href: "/tasks", match: "/tasks" },
+  { label: "Sync", href: "/sync", match: "/sync" },
 ];
 
 type MeetingLink = {
