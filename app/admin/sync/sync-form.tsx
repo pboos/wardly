@@ -168,7 +168,7 @@ export function SyncForm() {
             value={rawText}
             onChange={(e) => setRawText(e.target.value)}
             placeholder='[{"firstName":"John","lastName":"Doe","gender":"male","birthDate":"1990-01-15","email":"john@example.com","isBaptized":true}]'
-            className="min-h-48 font-mono text-xs"
+            className="h-48 resize-none overflow-y-auto font-mono text-xs"
           />
         </div>
         {error && (
