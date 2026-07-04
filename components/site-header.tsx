@@ -79,7 +79,7 @@ export function SiteHeader({ userName }: { userName: string }) {
           <span className="hidden sm:inline">Wardly</span>
         </Link>
 
-        <nav className="flex flex-1 items-center gap-1 overflow-x-auto">
+        <nav className="flex flex-1 items-center gap-1 overflow-x-auto overflow-y-hidden">
           {NAV_ITEMS.map((item) => {
             const active = isActive(pathname, item);
             if (item.children) {
