@@ -44,7 +44,15 @@ const NAV_ITEMS: NavItem[] = [
       { label: "Ward council", href: "/meetings/ward-council" },
     ],
   },
-  { label: "Sync", href: "/sync", match: "/sync" },
+  {
+    label: "Admin",
+    href: "/admin",
+    match: "/admin",
+    children: [
+      { label: "Users", href: "/admin/users" },
+      { label: "Sync", href: "/admin/sync" },
+    ],
+  },
 ];
 
 function getInitials(name: string): string {
