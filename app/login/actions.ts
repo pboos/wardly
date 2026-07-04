@@ -3,7 +3,7 @@
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { sanitizeRedirect, verifyRouteTarget } from "@/lib/auth/redirect";
-import { generateToken, generateCode, isExpired } from "@/lib/auth/tokens";
+import { generateToken, generateCode, isExpired, sha256, hashCode, verifyHashCode } from "@/lib/auth/tokens";
 import { sendLoginEmail } from "@/lib/email";
 import { createSession } from "@/lib/auth/session";
 import { deleteExpiredLogins } from "@/lib/auth/cleanup";
@@ -32,11 +32,12 @@ export async function requestLogin(
   if (user) {
     const token = generateToken();
     const code = generateCode();
+    const codeHash = await hashCode(code, user.id);
     // upsert because login PK is user_id (one active login per user)
     await prisma.login.upsert({
       where: { user_id: user.id },
-      create: { user_id: user.id, token, code, redirect_path: redirect },
-      update: { token, code, attempts: 0, created_at: new Date(), redirect_path: redirect },
+      create: { user_id: user.id, token_hash: sha256(token), code_hash: codeHash, redirect_path: redirect },
+      update: { token_hash: sha256(token), code_hash: codeHash, attempts: 0, created_at: new Date(), redirect_path: redirect },
     });
     try {
       await sendLoginEmail({ to: user.email, name: user.name, token, code });
@@ -76,7 +77,7 @@ export async function verifyCode(
     };
   }
 
-  if (login.code !== code) {
+  if (!await verifyHashCode(login.code_hash, code, user.id)) {
     await prisma.login.update({
       where: { user_id: user.id },
       data: { attempts: { increment: 1 } },

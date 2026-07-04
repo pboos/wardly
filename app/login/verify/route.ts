@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { isExpired } from "@/lib/auth/tokens";
+import { isExpired, sha256 } from "@/lib/auth/tokens";
 import { createSession } from "@/lib/auth/session";
 import { deleteExpiredLogins } from "@/lib/auth/cleanup";
 import { verifyRouteTarget } from "@/lib/auth/redirect";
@@ -13,7 +13,7 @@ export async function GET(req: Request) {
 
   if (!token) return errorResponse("Invalid link.");
 
-  const login = await prisma.login.findUnique({ where: { token } });
+  const login = await prisma.login.findUnique({ where: { token_hash: sha256(token) } });
   if (!login)
     return errorResponse(
       "This link is invalid or has already been used.",

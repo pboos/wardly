@@ -35,8 +35,8 @@ model user {
 
 model login {
   user_id       String
-  token         String
-  code          String
+  token_hash    String
+  code_hash     String
   attempts      Int      @default(0)
   redirect_path String?
   created_at    DateTime @default(now())
@@ -44,7 +44,7 @@ model login {
   user user @relation(fields: [user_id], references: [id], onDelete: Cascade)
 
   @@id([user_id])
-  @@unique([token])
+  @@unique([token_hash])
   @@index([created_at])
 }
 

@@ -21,8 +21,8 @@ CREATE TABLE "user" (
 -- CreateTable
 CREATE TABLE "login" (
     "user_id" TEXT NOT NULL PRIMARY KEY,
-    "token" TEXT NOT NULL,
-    "code" TEXT NOT NULL,
+    "token_hash" TEXT NOT NULL,
+    "code_hash" TEXT NOT NULL,
     "attempts" INTEGER NOT NULL DEFAULT 0,
     "redirect_path" TEXT,
     "created_at" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -55,7 +55,7 @@ CREATE UNIQUE INDEX "user_email_key" ON "user"("email");
 CREATE INDEX "login_created_at_idx" ON "login"("created_at");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "login_token_key" ON "login"("token");
+CREATE UNIQUE INDEX "login_token_hash_key" ON "login"("token_hash");
 
 -- CreateIndex
 CREATE INDEX "member_ward_id_idx" ON "member"("ward_id");

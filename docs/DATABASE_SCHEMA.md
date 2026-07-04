@@ -54,8 +54,8 @@ CREATE INDEX idx_user_ward_id ON user (ward_id);
 
 Magic‑link / code login session. Created when a user requests a login.
 
-- `token` — random token sent as a link in the email (immediate login).
-- `code` — 6‑character human‑readable code (uppercase, no ambiguous chars like `0`, `O`, `1`, `I`) that can be entered on the login page.
+- `token_hash` — SHA‑256 hash of the random token sent as a link in the email (immediate login). Only the hash is stored; the plaintext token lives only in the email link.
+- `code_hash` — SHA‑256 hash of the 6‑character human‑readable code (uppercase, no ambiguous chars like `0`, `O`, `1`, `I`) that can be entered on the login page. Only the hash is stored; the plaintext code lives only in the email.
 - `attempts` — counter for failed code attempts; after 3 the entry is invalidated.
 - redirect_path TEXT — the sanitized original path to return to after login; null = fall back to /.
 - Both token and code expire 5 minutes after `created_at`. A cleanup job deletes rows older than 5 minutes.
@@ -64,8 +64,8 @@ Magic‑link / code login session. Created when a user requests a login.
 ```sql
 CREATE TABLE login (
   user_id       TEXT PRIMARY KEY REFERENCES user (id) ON DELETE CASCADE,
-  token         TEXT NOT NULL,
-  code          TEXT NOT NULL,
+  token_hash    TEXT NOT NULL,
+  code_hash     TEXT NOT NULL,
   attempts      INTEGER NOT NULL DEFAULT 0,
   redirect_path TEXT,  -- sanitized original path; null = fall back to /
   created_at    TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
@@ -75,7 +75,7 @@ CREATE TABLE login (
 ### Indexes
 
 ```sql
-CREATE UNIQUE INDEX idx_login_token ON login (token);
+CREATE UNIQUE INDEX idx_login_token_hash ON login (token_hash);
 CREATE INDEX idx_login_created_at ON login (created_at);
 ```
 
