@@ -15,17 +15,34 @@ Important: The website should be mobile friendly. Or at least most parts should 
 
 ---
 
-Another input for the ward organization website.
-
-If we want, we could also allow or assign email addresses to ward members. So we do have a ID for a ward member. Name, first name, last name, birthday, deleted, hidden. But we could add an email to them as well.
-
-And if they're not deleted or hidden, means they can log in and do specific parts related to their calling. So, or we could give them permission to do certain things like probably like either assigned to a calling or we just manually have a permission system which says like, yeah, bishopric or music lead.
-
-So for example, we could assign a person as music lead and then that would mean they can assign people on the Sunday that lead the music. So one or two people that lead the music and as well, one or two people that play the piano or organ.
+Tasks / interviews
+For interviews. Those should be the same. Table where normal task just has two states to do and done. And the other ones have multiple states. Also an assigned person and When the state changes it can switch to another assigned person. Like with temple interview, if the interview was done, then the state changes to Organizing with the stake, which would be the then the secretary of the ward that will be assigned automatically. Then for other interviews it will be different, but in total like each interview task is a task. But the interview would be a task type. temple interview or limited temple interview youth interview and so on or calling interview and those can be Also for a temple and so on we can have uh a member ID that it it relates to. So that we don't need to write the the name in the the task. But each type also has a setup of the different states, from which state it can go to what state. And if the state changes what It will have as an effect being um. Yeah, like the changing of the assigned user, for example.
 
 ---
 
-For interviews. Those should be the same. Table where normal task just has two states to do and done. And the other ones have multiple states. Also an assigned person and When the state changes it can switch to another assigned person. Like with temple interview, if the interview was done, then the state changes to Organizing with the stake, which would be the then the secretary of the ward that will be assigned automatically. Then for other interviews it will be different, but in total like each interview task is a task. But the interview would be a task type. temple interview or limited temple interview youth interview and so on or calling interview and those can be Also for a temple and so on we can have uh a member ID that it it relates to. So that we don't need to write the the name in the the task. But each type also has a setup of the different states, from which state it can go to what state. And if the state changes what It will have as an effect being um. Yeah, like the changing of the assigned user, for example.
+Tasks - Callings
+Tasks in general. Maybe should have a last state that is report. Okay, maybe not for temple interviews as they're printing it. Is all that's needed for last. One and then done. But for callings, for example, we should have a last state that is report. So that we bring it up in the meeting again. Another question is as well if we maybe That we can have like a calling name like type of the to-do's the name of the calling and then I know type being calling of the to-do and then the name or like the title would be the name of the calling and in description we can probably add multiple people but if we assign a name would mean we have this person person in mind and then we can have a prey status. Like first is first status would be to do or think about then second would be pray about or like just pray then the next state would be interview person after that it would be in front of ward Next one would be So in front of Ward would be sustained. In front of Ward. Then after that it would be set apart. And then entering in system. And after that it would be done. And for entering system it would be then automatically assigned to the secretary again. That you can put it in the system. 
+
+---
+
+Tasks - Completion date
+All tasks have one common completed state "done" or "completed" which doesn't need to reassign the person. But when a task is changed into this final completed state, it should record the completion date. Then in bishopric meetings it might be helpful to see the tasks completed within last 7 days, the last 14 days, ... so we can quickly see what was done since last meeting.
+
+---
+
+Tasks - Temple ordinances for the living
+Two more other task types will be for temple ordinances for the living. So for example So for endowment and Sealing. Where the person is gonna do it. Where the person is gonna get their endowment or where they are getting sealed to their spouse. This is combined with a temple interview, so it has a similar process as the temple recommend task, but it is slightly different. I still need to figure out what the differences are. There is One side temple preparation class. There is interview with Bishop. Then there is Into with the state president. So it's basically the same. 
+
+---
+
+Tasks - Information
+We could even on the task states maybe have some information of what needs to be done and we're in the handbook, maybe with a link even. So it could be markdown information. What they need to do and where in the handbook they find the parts about that. It could also for temple interview for example for the temple recommended interview can be that the that it has a link to the temple recommend questions.
+
+---
+
+Callings / Roles / Permissions
+We could add callings (or in other words roles) to users and based. So for example, we could assign a person as music lead and then that would mean they can assign people on the Sunday that lead the music. So one or two people that lead the music and as well, one or two people that play the piano or organ.
+We could do that basically automatically on members as well, so we could assign a calling on a member and link a user to a specific member ID. That way we would have the email there, maybe directly on the member instead of on the user. And Or still on the user at least. Like that's to be decided, but that way we could assign callings to members or to users. And we could have also a job that runs regularly that could send out an email. for the admin of the site or of of the ward telling them if a member moved out of the ward that they probably should revoke access to the user so that the user doesn't have access To the ward anymore. Or this could happen automatically after a "sync".
 
 ---
 

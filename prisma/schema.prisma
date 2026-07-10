@@ -14,8 +14,11 @@ model ward {
   created_at DateTime @default(now())
   updated_at DateTime @default(now())
 
-  user   user[]
-  member member[]
+  user                      user[]
+  member                    member[]
+  task                      task[]
+  task_type                 task_type[]
+  task_type_state           task_type_state[]
 }
 
 model user {
@@ -28,6 +31,11 @@ model user {
 
   ward  ward   @relation(fields: [ward_id], references: [id], onDelete: Cascade)
   login login?
+
+  // Tasks assigned to this user
+  task                       task[]
+  // States that reassign to this user
+  task_type_state            task_type_state[]
 
   @@unique([email])
   @@index([ward_id])
@@ -61,8 +69,74 @@ model member {
   created_at  DateTime @default(now())
   updated_at  DateTime @default(now())
 
-  ward ward @relation(fields: [ward_id], references: [id], onDelete: Cascade)
+  ward ward  @relation(fields: [ward_id], references: [id], onDelete: Cascade)
+  task task[]
 
   @@index([ward_id])
   @@index([ward_id, status])
+}
+
+model task {
+  id                String   @id @default(uuid())
+  ward_id           String
+  type             String
+  state            String   @default("todo")
+  title            String?
+  description      String?
+  assigned_user_id String?
+  member_id        String?
+  deadline         String?
+  priority         String   @default("normal") // 'urgent' | 'normal' | 'whenever'
+  duration_minutes Int?
+  completed_at     String?
+  created_at       DateTime @default(now())
+  updated_at       DateTime @default(now())
+
+  ward          ward    @relation(fields: [ward_id], references: [id], onDelete: Cascade)
+  assigned_user user?  @relation(fields: [assigned_user_id], references: [id], onDelete: SetNull)
+  member        member? @relation(fields: [member_id], references: [id], onDelete: SetNull)
+
+  @@index([ward_id])
+  @@index([ward_id, type, state])
+  @@index([assigned_user_id])
+  @@index([member_id])
+  @@index([deadline])
+  @@index([completed_at])
+  @@index([ward_id, completed_at])
+}
+
+model task_type {
+  ward_id        String
+  type          String // 'temple_recommend' | 'temple_recommend_limited' | 'youth_interview' | 'calling' | 'check_in'
+  name          String
+  name_short    String   @default("T")
+  color         String   @default("#71717a")
+  configuration String   @default("{}")
+  created_at    DateTime @default(now())
+  updated_at    DateTime @default(now())
+
+  ward ward @relation(fields: [ward_id], references: [id], onDelete: Cascade)
+
+  @@id([ward_id, type])
+}
+
+model task_type_state {
+  id                String   @id @default(uuid())
+  ward_id           String
+  task_type         String
+  state             String
+  label             String
+  color             String   @default("#3b82f6")
+  order_index       Int      @default(0)
+  is_final          Boolean  @default(false)
+  assign_to_user_id String?
+  created_at        DateTime @default(now())
+  updated_at        DateTime @default(now())
+
+  ward          ward  @relation(fields: [ward_id], references: [id], onDelete: Cascade)
+  assign_to_user user? @relation(fields: [assign_to_user_id], references: [id], onDelete: SetNull)
+
+  @@index([task_type])
+  @@index([ward_id])
+  @@unique([task_type, state])
 }

@@ -3,10 +3,6 @@
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import {
-  Avatar,
-  AvatarFallback,
-} from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -16,6 +12,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { UserAvatar } from "@/components/user-avatar";
 import { cn } from "@/lib/utils";
 import { IconChevronDown, IconLogout } from "@tabler/icons-react";
 
@@ -54,13 +51,6 @@ const NAV_ITEMS: NavItem[] = [
     ],
   },
 ];
-
-function getInitials(name: string): string {
-  const parts = name.trim().split(/\s+/).filter(Boolean);
-  if (parts.length === 0) return "?";
-  if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
-  return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
-}
 
 function isActive(pathname: string, item: NavItem): boolean {
   if (item.match === "/") return pathname === "/";
@@ -150,9 +140,7 @@ export function SiteHeader({ userName }: { userName: string }) {
               size="sm"
               className="flex items-center gap-2 px-2"
             >
-              <Avatar size="sm">
-                <AvatarFallback>{getInitials(userName)}</AvatarFallback>
-              </Avatar>
+              <UserAvatar name={userName} size="sm" />
               <span className="hidden max-w-32 truncate sm:inline">
                 {userName}
               </span>

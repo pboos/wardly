@@ -207,15 +207,21 @@ CREATE UNIQUE INDEX idx_meeting_agenda_item_unique ON meeting_agenda_item (meeti
 A generic task. Covers interviews (temple, youth, calling, check‑in) and action items.
 The `type` field distinguishes the kind of task; the `state` field tracks its progress.
 
-- `type` — `temple_interview`, `limited_temple_interview`, `youth_interview`, `calling_interview`, `check_in`, `action_item`, ...
-- `state` — current state in the task's lifecycle (e.g. for temple interview: `todo` → `organize_stake` → `stake_interview` → `print_handout` → `done`).
-- `assigned_user_id` — the bishopric member currently responsible. When the state changes this can be reassigned (e.g. temple interview done → secretary for stake organization).
+- `type` — `temple_recommend`, `temple_recommend_limited`, `youth_interview`, `calling`, `check_in`, `todo`.
+- `state` — current state in the task's lifecycle (e.g. for temple recommend: `todo` → `organize_stake` → `stake_interview` → `print_handout` → `done`).
+- `assigned_user_id` — the bishopric member currently responsible. When the state changes this can be reassigned (e.g. temple recommend done → secretary for stake organization).
 - `member_id` — the ward member the task is about (optional; avoids duplicating names).
-- `agenda_item_id` — for action items, the agenda item they belong to.
 - `deadline` — optional due date.
-- `priority` — `urgent` | `whenever` | `normal`.
-- `duration_minutes` — expected length (defaults per type, e.g. temple = 30, calling = 10, tithing = 15).
-- Final states: `done` or `abandoned`.
+- `priority` — `urgent` | `normal` | `whenever`.
+- `duration_minutes` — expected length (defaults per type, e.g. temple = 30, calling = 10, check-in = 15). Copied onto the task at creation from the matching `task_type` default; `todo` has no default (left null).
+- `completed_at` — ISO‑8601 timestamp set when the task enters a final state; cleared if the task is reopened. Needed for the "past tasks" view ordered by completion date.
+- Final states are defined per type in `task_type_state` (e.g. `done`).
+
+> **Deviation from earlier schema doc:**
+> - `agenda_item_id` (and its index `idx_task_agenda_item_id`) have been **removed** for now. They will be re-added in a later migration when agenda linking lands. Phase 1 has no `meeting_agenda_item` usage.
+> - `completed_at TEXT` has been **added** (nullable, ISO‑8601). Not in the original schema.
+> - `hidden` column dropped (not used in phase 1).
+> - `type` literals renamed: `temple_interview` → `temple_recommend`, `limited_temple_interview` → `temple_recommend_limited`, `calling_interview` → `calling`, `action_item` → `todo`.
 
 ```sql
 CREATE TABLE task (
@@ -227,11 +233,10 @@ CREATE TABLE task (
   description       TEXT,
   assigned_user_id  TEXT REFERENCES user (id) ON DELETE SET NULL,
   member_id         TEXT REFERENCES member (id) ON DELETE SET NULL,
-  agenda_item_id    TEXT REFERENCES agenda_item (id) ON DELETE SET NULL,
   deadline          TEXT,
   priority          TEXT NOT NULL DEFAULT 'normal',  -- 'urgent' | 'normal' | 'whenever'
   duration_minutes  INTEGER,
-  hidden            INTEGER NOT NULL DEFAULT 0,
+  completed_at      TEXT,  -- set when state reaches a final state; cleared on reopen
   created_at        TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
   updated_at        TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
@@ -244,69 +249,85 @@ CREATE INDEX idx_task_ward_id ON task (ward_id);
 CREATE INDEX idx_task_ward_type_state ON task (ward_id, type, state);
 CREATE INDEX idx_task_assigned_user_id ON task (assigned_user_id);
 CREATE INDEX idx_task_member_id ON task (member_id);
-CREATE INDEX idx_task_agenda_item_id ON task (agenda_item_id);
 CREATE INDEX idx_task_deadline ON task (deadline);
-CREATE INDEX idx_task_ward_type_state_hidden ON task (ward_id, type, state, hidden);
+CREATE INDEX idx_task_completed_at ON task (completed_at);
+CREATE INDEX idx_task_ward_completed ON task (ward_id, completed_at);
 ```
 
 ---
 
-## 9. `task_state_transition`
-
-Defines, per task type, the allowed state transitions and the role/user assignment
-that takes effect when the transition occurs. This keeps the workflow data‑driven
-rather than hardcoded. There is a default setup in code that can be imported which
-will add it to the database for that ward.
-
-- `from_state` / `to_state` — the transition.
-- `assign_to_role` — when set, the task is reassigned to the user currently holding
-  this role in the ward (e.g. `secretary` after a temple interview is completed).
-
-```sql
-CREATE TABLE task_state_transition (
-  id                TEXT PRIMARY KEY,
-  ward_id           TEXT NOT NULL REFERENCES ward (id) ON DELETE CASCADE,
-  task_type         TEXT NOT NULL,
-  from_state        TEXT NOT NULL,
-  to_state          TEXT NOT NULL,
-  assign_to_role    TEXT,  -- e.g. 'secretary' | 'bishop' | 'counselor_1' ...
-  created_at        TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  updated_at        TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
-);
-```
-
-### Indexes
-
-```sql
-CREATE INDEX idx_task_state_transition_type_from ON task_state_transition (task_type, from_state);
-CREATE INDEX idx_task_state_transition_ward_id ON task_state_transition (ward_id);
-```
-
----
-
-## 10. `task_state`
+## 9. `task_type_state`
 
 Defines the ordered set of states for each task type (used to render the lifecycle
-and validate `from_state` / `to_state`).
+and determine the next/previous state by `order_index`).
+
+- `label` — display label.
+- `color` — hex color string used as the background of the state in dropdowns and buttons.
+- `assign_to_user_id` — when set, a task entering this state is reassigned to this
+  user. When `NULL`, the task keeps its current `assigned_user_id`.
+
+> **Deviation from earlier schema doc:** renamed from `task_state` to `task_type_state`.
+> `assign_to_user_id` was previously on the now-removed `task_type_state_transition`
+> table; it has been moved here so reassignment is configured per state rather than
+> per transition. The `task_type_state_transition` table has been removed entirely.
 
 ```sql
-CREATE TABLE task_state (
-  id          TEXT PRIMARY KEY,
-  ward_id     TEXT NOT NULL REFERENCES ward (id) ON DELETE CASCADE,
-  task_type   TEXT NOT NULL,
-  state       TEXT NOT NULL,
-  label       TEXT NOT NULL,  -- display label
-  order_index INTEGER NOT NULL DEFAULT 0,
-  is_final    INTEGER NOT NULL DEFAULT 0,
-  created_at  TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  updated_at  TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+CREATE TABLE task_type_state (
+  id                  TEXT PRIMARY KEY,
+  ward_id             TEXT NOT NULL REFERENCES ward (id) ON DELETE CASCADE,
+  task_type           TEXT NOT NULL,
+  state               TEXT NOT NULL,
+  label               TEXT NOT NULL,
+  color               TEXT NOT NULL DEFAULT '#3b82f6',
+  order_index         INTEGER NOT NULL DEFAULT 0,
+  is_final            INTEGER NOT NULL DEFAULT 0,
+  assign_to_user_id   TEXT REFERENCES user (id) ON DELETE SET NULL,
+  created_at          TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at          TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 ```
 
 ### Indexes
 
 ```sql
-CREATE INDEX idx_task_state_type ON task_state (task_type);
-CREATE INDEX idx_task_state_ward_id ON task_state (ward_id);
-CREATE UNIQUE INDEX idx_task_state_type_state_unique ON task_state (task_type, state);
+CREATE INDEX idx_task_type_state_type ON task_type_state (task_type);
+CREATE INDEX idx_task_type_state_ward_id ON task_type_state (ward_id);
+CREATE UNIQUE INDEX idx_task_type_state_type_state_unique ON task_type_state (task_type, state);
 ```
+
+---
+
+## 10. `task_type`
+
+Per‑ward configuration of task types. Composite primary key `(ward_id, type)` — no
+separate `id` column. Stores the human‑readable display name and a JSON `configuration`
+string applied to new tasks of that type.
+
+- `type` — one of `temple_recommend`, `temple_recommend_limited`, `youth_interview`,
+  `calling`, `check_in`. The `todo` type is **never stored** in this table — it always
+  exists programmatically for every ward (see `lib/tasks/defaults.ts`).
+- `name` — display name (e.g. "Temple recommend").
+- `name_short` — abbreviated label, max 4 characters (e.g. "T", "TL", "CALL", "CI", "Y"). Always rendered in a fixed-width slot for alignment.
+- `color` — hex color string used as the background of the type badge in the UI.
+- `configuration` — JSON string. `durationMinutes` is copied onto a `task` row at
+  creation time (so a task keeps its duration even if the type default later changes).
+  `showTaskTitle` controls whether the title field is shown for tasks of this type.
+
+> **Deviation from earlier schema doc:** this table is new (not present in the original
+> schema). `todo` is intentionally never stored in it.
+
+```sql
+CREATE TABLE task_type (
+  ward_id           TEXT NOT NULL REFERENCES ward (id) ON DELETE CASCADE,
+  type              TEXT NOT NULL,
+  name              TEXT NOT NULL,
+  name_short        TEXT NOT NULL DEFAULT 'T',
+  color             TEXT NOT NULL DEFAULT '#71717a',
+  configuration     TEXT NOT NULL DEFAULT '{}',
+  created_at        TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at        TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (ward_id, type)
+);
+```
+
+No extra indexes needed — the composite primary key covers lookups by `(ward_id, type)`.
