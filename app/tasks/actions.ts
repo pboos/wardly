@@ -87,7 +87,7 @@ export async function changeTaskState(taskId: string, toState: string) {
     where: { id: task.id },
     data: {
       state: toState,
-      completed_at: targetState.is_final ? new Date().toISOString() : null,
+      completed_at: targetState.state_group === "closed" ? new Date().toISOString() : null,
       ...(assignToUserId !== null ? { assigned_user_id: assignToUserId } : {}),
       updated_at: new Date(),
     },
@@ -178,7 +178,7 @@ export async function reopenTask(taskId: string) {
   if (!typeDef) throw new Error("Task type not found.");
 
   const current = findStateDef(typeDef, task.state);
-  const newState = current?.is_final
+  const newState = current?.state_group === "closed"
     ? (getPreviousState(typeDef, task.state)?.state ?? task.state)
     : task.state;
 

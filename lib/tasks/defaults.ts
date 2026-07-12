@@ -13,8 +13,8 @@ export const BUILTIN_TASK_TYPES: TaskTypeDef[] = [
     configuration: { showTaskTitle: true },
     isBuiltIn: true,
     states: [
-      { state: "todo", label: "To do", color: "#3b82f6", order_index: 0, is_final: false, assign_to_user_id: null },
-      { state: "done", label: "Done", color: "#22c55e", order_index: 1, is_final: true, assign_to_user_id: null },
+      { state: "todo", label: "To do", color: "#3b82f6", order_index: 0, state_group: "not_started", progress_percentage: 0, assign_to_user_id: null },
+      { state: "done", label: "Done", color: "#22c55e", order_index: 1, state_group: "closed", progress_percentage: 1, assign_to_user_id: null },
     ],
   },
 ];

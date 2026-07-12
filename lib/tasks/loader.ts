@@ -1,7 +1,6 @@
 import { prisma } from "@/lib/prisma";
-import { parseConfiguration } from "./defaults";
-import { BUILTIN_TASK_TYPES } from "./defaults";
-import type { TaskTypeDef, TaskStateDef } from "./types";
+import { parseConfiguration, BUILTIN_TASK_TYPES } from "./defaults";
+import type { TaskTypeDef, TaskStateDef, StateGroup } from "./types";
 
 /**
  * Load all task types for a ward: database rows merged with built-in types.
@@ -10,6 +9,13 @@ import type { TaskTypeDef, TaskStateDef } from "./types";
  * 2. Map DB rows → `TaskTypeDef[]` (isBuiltIn: false), states sorted by
  *    `order_index` ascending.
  * 3. Append `BUILTIN_TASK_TYPES` (isBuiltIn: true).
+ *
+ * `progress_percentage` is calculated for active states:
+ *   step = 1 / (nr_of_active_states + 1)
+ *   first active state  → step
+ *   last active state   → 1 - step
+ *   evenly spaced in between.
+ * `not_started` states get 0, `closed` states get 1.
  *
  * Returns a single array — the source of truth for what task types exist
  * for this ward.
@@ -32,7 +38,8 @@ export async function loadTaskTypes(wardId: string): Promise<TaskTypeDef[]> {
       label: s.label,
       color: s.color,
       order_index: s.order_index,
-      is_final: s.is_final,
+      state_group: s.state_group as StateGroup,
+      progress_percentage: 0,
       assign_to_user_id: s.assign_to_user_id,
     });
     statesByType.set(s.task_type, list);
@@ -45,8 +52,34 @@ export async function loadTaskTypes(wardId: string): Promise<TaskTypeDef[]> {
     color: row.color,
     configuration: parseConfiguration(row.configuration),
     isBuiltIn: false,
-    states: statesByType.get(row.type) ?? [],
+    states: withProgress(statesByType.get(row.type) ?? []),
   }));
 
-  return [...dbTypes, ...BUILTIN_TASK_TYPES];
+  const builtIn = BUILTIN_TASK_TYPES.map((t) => ({
+    ...t,
+    states: withProgress(t.states),
+  }));
+
+  return [...dbTypes, ...builtIn];
+}
+
+/**
+ * Calculate `progress_percentage` for active states in a state list.
+ * `not_started` → 0, `closed` → 1. Active states are spaced evenly between
+ * `step` and `1 - step` where `step = 1 / (nr_active + 1)`.
+ */
+function withProgress(states: TaskStateDef[]): TaskStateDef[] {
+  const activeIndices = states
+    .map((s, i) => (s.state_group === "active" ? i : -1))
+    .filter((i) => i >= 0);
+  const nrActive = activeIndices.length;
+  // +1 because 100% is the "closed" status
+  const step = nrActive > 0 ? 1 / (nrActive + 1) : 0;
+
+  return states.map((s, i) => {
+    if (s.state_group === "not_started") return { ...s, progress_percentage: 0 };
+    if (s.state_group === "closed") return { ...s, progress_percentage: 1 };
+    const pos = activeIndices.indexOf(i);
+    return { ...s, progress_percentage: step * (pos + 1) };
+  });
 }

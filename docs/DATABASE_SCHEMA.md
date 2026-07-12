@@ -263,6 +263,9 @@ and determine the next/previous state by `order_index`).
 
 - `label` — display label.
 - `color` — hex color string used as the background of the state in dropdowns and buttons.
+- `state_group` — lifecycle group: `not_started`, `active`, or `closed`. Replaces the
+  former `is_final` boolean. `todo` is `not_started`, `done` is `closed`, all others are
+  `active`. `completed_at` is set when a task enters a `closed` state.
 - `assign_to_user_id` — when set, a task entering this state is reassigned to this
   user. When `NULL`, the task keeps its current `assigned_user_id`.
 
@@ -270,6 +273,8 @@ and determine the next/previous state by `order_index`).
 > `assign_to_user_id` was previously on the now-removed `task_type_state_transition`
 > table; it has been moved here so reassignment is configured per state rather than
 > per transition. The `task_type_state_transition` table has been removed entirely.
+> `is_final BOOLEAN` has been replaced with `state_group TEXT` — a three-way
+> classification (`not_started` | `active` | `closed`).
 
 ```sql
 CREATE TABLE task_type_state (
@@ -280,7 +285,7 @@ CREATE TABLE task_type_state (
   label               TEXT NOT NULL,
   color               TEXT NOT NULL DEFAULT '#3b82f6',
   order_index         INTEGER NOT NULL DEFAULT 0,
-  is_final            INTEGER NOT NULL DEFAULT 0,
+  state_group         TEXT NOT NULL DEFAULT 'active',
   assign_to_user_id   TEXT REFERENCES user (id) ON DELETE SET NULL,
   created_at          TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
   updated_at          TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP

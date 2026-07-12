@@ -163,10 +163,10 @@ export function TasksList({
                         task={task}
                         taskTypes={taskTypes}
                         past={past}
-                        onChangeState={(toState, isFinal, assignToUserId) => {
+                        onChangeState={(toState, isClosed, assignToUserId) => {
                           updateLocal(task.id, {
                             state: toState,
-                            completed_at: isFinal ? new Date().toISOString() : null,
+                            completed_at: isClosed ? new Date().toISOString() : null,
                             ...(assignToUserId !== null
                               ? { assigned_user_id: assignToUserId }
                               : {}),
@@ -238,10 +238,10 @@ export function TasksList({
                     task={task}
                     taskTypes={taskTypes}
                     past={past}
-                    onChangeState={(toState, isFinal, assignToUserId) => {
+                    onChangeState={(toState, isClosed, assignToUserId) => {
                       updateLocal(task.id, {
                         state: toState,
-                        completed_at: isFinal ? new Date().toISOString() : null,
+                        completed_at: isClosed ? new Date().toISOString() : null,
                         ...(assignToUserId !== null
                           ? { assigned_user_id: assignToUserId }
                           : {}),
@@ -386,7 +386,7 @@ function StateCell({
   task: Task;
   taskTypes: TaskTypeDef[];
   past: boolean;
-  onChangeState: (toState: string, isFinal: boolean, assignToUserId: string | null) => void;
+  onChangeState: (toState: string, isClosed: boolean, assignToUserId: string | null) => void;
 }) {
   const typeDef = findTypeDef(taskTypes, task.type);
   if (!typeDef) return null;
@@ -402,19 +402,19 @@ function StateCell({
   }
 
   if (!stateDef) return null;
-  const isFinal = stateDef.is_final;
+  const isClosed = stateDef.state_group === "closed";
   const next = getNextState(typeDef, task.state);
 
   return (
     <div className="flex items-center gap-1.5">
       <Button
         type="button"
-        variant={isFinal ? "secondary" : "outline"}
+        variant={isClosed ? "secondary" : "outline"}
         size="sm"
-        disabled={isFinal}
+        disabled={isClosed}
         onClick={() => {
           if (next) {
-            onChangeState(next.state, next.is_final, next.assign_to_user_id);
+            onChangeState(next.state, next.state_group === "closed", next.assign_to_user_id);
           }
         }}
         className="gap-1.5 text-white"
@@ -426,8 +426,8 @@ function StateCell({
       <StateDropdown
         typeDef={typeDef}
         currentState={task.state}
-        onSelect={(toState, isFinal, assignToUserId) =>
-          onChangeState(toState, isFinal, assignToUserId)
+        onSelect={(toState, isClosed, assignToUserId) =>
+          onChangeState(toState, isClosed, assignToUserId)
         }
       />
     </div>
@@ -441,7 +441,7 @@ function StateDropdown({
 }: {
   typeDef: TaskTypeDef;
   currentState: string;
-  onSelect: (toState: string, isFinal: boolean, assignToUserId: string | null) => void;
+  onSelect: (toState: string, isClosed: boolean, assignToUserId: string | null) => void;
 }) {
   const [open, setOpen] = useState(false);
 
@@ -463,15 +463,15 @@ function StateDropdown({
                   key={s.state}
                   value={s.label}
                   onSelect={() => {
-                    onSelect(s.state, s.is_final, s.assign_to_user_id);
+                    onSelect(s.state, s.state_group === "closed", s.assign_to_user_id);
                     setOpen(false);
                   }}
                   className="text-white"
                   style={{ backgroundColor: s.color }}
                 >
                   {s.label}
-                  {s.is_final && (
-                    <span className="ml-auto text-xs text-white/70">final</span>
+                  {s.state_group === "closed" && (
+                    <span className="ml-auto text-xs text-white/70">closed</span>
                   )}
                   {s.state === currentState && (
                     <IconCheck className="ml-1 size-3.5" />

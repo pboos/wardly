@@ -8,6 +8,9 @@ export type TaskTypeConfiguration = {
   showTaskTitle: boolean;
 };
 
+/** State group classification for lifecycle grouping. */
+export type StateGroup = "not_started" | "active" | "closed";
+
 export type TaskStateDef = {
   /** Omitted in seed data; present when loaded from the database. */
   id?: string;
@@ -15,7 +18,9 @@ export type TaskStateDef = {
   label: string;
   color: string;
   order_index: number;
-  is_final: boolean;
+  state_group: StateGroup;
+  /** Calculated on load — progress percentage 0.00–1.00 for active states. */
+  progress_percentage: number;
   assign_to_user_id: string | null;
 };
 

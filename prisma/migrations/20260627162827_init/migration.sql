@@ -108,7 +108,7 @@ CREATE TABLE "task_type_state" (
     "label" TEXT NOT NULL,
     "color" TEXT NOT NULL DEFAULT '#3b82f6',
     "order_index" INTEGER NOT NULL DEFAULT 0,
-    "is_final" BOOLEAN NOT NULL DEFAULT false,
+    "state_group" TEXT NOT NULL DEFAULT 'active',
     "assign_to_user_id" TEXT,
     "created_at" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updated_at" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,

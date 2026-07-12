@@ -56,7 +56,7 @@ export async function seedTaskDefaults() {
         label: s.label,
         color: s.color,
         order_index: s.order_index,
-        is_final: s.is_final,
+        state_group: s.state_group,
         assign_to_user_id: null,
       })),
     });
@@ -99,7 +99,7 @@ export async function resetTaskDefaults() {
           label: s.label,
           color: s.color,
           order_index: s.order_index,
-          is_final: s.is_final,
+          state_group: s.state_group,
           assign_to_user_id: null,
         })),
       ),

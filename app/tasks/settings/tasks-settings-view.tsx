@@ -262,8 +262,8 @@ function StatesCard({
           <li key={s.id ?? s.state} className="flex flex-col gap-2 sm:flex-row sm:items-center">
             <span className="text-sm sm:w-64">
               {s.label}
-              {s.is_final && (
-                <span className="ml-1.5 text-xs text-muted-foreground">(final)</span>
+              {s.state_group === "closed" && (
+                <span className="ml-1.5 text-xs text-muted-foreground">(closed)</span>
               )}
             </span>
             <div className="sm:w-56">
