@@ -145,13 +145,13 @@ export function TasksList({
       ) : (
         <>
           {/* Desktop: table */}
-          <div className="hidden sm:block">
+          <div>
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead className="w-10">Status</TableHead>
-                  <TableHead className="w-28">Task Type</TableHead>
-                  <TableHead>Member Name &amp; Title</TableHead>
+                  <TableHead className="w-10"></TableHead>
+                  <TableHead className="w-28"></TableHead>
+                  <TableHead>Name</TableHead>
                   <TableHead className="w-28">Assignee</TableHead>
                   <TableHead className="w-10" />
                 </TableRow>
@@ -184,7 +184,7 @@ export function TasksList({
                         />
                       </TableCell>
                       <TableCell>
-                        <TypeBadge type={task.type} taskTypes={taskTypes} />
+                        <TypeBadge taskType={typeDef} />
                       </TableCell>
                       <TableCell>
                         <MemberTitleCell
@@ -220,73 +220,6 @@ export function TasksList({
               </TableBody>
             </Table>
           </div>
-
-          {/* Mobile: card list */}
-          <ul className="flex flex-col gap-3 sm:hidden">
-            {localTasks.map((task) => {
-              const typeDef = findTypeDef(taskTypes, task.type);
-              const memberName = getMemberName(task);
-
-              return (
-                <li
-                  key={task.id}
-                  className="flex flex-col gap-2 rounded-lg border border-border bg-card p-3"
-                >
-                  <div className="flex items-center gap-2">
-                    <span onClick={(e) => e.stopPropagation()}>
-                      <StatusCell
-                        task={task}
-                        taskTypes={taskTypes}
-                        onChangeState={(toState, isClosed, assignToUserId) => {
-                          updateLocal(task.id, {
-                            state: toState,
-                            completed_at: isClosed ? new Date().toISOString() : null,
-                            ...(assignToUserId !== null
-                              ? { assigned_user_id: assignToUserId }
-                              : {}),
-                          });
-                          runAction(() => changeTaskState(task.id, toState));
-                        }}
-                      />
-                    </span>
-                    <TypeBadge type={task.type} taskTypes={taskTypes} />
-                    <span className="ml-auto" onClick={(e) => e.stopPropagation()}>
-                      <TaskActions
-                        task={task}
-                        past={past}
-                        onEdit={() => setEditTaskId(task.id)}
-                        onReopen={() => {
-                          updateLocal(task.id, { completed_at: null });
-                          runAction(() => reopenTask(task.id));
-                        }}
-                      />
-                    </span>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => setEditTaskId(task.id)}
-                    className="text-left"
-                  >
-                    <MemberTitleCell
-                      title={task.title}
-                      showTitle={typeDef?.configuration.showTaskTitle ?? true}
-                      memberName={memberName}
-                    />
-                  </button>
-                  <div onClick={(e) => e.stopPropagation()} className="flex items-center">
-                    <AssigneeCell
-                      task={task}
-                      userItems={userItems}
-                      onUpdate={(v) => {
-                        updateLocal(task.id, { assigned_user_id: v });
-                        runAction(() => updateTaskAssignee(task.id, v));
-                      }}
-                    />
-                  </div>
-                </li>
-              );
-            })}
-          </ul>
         </>
       )}
 
@@ -470,11 +403,10 @@ function StatePicker({
   );
 }
 
-function TypeBadge({ type, taskTypes }: { type: string; taskTypes: TaskTypeDef[] }) {
-  const typeDef = findTypeDef(taskTypes, type);
-  const name = typeDef?.name ?? type;
-  const short = typeDef?.name_short ?? name.slice(0, 2);
-  const color = typeDef?.color ?? "#71717a";
+function TypeBadge({ taskType, size }: { taskType: TaskTypeDef | undefined, size?: "big" | "small" | undefined }) {
+  const name = taskType?.name ?? "-";
+  const short = taskType?.name_short ?? name.slice(0, 2);
+  const color = taskType?.color ?? "#71717a";
   return (
     <Badge
       variant="secondary"
@@ -482,7 +414,7 @@ function TypeBadge({ type, taskTypes }: { type: string; taskTypes: TaskTypeDef[]
       style={{ backgroundColor: color }}
       title={name}
     >
-      {short}
+      {size === "big" ? name : short}
     </Badge>
   );
 }
@@ -716,6 +648,16 @@ function EditTaskModal({
 
           <Table>
             <TableBody>
+              <TableRow>
+                <TableCell className="w-28 font-medium">Type</TableCell>
+                <TableCell>
+                  {typeDef ? (
+                    <TypeBadge taskType={typeDef} size="big" />
+                  ) : (
+                    <span className="text-sm text-muted-foreground">—</span>
+                  )}
+                </TableCell>
+              </TableRow>
               <TableRow>
                 <TableCell className="w-28 font-medium">Status</TableCell>
                 <TableCell>
