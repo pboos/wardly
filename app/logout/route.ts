@@ -1,5 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { SESSION_COOKIE_NAME } from "@/lib/auth/constants";
+import { absoluteRedirectUrl } from "@/lib/auth/redirect";
 
 // Clear the session cookie and redirect to /login. We build the response
 // explicitly (rather than calling `cookies().delete()` + `redirect()`) so the
@@ -7,7 +8,7 @@ import { SESSION_COOKIE_NAME } from "@/lib/auth/constants";
 // the cookie mutation can be dropped and the header stays visible until a
 // full reload.
 export async function GET(req: NextRequest) {
-  const res = NextResponse.redirect(new URL("/login", req.url));
+  const res = NextResponse.redirect(absoluteRedirectUrl("/login", req.url));
   res.cookies.set(SESSION_COOKIE_NAME, "", { path: "/", maxAge: 0 });
   return res;
 }

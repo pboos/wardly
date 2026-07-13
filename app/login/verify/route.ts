@@ -3,7 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { isExpired, sha256 } from "@/lib/auth/tokens";
 import { createSession } from "@/lib/auth/session";
 import { deleteExpiredLogins } from "@/lib/auth/cleanup";
-import { verifyRouteTarget } from "@/lib/auth/redirect";
+import { verifyRouteTarget, absoluteRedirectUrl } from "@/lib/auth/redirect";
 
 export async function GET(req: Request) {
   const url = new URL(req.url);
@@ -40,7 +40,7 @@ export async function GET(req: Request) {
     name: user.name,
     ward_id: user.ward_id,
   });
-  return NextResponse.redirect(new URL(target, req.url));
+  return NextResponse.redirect(absoluteRedirectUrl(target, req.url));
 }
 
 function errorResponse(message: string) {

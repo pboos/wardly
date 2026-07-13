@@ -3,6 +3,29 @@ const C0_AND_DEL_RE = /[\x00-\x1F\x7F]/;
 const PCT_ENCODED_C0_OR_DEL_RE = /%(?:[0-1][0-9A-Fa-f]|7F)/i;
 
 /**
+ * Builds an absolute URL for a route-handler redirect.
+ *
+ * `req.url` in a Next.js route handler reflects the address the server is
+ * bound to (e.g. `http://0.0.0.0:3000/...`), not the public origin the browser
+ * hit, because `X-Forwarded-Host`/`X-Forwarded-Proto` are not trusted by
+ * default. Using `req.url` as the base therefore leaks the internal host to the
+ * client on redirects behind a reverse proxy.
+ *
+ * Prefer `APP_URL` (the canonical public origin) when set, falling back to
+ * `req.url` only in local dev where it is authoritative.
+ *
+ * @param relativePath A server-relative path (must start with "/").
+ * @param reqUrl The incoming request URL, used as a fallback base.
+ */
+export function absoluteRedirectUrl(
+  relativePath: string,
+  reqUrl: string | URL,
+): URL {
+  const base = process.env.APP_URL ?? reqUrl;
+  return new URL(relativePath, base);
+}
+
+/**
  * Returns a safe relative path, defaulting to "/".
  *
  * Validation rules:
