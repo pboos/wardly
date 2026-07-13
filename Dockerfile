@@ -25,6 +25,7 @@ FROM base AS builder
 WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
+ENV DATABASE_URL="file:/data/wardly.db"
 RUN bun run db:generate
 RUN bun run build
 

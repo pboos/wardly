@@ -13,4 +13,3 @@ generated
 Dockerfile
 docker-compose.yml
 .dockerignore
-entrypoint.sh
