@@ -1,6 +1,5 @@
 # Next features
 - Tasks
-  - Add "Calling Release" (CR) type?
   - row is not good. state transition also bad
     - show the short label/name of the task
       - hover over it will show whole name
@@ -9,6 +8,7 @@
     - Question is where to show current status?
     - check mark should be in first row
     - status should allow changing status anywhere with dropdown? (or maybe that should only be in modal?)
+  - Task Type to have icon that we can show in table?
   - Priority and due date nowhere yet
   - hide until date (do not show task until given date) - option to show it in list?
     - easy way on sunday to quickly hide some (e.g. they are not there). but then to show those hidden

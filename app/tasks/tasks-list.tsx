@@ -1,11 +1,12 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState, useTransition } from "react";
+import { useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { IconCheck, IconDots, IconTrash } from "@tabler/icons-react";
+import { IconCheck, IconDots, IconEdit, IconTrash } from "@tabler/icons-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Combobox } from "@/components/ui/combobox";
 import {
   Command,
   CommandEmpty,
@@ -29,6 +30,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import {
   Popover,
   PopoverContent,
@@ -45,8 +47,16 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { UserAvatar } from "@/components/user-avatar";
 import { cn } from "@/lib/utils";
-import { findStateDef, findTypeDef, getNextState } from "@/lib/tasks/utils";
-import type { Task, TaskTypeDef, WardMember, WardUser } from "@/lib/tasks/types";
+import { findStateDef, findTypeDef } from "@/lib/tasks/utils";
+import type {
+  StateGroup,
+  Task,
+  TaskStateDef,
+  TaskTypeDef,
+  WardMember,
+  WardUser,
+} from "@/lib/tasks/types";
+import { TaskStateIcon } from "./status-progress-icon";
 import {
   changeTaskState,
   deleteTask,
@@ -58,6 +68,13 @@ import {
 } from "./actions";
 
 type Item = { value: string; label: string };
+
+const STATE_GROUP_LABELS: Record<StateGroup, string> = {
+  not_started: "Not started",
+  active: "Active",
+  closed: "Closed",
+};
+const STATE_GROUP_ORDER: StateGroup[] = ["not_started", "active", "closed"];
 
 export function TasksList({
   tasks,
@@ -91,6 +108,9 @@ export function TasksList({
     [users],
   );
 
+  const [editTaskId, setEditTaskId] = useState<string | null>(null);
+  const editTask = editTaskId ? localTasks.find((t) => t.id === editTaskId) ?? null : null;
+
   function updateLocal(id: string, patch: Partial<Task>) {
     setLocalTasks((prev) => prev.map((t) => (t.id === id ? { ...t, ...patch } : t)));
   }
@@ -107,6 +127,15 @@ export function TasksList({
     });
   }
 
+  function getMemberName(task: Task): string | null {
+    if (!task.member_id) return null;
+    const first = task.member_first_name ?? "";
+    const last = task.member_last_name ?? "";
+    const joined = `${first} ${last}`.trim();
+    if (joined) return joined;
+    return memberItems.find((m) => m.value === task.member_id)?.label ?? null;
+  }
+
   return (
     <>
       {localTasks.length === 0 ? (
@@ -120,49 +149,94 @@ export function TasksList({
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Type / Title / Member</TableHead>
-                  <TableHead className="w-32">Assignee</TableHead>
-                  <TableHead className="w-48">State</TableHead>
+                  <TableHead className="w-10">Status</TableHead>
+                  <TableHead className="w-28">Task Type</TableHead>
+                  <TableHead>Member Name &amp; Title</TableHead>
+                  <TableHead className="w-28">Assignee</TableHead>
                   <TableHead className="w-10" />
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {localTasks.map((task) => (
-                  <TableRow key={task.id}>
-                    <TableCell>
-                      <TaskContent
+                {localTasks.map((task) => {
+                  const typeDef = findTypeDef(taskTypes, task.type);
+                  const memberName = getMemberName(task);
+
+                  return (
+                    <TableRow
+                      key={task.id}
+                      className="cursor-pointer"
+                      onClick={() => setEditTaskId(task.id)}
+                    >
+                      <TableCell onClick={(e) => e.stopPropagation()}>
+                        <StatusCell
+                          task={task}
+                          taskTypes={taskTypes}
+                          onChangeState={(toState, isClosed, assignToUserId) => {
+                            updateLocal(task.id, {
+                              state: toState,
+                              completed_at: isClosed ? new Date().toISOString() : null,
+                              ...(assignToUserId !== null
+                                ? { assigned_user_id: assignToUserId }
+                                : {}),
+                            });
+                            runAction(() => changeTaskState(task.id, toState));
+                          }}
+                        />
+                      </TableCell>
+                      <TableCell>
+                        <TypeBadge type={task.type} taskTypes={taskTypes} />
+                      </TableCell>
+                      <TableCell>
+                        <MemberTitleCell
+                          title={task.title}
+                          showTitle={typeDef?.configuration.showTaskTitle ?? true}
+                          memberName={memberName}
+                        />
+                      </TableCell>
+                      <TableCell onClick={(e) => e.stopPropagation()}>
+                        <AssigneeCell
+                          task={task}
+                          userItems={userItems}
+                          onUpdate={(v) => {
+                            updateLocal(task.id, { assigned_user_id: v });
+                            runAction(() => updateTaskAssignee(task.id, v));
+                          }}
+                        />
+                      </TableCell>
+                      <TableCell onClick={(e) => e.stopPropagation()}>
+                        <TaskActions
+                          task={task}
+                          past={past}
+                          onEdit={() => setEditTaskId(task.id)}
+                          onReopen={() => {
+                            updateLocal(task.id, { completed_at: null });
+                            runAction(() => reopenTask(task.id));
+                          }}
+                        />
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
+              </TableBody>
+            </Table>
+          </div>
+
+          {/* Mobile: card list */}
+          <ul className="flex flex-col gap-3 sm:hidden">
+            {localTasks.map((task) => {
+              const typeDef = findTypeDef(taskTypes, task.type);
+              const memberName = getMemberName(task);
+
+              return (
+                <li
+                  key={task.id}
+                  className="flex flex-col gap-2 rounded-lg border border-border bg-card p-3"
+                >
+                  <div className="flex items-center gap-2">
+                    <span onClick={(e) => e.stopPropagation()}>
+                      <StatusCell
                         task={task}
                         taskTypes={taskTypes}
-                        memberItems={memberItems}
-                        onUpdateMember={(v) => {
-                          updateLocal(task.id, { member_id: v });
-                          runAction(() => updateTaskMember(task.id, v));
-                        }}
-                        onUpdateTitle={(v) => {
-                          updateLocal(task.id, { title: v });
-                          runAction(() => updateTaskTitle(task.id, v));
-                        }}
-                        onUpdateDescription={(v) => {
-                          updateLocal(task.id, { description: v });
-                          runAction(() => updateTaskDescription(task.id, v));
-                        }}
-                      />
-                    </TableCell>
-                    <TableCell>
-                      <AssigneeCell
-                        task={task}
-                        userItems={userItems}
-                        onUpdate={(v) => {
-                          updateLocal(task.id, { assigned_user_id: v });
-                          runAction(() => updateTaskAssignee(task.id, v));
-                        }}
-                      />
-                    </TableCell>
-                    <TableCell>
-                      <StateCell
-                        task={task}
-                        taskTypes={taskTypes}
-                        past={past}
                         onChangeState={(toState, isClosed, assignToUserId) => {
                           updateLocal(task.id, {
                             state: toState,
@@ -174,86 +248,104 @@ export function TasksList({
                           runAction(() => changeTaskState(task.id, toState));
                         }}
                       />
-                    </TableCell>
-                    <TableCell>
+                    </span>
+                    <TypeBadge type={task.type} taskTypes={taskTypes} />
+                    <span className="ml-auto" onClick={(e) => e.stopPropagation()}>
                       <TaskActions
                         task={task}
                         past={past}
+                        onEdit={() => setEditTaskId(task.id)}
                         onReopen={() => {
                           updateLocal(task.id, { completed_at: null });
                           runAction(() => reopenTask(task.id));
                         }}
                       />
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </div>
-
-          {/* Mobile: card list */}
-          <ul className="flex flex-col gap-3 sm:hidden">
-            {localTasks.map((task) => (
-              <li
-                key={task.id}
-                className="flex flex-col gap-3 rounded-lg border border-border bg-card p-3"
-              >
-                <div className="flex items-start justify-between gap-2">
-                  <TaskContent
-                    task={task}
-                    taskTypes={taskTypes}
-                    memberItems={memberItems}
-                    onUpdateMember={(v) => {
-                      updateLocal(task.id, { member_id: v });
-                      runAction(() => updateTaskMember(task.id, v));
-                    }}
-                    onUpdateTitle={(v) => {
-                      updateLocal(task.id, { title: v });
-                      runAction(() => updateTaskTitle(task.id, v));
-                    }}
-                    onUpdateDescription={(v) => {
-                      updateLocal(task.id, { description: v });
-                      runAction(() => updateTaskDescription(task.id, v));
-                    }}
-                  />
-                  <TaskActions
-                    task={task}
-                    past={past}
-                    onReopen={() => {
-                      updateLocal(task.id, { completed_at: null });
-                      runAction(() => reopenTask(task.id));
-                    }}
-                  />
-                </div>
-                <div className="flex items-center justify-between gap-2">
-                  <AssigneeCell
-                    task={task}
-                    userItems={userItems}
-                    onUpdate={(v) => {
-                      updateLocal(task.id, { assigned_user_id: v });
-                      runAction(() => updateTaskAssignee(task.id, v));
-                    }}
-                  />
-                  <StateCell
-                    task={task}
-                    taskTypes={taskTypes}
-                    past={past}
-                    onChangeState={(toState, isClosed, assignToUserId) => {
-                      updateLocal(task.id, {
-                        state: toState,
-                        completed_at: isClosed ? new Date().toISOString() : null,
-                        ...(assignToUserId !== null
-                          ? { assigned_user_id: assignToUserId }
-                          : {}),
-                      });
-                      runAction(() => changeTaskState(task.id, toState));
-                    }}
-                  />
-                </div>
-              </li>
-            ))}
+                    </span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setEditTaskId(task.id)}
+                    className="text-left"
+                  >
+                    <MemberTitleCell
+                      title={task.title}
+                      showTitle={typeDef?.configuration.showTaskTitle ?? true}
+                      memberName={memberName}
+                    />
+                  </button>
+                  <div onClick={(e) => e.stopPropagation()} className="flex items-center">
+                    <AssigneeCell
+                      task={task}
+                      userItems={userItems}
+                      onUpdate={(v) => {
+                        updateLocal(task.id, { assigned_user_id: v });
+                        runAction(() => updateTaskAssignee(task.id, v));
+                      }}
+                    />
+                  </div>
+                </li>
+              );
+            })}
           </ul>
         </>
+      )}
+
+      {editTask && (
+        <EditTaskModal
+          key={editTask.id}
+          task={editTask}
+          taskTypes={taskTypes}
+          memberItems={memberItems}
+          userItems={userItems}
+          onClose={() => setEditTaskId(null)}
+          onSave={(draft) => {
+            const id = editTask.id;
+            const typeDef = findTypeDef(taskTypes, editTask.type);
+            const targetStateDef = typeDef ? findStateDef(typeDef, draft.state) : null;
+            const isClosed = targetStateDef?.state_group === "closed";
+            const stateAssignTo = targetStateDef?.assign_to_user_id ?? null;
+
+            const localPatch: Partial<Task> = {};
+            const ops: Promise<void>[] = [];
+
+            if (draft.title !== editTask.title) {
+              localPatch.title = draft.title;
+              ops.push(updateTaskTitle(id, draft.title));
+            }
+            if (draft.memberId !== editTask.member_id) {
+              localPatch.member_id = draft.memberId;
+              ops.push(updateTaskMember(id, draft.memberId));
+            }
+            if (draft.state !== editTask.state) {
+              localPatch.state = draft.state;
+              localPatch.completed_at = isClosed ? new Date().toISOString() : null;
+              if (stateAssignTo !== null) localPatch.assigned_user_id = stateAssignTo;
+              ops.push(changeTaskState(id, draft.state));
+            } else if (draft.assignedUserId !== editTask.assigned_user_id) {
+              localPatch.assigned_user_id = draft.assignedUserId;
+              ops.push(updateTaskAssignee(id, draft.assignedUserId));
+            }
+            if (draft.description !== editTask.description) {
+              localPatch.description = draft.description;
+              ops.push(updateTaskDescription(id, draft.description));
+            }
+
+            if (Object.keys(localPatch).length > 0) updateLocal(id, localPatch);
+            setEditTaskId(null);
+
+            if (ops.length === 0) return;
+            start(async () => {
+              try {
+                await Promise.all(ops);
+              } catch (e) {
+                toast.error(e instanceof Error ? e.message : "Failed to save task.", {
+                  action: { label: "Reload", onClick: () => router.refresh() },
+                });
+                router.refresh();
+              }
+            });
+          }}
+        />
       )}
     </>
   );
@@ -261,80 +353,167 @@ export function TasksList({
 
 /* ------------------------------ Sub-components ----------------------------- */
 
-function TaskContent({
+function StatusCell({
   task,
   taskTypes,
-  memberItems,
-  onUpdateMember,
-  onUpdateTitle,
-  onUpdateDescription,
+  onChangeState,
 }: {
   task: Task;
   taskTypes: TaskTypeDef[];
-  memberItems: Item[];
-  onUpdateMember: (v: string | null) => void;
-  onUpdateTitle: (v: string | null) => void;
-  onUpdateDescription: (v: string | null) => void;
+  onChangeState: (toState: string, isClosed: boolean, assignToUserId: string | null) => void;
 }) {
   const typeDef = findTypeDef(taskTypes, task.type);
-  const showTitle = typeDef?.configuration.showTaskTitle ?? true;
-  const memberLabel = task.member_id
-    ? memberItems.find((m) => m.value === task.member_id)?.label ?? null
-    : null;
+  if (!typeDef) return null;
+  const stateDef = findStateDef(typeDef, task.state);
+  if (!stateDef) return null;
 
   return (
-    <div className="flex flex-col gap-1">
-      <div className="flex flex-wrap items-center gap-2">
-        <TypeBadge type={task.type} taskTypes={taskTypes} />
-        <InlineCombobox
-          items={memberItems}
-          value={task.member_id}
-          onChange={onUpdateMember}
-          clearable
-          searchPlaceholder="Search members…"
-          emptyText="No members found."
-          clearLabel="No member"
-          align="start"
-        >
-          {memberLabel ? (
-            <button type="button" className="rounded px-1.5 py-0.5 text-sm font-medium hover:bg-muted">
-              {memberLabel}
-            </button>
-          ) : (
-            <button type="button" className="rounded px-1.5 py-0.5 text-sm text-muted-foreground hover:bg-muted">
-              + Member
-            </button>
-          )}
-        </InlineCombobox>
-      </div>
+    <StatePicker
+      typeDef={typeDef}
+      value={task.state}
+      showLabel={false}
+      align="start"
+      onSelect={(toState, isClosed, assignToUserId) =>
+        onChangeState(toState, isClosed, assignToUserId)
+      }
+    />
+  );
+}
 
-      {showTitle && (
-        <InlineTextEdit
-          value={task.title}
-          onSave={onUpdateTitle}
-          placeholder="Untitled"
-          className="text-sm font-medium"
-        />
-      )}
+function StatePicker({
+  typeDef,
+  value,
+  onSelect,
+  showLabel = false,
+  align = "start",
+  buttonClassName,
+}: {
+  typeDef: TaskTypeDef;
+  value: string;
+  onSelect: (toState: string, isClosed: boolean, assignToUserId: string | null) => void;
+  showLabel?: boolean;
+  align?: "start" | "center" | "end";
+  buttonClassName?: string;
+}) {
+  const [open, setOpen] = useState(false);
+  const current = findStateDef(typeDef, value);
+  if (!current) return null;
 
-      <InlineDescriptionEdit value={task.description} onSave={onUpdateDescription} />
-    </div>
+  const grouped: Record<StateGroup, TaskStateDef[]> = {
+    not_started: [],
+    active: [],
+    closed: [],
+  };
+  for (const s of typeDef.states) {
+    grouped[s.state_group].push(s);
+  }
+
+  return (
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
+        {showLabel ? (
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            className={cn("w-full justify-start gap-2 font-normal", buttonClassName)}
+            aria-label="Change status"
+          >
+            <TaskStateIcon stateDef={current} size={16} />
+            <span className="truncate">{current.label}</span>
+          </Button>
+        ) : (
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon-sm"
+            className={cn(buttonClassName)}
+            aria-label="Change status"
+          >
+            <TaskStateIcon stateDef={current} size={20} />
+          </Button>
+        )}
+      </PopoverTrigger>
+      <PopoverContent className="w-56 p-0" align={align}>
+        <Command>
+          <CommandInput placeholder="Search states…" />
+          <CommandList>
+            <CommandEmpty>No states found.</CommandEmpty>
+            {STATE_GROUP_ORDER.filter((g) => grouped[g].length > 0).map((g) => (
+              <CommandGroup key={g} heading={STATE_GROUP_LABELS[g]}>
+                {grouped[g].map((s) => (
+                  <CommandItem
+                    key={s.state}
+                    value={s.label}
+                    onSelect={() => {
+                      onSelect(s.state, s.state_group === "closed", s.assign_to_user_id);
+                      setOpen(false);
+                    }}
+                    className="gap-2"
+                  >
+                    <TaskStateIcon stateDef={s} size={16} />
+                    <span>{s.label}</span>
+                    <IconCheck
+                      className={cn(
+                        "ml-auto",
+                        s.state === value ? "opacity-100" : "opacity-0",
+                      )}
+                    />
+                  </CommandItem>
+                ))}
+              </CommandGroup>
+            ))}
+          </CommandList>
+        </Command>
+      </PopoverContent>
+    </Popover>
   );
 }
 
 function TypeBadge({ type, taskTypes }: { type: string; taskTypes: TaskTypeDef[] }) {
   const typeDef = findTypeDef(taskTypes, type);
   const name = typeDef?.name ?? type;
+  const short = typeDef?.name_short ?? name.slice(0, 2);
   const color = typeDef?.color ?? "#71717a";
   return (
     <Badge
       variant="secondary"
       className="text-white"
       style={{ backgroundColor: color }}
+      title={name}
     >
-      {name}
+      {short}
     </Badge>
   );
+}
+
+function MemberTitleCell({
+  title,
+  showTitle,
+  memberName,
+}: {
+  title: string | null;
+  showTitle: boolean;
+  memberName: string | null;
+}) {
+  const hasTitle = showTitle && title;
+  const hasMember = !!memberName;
+
+  if (hasTitle && hasMember) {
+    return (
+      <div className="flex flex-wrap items-baseline gap-1.5">
+        <span className="text-sm font-medium">{memberName}</span>
+        <span className="text-sm text-muted-foreground">{title}</span>
+      </div>
+    );
+  }
+  if (hasTitle) {
+    return <span className="text-sm font-medium">{title}</span>;
+  }
+  if (hasMember) {
+    return <span className="text-sm font-medium">{memberName}</span>;
+  }
+  return <span className="text-sm text-muted-foreground">Untitled</span>;
 }
 
 function AssigneeCell({
@@ -377,122 +556,15 @@ function AssigneeCell({
   );
 }
 
-function StateCell({
-  task,
-  taskTypes,
-  past,
-  onChangeState,
-}: {
-  task: Task;
-  taskTypes: TaskTypeDef[];
-  past: boolean;
-  onChangeState: (toState: string, isClosed: boolean, assignToUserId: string | null) => void;
-}) {
-  const typeDef = findTypeDef(taskTypes, task.type);
-  if (!typeDef) return null;
-
-  const stateDef = findStateDef(typeDef, task.state);
-
-  if (past) {
-    return (
-      <span className="text-sm text-muted-foreground">
-        {formatDate(task.completed_at)}
-      </span>
-    );
-  }
-
-  if (!stateDef) return null;
-  const isClosed = stateDef.state_group === "closed";
-  const next = getNextState(typeDef, task.state);
-
-  return (
-    <div className="flex items-center gap-1.5">
-      <Button
-        type="button"
-        variant={isClosed ? "secondary" : "outline"}
-        size="sm"
-        disabled={isClosed}
-        onClick={() => {
-          if (next) {
-            onChangeState(next.state, next.state_group === "closed", next.assign_to_user_id);
-          }
-        }}
-        className="gap-1.5 text-white"
-        style={{ backgroundColor: stateDef.color }}
-      >
-        <IconCheck className="size-4" />
-        {stateDef.label}
-      </Button>
-      <StateDropdown
-        typeDef={typeDef}
-        currentState={task.state}
-        onSelect={(toState, isClosed, assignToUserId) =>
-          onChangeState(toState, isClosed, assignToUserId)
-        }
-      />
-    </div>
-  );
-}
-
-function StateDropdown({
-  typeDef,
-  currentState,
-  onSelect,
-}: {
-  typeDef: TaskTypeDef;
-  currentState: string;
-  onSelect: (toState: string, isClosed: boolean, assignToUserId: string | null) => void;
-}) {
-  const [open, setOpen] = useState(false);
-
-  return (
-    <Popover open={open} onOpenChange={setOpen}>
-      <PopoverTrigger asChild>
-        <Button type="button" variant="ghost" size="icon-sm" aria-label="Change state">
-          <IconDots className="size-4" />
-        </Button>
-      </PopoverTrigger>
-      <PopoverContent className="w-56 p-0" align="start">
-        <Command>
-          <CommandInput placeholder="Search states…" />
-          <CommandList>
-            <CommandEmpty>No states found.</CommandEmpty>
-            <CommandGroup>
-              {typeDef.states.map((s) => (
-                <CommandItem
-                  key={s.state}
-                  value={s.label}
-                  onSelect={() => {
-                    onSelect(s.state, s.state_group === "closed", s.assign_to_user_id);
-                    setOpen(false);
-                  }}
-                  className="text-white"
-                  style={{ backgroundColor: s.color }}
-                >
-                  {s.label}
-                  {s.state_group === "closed" && (
-                    <span className="ml-auto text-xs text-white/70">closed</span>
-                  )}
-                  {s.state === currentState && (
-                    <IconCheck className="ml-1 size-3.5" />
-                  )}
-                </CommandItem>
-              ))}
-            </CommandGroup>
-          </CommandList>
-        </Command>
-      </PopoverContent>
-    </Popover>
-  );
-}
-
 function TaskActions({
   task,
   past,
+  onEdit,
   onReopen,
 }: {
   task: Task;
   past: boolean;
+  onEdit: () => void;
   onReopen: () => void;
 }) {
   const router = useRouter();
@@ -520,6 +592,10 @@ function TaskActions({
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
+          <DropdownMenuItem onSelect={() => onEdit()}>
+            <IconEdit className="size-4" />
+            Edit
+          </DropdownMenuItem>
           {past && (
             <DropdownMenuItem onSelect={() => onReopen()}>Reopen</DropdownMenuItem>
           )}
@@ -557,155 +633,143 @@ function TaskActions({
   );
 }
 
-/* --------------------------- Inline edit widgets --------------------------- */
+/* ------------------------------- Edit modal ------------------------------- */
 
-function InlineTextEdit({
-  value,
+function EditTaskModal({
+  task,
+  taskTypes,
+  memberItems,
+  userItems,
+  onClose,
   onSave,
-  placeholder,
-  className,
 }: {
-  value: string | null;
-  onSave: (v: string | null) => void;
-  placeholder?: string;
-  className?: string;
+  task: Task;
+  taskTypes: TaskTypeDef[];
+  memberItems: Item[];
+  userItems: Item[];
+  onClose: () => void;
+  onSave: (draft: {
+    title: string | null;
+    memberId: string | null;
+    assignedUserId: string | null;
+    state: string;
+    description: string | null;
+  }) => void;
 }) {
-  const [editing, setEditing] = useState(false);
-  const [draft, setDraft] = useState(value ?? "");
-  const ref = useRef<HTMLInputElement>(null);
+  const typeDef = findTypeDef(taskTypes, task.type);
+  const showTitle = typeDef?.configuration.showTaskTitle ?? true;
 
-  useEffect(() => {
-    if (editing) ref.current?.select();
-  }, [editing]);
+  const [title, setTitle] = useState(task.title ?? "");
+  const [memberId, setMemberId] = useState(task.member_id);
+  const [assignedUserId, setAssignedUserId] = useState(task.assigned_user_id);
+  const [state, setState] = useState(task.state);
+  const [description, setDescription] = useState(task.description ?? "");
 
-  function commit() {
-    const trimmed = draft.trim() || null;
-    if (trimmed !== value) onSave(trimmed);
-    setEditing(false);
-  }
-
-  if (editing) {
-    return (
-      <div className="flex items-center gap-1">
-        <Input
-          ref={ref}
-          value={draft}
-          onChange={(e) => setDraft(e.target.value)}
-          onKeyDown={(e) => {
-            if (e.key === "Enter") {
-              e.preventDefault();
-              commit();
-            } else if (e.key === "Escape") {
-              e.preventDefault();
-              setEditing(false);
-            }
-          }}
-          className="h-7"
-          aria-label="Edit title"
-        />
-        <Button type="button" size="xs" onClick={commit}>
-          Save
-        </Button>
-        <Button type="button" size="xs" variant="ghost" onClick={() => setEditing(false)}>
-          Cancel
-        </Button>
-      </div>
-    );
+  function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    onSave({
+      title: title.trim() || null,
+      memberId,
+      assignedUserId,
+      state,
+      description: description.trim() || null,
+    });
   }
 
   return (
-    <button
-      type="button"
-      onClick={() => {
-        setDraft(value ?? "");
-        setEditing(true);
+    <Dialog
+      open
+      onOpenChange={(open) => {
+        if (!open) onClose();
       }}
-      className={cn("truncate rounded px-1.5 py-0.5 text-left hover:bg-muted", className)}
-      title={value ?? placeholder}
     >
-      {value || <span className="text-muted-foreground">{placeholder}</span>}
-    </button>
-  );
-}
+      <DialogContent className="sm:max-w-lg">
+        <DialogHeader>
+          <DialogTitle>Edit task</DialogTitle>
+        </DialogHeader>
+        <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+          {showTitle && (
+            <div className="flex flex-col gap-1.5">
+              <Label htmlFor="edit-title">Title</Label>
+              <Input
+                id="edit-title"
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+                placeholder="Task title"
+              />
+            </div>
+          )}
 
-function InlineDescriptionEdit({
-  value,
-  onSave,
-}: {
-  value: string | null;
-  onSave: (v: string | null) => void;
-}) {
-  const [editing, setEditing] = useState(false);
-  const [draft, setDraft] = useState(value ?? "");
-  const ref = useRef<HTMLTextAreaElement>(null);
+          <div className="flex flex-col gap-1.5">
+            <Label htmlFor="edit-member">Member</Label>
+            <Combobox
+              items={memberItems}
+              value={memberId}
+              onChange={setMemberId}
+              placeholder="Select member"
+              searchPlaceholder="Search members…"
+              emptyText="No members found."
+              clearable
+              clearLabel="No member"
+            />
+          </div>
 
-  useEffect(() => {
-    if (editing) ref.current?.focus();
-  }, [editing]);
+          <Table>
+            <TableBody>
+              <TableRow>
+                <TableCell className="w-28 font-medium">Status</TableCell>
+                <TableCell>
+                  {typeDef ? (
+                    <StatePicker
+                      typeDef={typeDef}
+                      value={state}
+                      showLabel
+                      align="start"
+                      onSelect={(toState) => setState(toState)}
+                    />
+                  ) : (
+                    <span className="text-sm text-muted-foreground">—</span>
+                  )}
+                </TableCell>
+              </TableRow>
+              <TableRow>
+                <TableCell className="font-medium">Assignee</TableCell>
+                <TableCell>
+                  <Combobox
+                    items={userItems}
+                    value={assignedUserId}
+                    onChange={setAssignedUserId}
+                    placeholder="Select assignee"
+                    searchPlaceholder="Search users…"
+                    emptyText="No users found."
+                    clearable
+                    clearLabel="No assignee"
+                  />
+                </TableCell>
+              </TableRow>
+            </TableBody>
+          </Table>
 
-  if (!editing && !value) {
-    return (
-      <button
-        type="button"
-        onClick={() => {
-          setDraft("");
-          setEditing(true);
-        }}
-        className="rounded px-1.5 py-0.5 text-xs text-muted-foreground hover:bg-muted"
-      >
-        + Description
-      </button>
-    );
-  }
+          <div className="flex flex-col gap-1.5">
+            <Label htmlFor="edit-description">Description</Label>
+            <Textarea
+              id="edit-description"
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              rows={4}
+              placeholder="Add details…"
+            />
+          </div>
 
-  if (editing) {
-    return (
-      <div className="flex flex-col gap-1">
-        <Textarea
-          ref={ref}
-          value={draft}
-          onChange={(e) => setDraft(e.target.value)}
-          rows={3}
-          className="min-h-16"
-          aria-label="Edit description"
-        />
-        <div className="flex items-center gap-1">
-          <Button
-            type="button"
-            size="xs"
-            onClick={() => {
-              const next = draft.trim() || null;
-              if (next !== value) onSave(next);
-              setEditing(false);
-            }}
-          >
-            Save
-          </Button>
-          <Button
-            type="button"
-            size="xs"
-            variant="ghost"
-            onClick={() => setEditing(false)}
-          >
-            Cancel
-          </Button>
-        </div>
-      </div>
-    );
-  }
-
-  return (
-    <button
-      type="button"
-      onClick={() => {
-        setDraft(value ?? "");
-        setEditing(true);
-      }}
-      className="line-clamp-1 max-w-full truncate rounded px-1.5 py-0.5 text-left text-xs text-muted-foreground hover:bg-muted"
-      title={value ?? ""}
-    >
-      {value}
-    </button>
+          <DialogFooter>
+            <Button type="button" variant="outline" onClick={onClose}>
+              Cancel
+            </Button>
+            <Button type="submit">Save</Button>
+          </DialogFooter>
+        </form>
+      </DialogContent>
+    </Dialog>
   );
 }
 
@@ -780,13 +844,4 @@ function InlineCombobox({
       </PopoverContent>
     </Popover>
   );
-}
-
-/* --------------------------------- Helpers --------------------------------- */
-
-function formatDate(iso: string | null): string {
-  if (!iso) return "";
-  const d = new Date(iso);
-  if (Number.isNaN(d.getTime())) return "";
-  return d.toLocaleDateString(undefined, { year: "numeric", month: "short", day: "numeric" });
 }
