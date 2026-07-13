@@ -11,7 +11,7 @@ All tasks and to-dos in the system share a core set of features and operate on a
 * **Task Type:** Defines the category (e.g., Temple Interview, Youth Interview, Calling).
 * **Title/Description:** For callings, the title is the calling name. The description can hold multiple candidate names until a specific person is assigned.
 * **Assigned Person:** The user responsible for the current state of the task.
-* **Deadline:** A specific due date for the task to be completed.
+* **Due date:** A specific due date for the task to be completed.
 * **Priority Level:** Flags for urgency (e.g., "Urgent" or a specific "Low Priority" flag for inactive members).
 
 

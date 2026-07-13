@@ -73,7 +73,7 @@ CREATE TABLE "task" (
     "description" TEXT,
     "assigned_user_id" TEXT,
     "member_id" TEXT,
-    "deadline" TEXT,
+    "due_date" TEXT,
     "priority" TEXT NOT NULL DEFAULT 'normal',
     "duration_minutes" INTEGER,
     "completed_at" TEXT,
@@ -129,7 +129,7 @@ CREATE INDEX "task_assigned_user_id_idx" ON "task"("assigned_user_id");
 CREATE INDEX "task_member_id_idx" ON "task"("member_id");
 
 -- CreateIndex
-CREATE INDEX "task_deadline_idx" ON "task"("deadline");
+CREATE INDEX "task_due_date_idx" ON "task"("due_date");
 
 -- CreateIndex
 CREATE INDEX "task_completed_at_idx" ON "task"("completed_at");

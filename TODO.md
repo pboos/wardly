@@ -9,8 +9,7 @@
     - Question is where to show current status?
     - check mark should be in first row
     - status should allow changing status anywhere with dropdown? (or maybe that should only be in modal?)
-  - Priority and deadline nowhere yet
-  - deadline -> rename to due date?
+  - Priority and due date nowhere yet
   - hide until date (do not show task until given date) - option to show it in list?
     - easy way on sunday to quickly hide some (e.g. they are not there). but then to show those hidden
   - dialog to edit a task (title / description) instead of having edit in the list possible?

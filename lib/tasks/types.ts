@@ -47,7 +47,7 @@ export type Task = {
   member_id: string | null;
   member_first_name: string | null;
   member_last_name: string | null;
-  deadline: string | null;
+  due_date: string | null;
   priority: string;
   duration_minutes: number | null;
   completed_at: string | null;

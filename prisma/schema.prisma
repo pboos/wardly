@@ -85,7 +85,7 @@ model task {
   description      String?
   assigned_user_id String?
   member_id        String?
-  deadline         String?
+  due_date         String?
   priority         String   @default("normal") // 'urgent' | 'normal' | 'whenever'
   duration_minutes Int?
   completed_at     String?
@@ -100,7 +100,7 @@ model task {
   @@index([ward_id, type, state])
   @@index([assigned_user_id])
   @@index([member_id])
-  @@index([deadline])
+  @@index([due_date])
   @@index([completed_at])
   @@index([ward_id, completed_at])
 }

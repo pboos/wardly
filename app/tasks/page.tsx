@@ -82,7 +82,7 @@ function mapTask(
     description: string | null;
     assigned_user_id: string | null;
     member_id: string | null;
-    deadline: string | null;
+    due_date: string | null;
     priority: string;
     duration_minutes: number | null;
     completed_at: string | null;
@@ -103,7 +103,7 @@ function mapTask(
     member_id: t.member_id,
     member_first_name: t.member?.first_name ?? null,
     member_last_name: t.member?.last_name ?? null,
-    deadline: t.deadline,
+    due_date: t.due_date,
     priority: t.priority,
     duration_minutes: t.duration_minutes,
     completed_at: t.completed_at,

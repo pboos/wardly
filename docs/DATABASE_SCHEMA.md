@@ -211,7 +211,7 @@ The `type` field distinguishes the kind of task; the `state` field tracks its pr
 - `state` — current state in the task's lifecycle (e.g. for temple recommend: `todo` → `organize_stake` → `stake_interview` → `print_handout` → `done`).
 - `assigned_user_id` — the bishopric member currently responsible. When the state changes this can be reassigned (e.g. temple recommend done → secretary for stake organization).
 - `member_id` — the ward member the task is about (optional; avoids duplicating names).
-- `deadline` — optional due date.
+- `due_date` — optional due date.
 - `priority` — `urgent` | `normal` | `whenever`.
 - `duration_minutes` — expected length (defaults per type, e.g. temple = 30, calling = 10, check-in = 15). Copied onto the task at creation from the matching `task_type` default; `todo` has no default (left null).
 - `completed_at` — ISO‑8601 timestamp set when the task enters a final state; cleared if the task is reopened. Needed for the "past tasks" view ordered by completion date.
@@ -233,7 +233,7 @@ CREATE TABLE task (
   description       TEXT,
   assigned_user_id  TEXT REFERENCES user (id) ON DELETE SET NULL,
   member_id         TEXT REFERENCES member (id) ON DELETE SET NULL,
-  deadline          TEXT,
+  due_date          TEXT,
   priority          TEXT NOT NULL DEFAULT 'normal',  -- 'urgent' | 'normal' | 'whenever'
   duration_minutes  INTEGER,
   completed_at      TEXT,  -- set when state reaches a final state; cleared on reopen
@@ -249,7 +249,7 @@ CREATE INDEX idx_task_ward_id ON task (ward_id);
 CREATE INDEX idx_task_ward_type_state ON task (ward_id, type, state);
 CREATE INDEX idx_task_assigned_user_id ON task (assigned_user_id);
 CREATE INDEX idx_task_member_id ON task (member_id);
-CREATE INDEX idx_task_deadline ON task (deadline);
+CREATE INDEX idx_task_due_date ON task (due_date);
 CREATE INDEX idx_task_completed_at ON task (completed_at);
 CREATE INDEX idx_task_ward_completed ON task (ward_id, completed_at);
 ```

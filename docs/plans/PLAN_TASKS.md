@@ -33,7 +33,7 @@ CREATE TABLE task (
   description       TEXT,
   assigned_user_id  TEXT REFERENCES user (id) ON DELETE SET NULL,
   member_id         TEXT REFERENCES member (id) ON DELETE SET NULL,
-  deadline          TEXT,
+  due_date          TEXT,
   priority          TEXT NOT NULL DEFAULT 'normal',  -- 'urgent' | 'normal' | 'whenever'
   duration_minutes  INTEGER,
   completed_at      TEXT,  -- set when state reaches a final state; cleared on reopen
