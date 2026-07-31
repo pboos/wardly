@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import { parseConfiguration, BUILTIN_TASK_TYPES } from "./defaults";
 import type { TaskTypeDef, TaskStateDef, StateGroup } from "./types";
+import { withProgress } from "./utils";
 
 /**
  * Load all task types for a ward: database rows merged with built-in types.
@@ -61,25 +62,4 @@ export async function loadTaskTypes(wardId: string): Promise<TaskTypeDef[]> {
   }));
 
   return [...dbTypes, ...builtIn];
-}
-
-/**
- * Calculate `progress_percentage` for active states in a state list.
- * `not_started` → 0, `closed` → 1. Active states are spaced evenly between
- * `step` and `1 - step` where `step = 1 / (nr_active + 1)`.
- */
-function withProgress(states: TaskStateDef[]): TaskStateDef[] {
-  const activeIndices = states
-    .map((s, i) => (s.state_group === "active" ? i : -1))
-    .filter((i) => i >= 0);
-  const nrActive = activeIndices.length;
-  // +1 because 100% is the "closed" status
-  const step = nrActive > 0 ? 1 / (nrActive + 1) : 0;
-
-  return states.map((s, i) => {
-    if (s.state_group === "not_started") return { ...s, progress_percentage: 0 };
-    if (s.state_group === "closed") return { ...s, progress_percentage: 1 };
-    const pos = activeIndices.indexOf(i);
-    return { ...s, progress_percentage: step * (pos + 1) };
-  });
 }
