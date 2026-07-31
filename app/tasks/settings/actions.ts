@@ -9,7 +9,7 @@ import type { TaskTypeConfiguration } from "@/lib/tasks/types";
 
 /**
  * Idempotent seeding of the ward's task defaults:
- *  - `task_type` rows for the five non-built-in types (skipping existing pairs).
+ *  - `task_type` rows for the non-built-in types (skipping existing pairs).
  *  - `task_type_state` rows for each seeded type (skipping types that already
  *    have rows). States include `assign_to_user_id` (null by default).
  */
