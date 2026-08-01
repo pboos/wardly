@@ -7,9 +7,11 @@ import { Button } from "@/components/ui/button";
 import { Combobox } from "@/components/ui/combobox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import {
   Select,
   SelectContent,
+  SelectGroup,
   SelectItem,
   SelectTrigger,
   SelectValue,
@@ -51,9 +53,10 @@ export function TasksView({
     () => users.map((u) => ({ value: u.id, label: u.name })),
     [users],
   );
+  const enabledTaskTypes = taskTypes.filter((taskType) => taskType.enabled);
 
   // New-task form state
-  const [type, setType] = useState<string>(taskTypes[0]?.type ?? "todo");
+  const [type, setType] = useState<string>(enabledTaskTypes[0]?.type ?? "");
   const [memberId, setMemberId] = useState<string | null>(null);
   const [title, setTitle] = useState("");
   const [assignedUserId, setAssignedUserId] = useState<string | null>(null);
@@ -61,11 +64,11 @@ export function TasksView({
 
   const typeSelectRef = useRef<HTMLButtonElement>(null);
 
-  const currentTypeDef = taskTypes.find((t) => t.type === type);
+  const currentTypeDef = enabledTaskTypes.find((taskType) => taskType.type === type);
   const showTitle = currentTypeDef?.configuration.showTaskTitle ?? true;
 
   function resetForm() {
-    setType(taskTypes[0]?.type ?? "todo");
+    setType(enabledTaskTypes[0]?.type ?? "");
     setMemberId(null);
     setTitle("");
     setAssignedUserId(null);
@@ -73,6 +76,11 @@ export function TasksView({
   }
 
   function submit() {
+    if (!currentTypeDef) {
+      setError("No task types are enabled.");
+      return;
+    }
+
     const trimmedTitle = title.trim();
     if (!trimmedTitle && !memberId) {
       setError("A task requires either a title or a member.");
@@ -129,12 +137,12 @@ export function TasksView({
         typeSelectRef={typeSelectRef}
         memberItems={memberItems}
         userItems={userItems}
-        taskTypes={taskTypes}
+        taskTypes={enabledTaskTypes}
         onEnter={handleEnter}
         onSubmit={submit}
       />
 
-      <Filters filter={filter} onFilterChange={setFilter} taskTypes={taskTypes} />
+      <Filters filter={filter} onFilterChange={setFilter} taskTypes={enabledTaskTypes} />
 
       <TasksList
         tasks={filteredActive}
@@ -184,6 +192,17 @@ function NewTaskForm({
   onEnter: (e: React.KeyboardEvent) => void;
   onSubmit: () => void;
 }) {
+  if (taskTypes.length === 0) {
+    return (
+      <Alert>
+        <AlertTitle>No task types are enabled</AlertTitle>
+        <AlertDescription>
+          New tasks cannot be created until this ward has an enabled task type.
+        </AlertDescription>
+      </Alert>
+    );
+  }
+
   return (
     <form
       onSubmit={(e) => {
@@ -199,11 +218,13 @@ function NewTaskForm({
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
-            {taskTypes.map((t) => (
-              <SelectItem key={t.type} value={t.type}>
-                {t.name}
-              </SelectItem>
-            ))}
+            <SelectGroup>
+              {taskTypes.map((t) => (
+                <SelectItem key={t.type} value={t.type}>
+                  {t.name}
+                </SelectItem>
+              ))}
+            </SelectGroup>
           </SelectContent>
         </Select>
       </div>
@@ -282,18 +303,20 @@ function Filters({
       <ToggleButton active={filter === "mine"} onClick={() => onFilterChange("mine")}>
         Mine
       </ToggleButton>
-      <div className="w-44">
-        <Combobox
-          items={typeItems}
-          value={selectedType}
-          onChange={(v) => onFilterChange(v ?? "all")}
-          placeholder="Filter by type"
-          searchPlaceholder="Search types…"
-          emptyText="No types found."
-          clearable
-          clearLabel="All types"
-        />
-      </div>
+      {typeItems.length > 0 && (
+        <div className="w-44">
+          <Combobox
+            items={typeItems}
+            value={selectedType}
+            onChange={(v) => onFilterChange(v ?? "all")}
+            placeholder="Filter by type"
+            searchPlaceholder="Search types…"
+            emptyText="No types found."
+            clearable
+            clearLabel="All types"
+          />
+        </div>
+      )}
     </div>
   );
 }

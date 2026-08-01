@@ -92,6 +92,7 @@ CREATE TABLE "task_type" (
     "name_short" TEXT NOT NULL DEFAULT 'T',
     "color" TEXT NOT NULL DEFAULT '#71717a',
     "configuration" TEXT NOT NULL DEFAULT '{}',
+    "enabled" BOOLEAN NOT NULL DEFAULT true,
     "created_at" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updated_at" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
@@ -109,11 +110,23 @@ CREATE TABLE "task_type_state" (
     "color" TEXT NOT NULL DEFAULT '#3b82f6',
     "order_index" INTEGER NOT NULL DEFAULT 0,
     "state_group" TEXT NOT NULL DEFAULT 'active',
+    "created_at" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updated_at" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT "task_type_state_ward_id_fkey" FOREIGN KEY ("ward_id") REFERENCES "ward" ("id") ON DELETE CASCADE ON UPDATE CASCADE
+);
+
+-- CreateTable
+CREATE TABLE "task_type_state_assignment" (
+    "ward_id" TEXT NOT NULL,
+    "task_type" TEXT NOT NULL,
+    "state" TEXT NOT NULL,
     "assign_to_user_id" TEXT,
     "created_at" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updated_at" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    CONSTRAINT "task_type_state_ward_id_fkey" FOREIGN KEY ("ward_id") REFERENCES "ward" ("id") ON DELETE CASCADE ON UPDATE CASCADE,
-    CONSTRAINT "task_type_state_assign_to_user_id_fkey" FOREIGN KEY ("assign_to_user_id") REFERENCES "user" ("id") ON DELETE SET NULL ON UPDATE CASCADE
+
+    PRIMARY KEY ("ward_id", "task_type", "state"),
+    CONSTRAINT "task_type_state_assignment_ward_id_fkey" FOREIGN KEY ("ward_id") REFERENCES "ward" ("id") ON DELETE CASCADE ON UPDATE CASCADE,
+    CONSTRAINT "task_type_state_assignment_assign_to_user_id_fkey" FOREIGN KEY ("assign_to_user_id") REFERENCES "user" ("id") ON DELETE SET NULL ON UPDATE CASCADE
 );
 
 -- CreateIndex
@@ -144,4 +157,7 @@ CREATE INDEX "task_type_state_task_type_idx" ON "task_type_state"("task_type");
 CREATE INDEX "task_type_state_ward_id_idx" ON "task_type_state"("ward_id");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "task_type_state_task_type_state_key" ON "task_type_state"("task_type", "state");
+CREATE UNIQUE INDEX "task_type_state_ward_id_task_type_state_key" ON "task_type_state"("ward_id", "task_type", "state");
+
+-- CreateIndex
+CREATE INDEX "task_type_state_assignment_assign_to_user_id_idx" ON "task_type_state_assignment"("assign_to_user_id");

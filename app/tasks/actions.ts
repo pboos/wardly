@@ -17,6 +17,9 @@ export async function createTask(input: {
   const taskTypes = await loadTaskTypes(user.ward_id);
   const typeDef = findTypeDef(taskTypes, input.type);
   if (!typeDef) throw new Error(`Unknown task type "${input.type}".`);
+  if (!typeDef.enabled) throw new Error(`Task type "${input.type}" is disabled.`);
+  const initialState = typeDef.states[0];
+  if (!initialState) throw new Error(`Task type "${input.type}" has no states.`);
 
   const title = input.title?.trim() || null;
   const memberId = input.memberId || null;
@@ -53,12 +56,14 @@ export async function createTask(input: {
     data: {
       ward_id: user.ward_id,
       type: input.type,
-      state: "todo",
+      state: initialState.state,
       title,
       description,
       assigned_user_id: assignedUserId,
       member_id: memberId,
       duration_minutes: durationMinutes,
+      completed_at:
+        initialState.state_group === "closed" ? new Date().toISOString() : null,
     },
   });
 

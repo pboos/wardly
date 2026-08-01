@@ -24,13 +24,19 @@ export type TaskStateDef = {
   assign_to_user_id: string | null;
 };
 
+/** Origin of a resolved task type definition. */
+export type TaskTypeSource = "default" | "override" | "custom";
+
 export type TaskTypeDef = {
   type: string;
   name: string;
   name_short: string;
   color: string;
   configuration: TaskTypeConfiguration;
-  isBuiltIn: boolean;
+  /** Whether new tasks of this type may be created. */
+  enabled: boolean;
+  /** Whether this definition is automatic, overridden, or database-only. */
+  source: TaskTypeSource;
   states: TaskStateDef[];
 };
 

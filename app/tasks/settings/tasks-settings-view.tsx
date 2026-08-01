@@ -3,27 +3,12 @@
 import { useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { IconCheck } from "@tabler/icons-react";
 import { Button } from "@/components/ui/button";
 import { Combobox } from "@/components/ui/combobox";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { cn } from "@/lib/utils";
 import type { TaskTypeDef, WardUser } from "@/lib/tasks/types";
-import {
-  resetTaskDefaults,
-  seedTaskDefaults,
-  updateStateAssignee,
-  updateTaskType,
-} from "./actions";
+import { updateStateAssignee, updateTaskType } from "./actions";
 
 export function TasksSettingsView({
   users,
@@ -37,11 +22,8 @@ export function TasksSettingsView({
 
   const userItems = useMemo(() => users.map((u) => ({ value: u.id, label: u.name })), [users]);
 
-  // Types that are in the DB (not built-in).
-  const dbTypes = taskTypes.filter((t) => !t.isBuiltIn);
-  const allSeeded = dbTypes.length > 0 && dbTypes.every((t) => t.states.length > 0);
-
-  const [resetOpen, setResetOpen] = useState(false);
+  const dbTypes = taskTypes.filter((taskType) => taskType.source !== "default");
+  const defaultTypes = taskTypes.filter((taskType) => taskType.source === "default");
 
   function run(fn: () => Promise<void>, okMsg: string) {
     start(async () => {
@@ -56,96 +38,57 @@ export function TasksSettingsView({
     });
   }
 
-  // Types that have seeded state rows → show a states card each.
+  // Show an assignment editor for every resolved lifecycle.
   const typesWithStates = taskTypes.filter((t) => t.states.length > 0);
 
   return (
     <div className="flex flex-col gap-8">
-      {/* A. Seed defaults */}
-      <section className="flex flex-col gap-3">
-        <h2 className="text-lg font-medium">Defaults</h2>
-        <div className="flex flex-col gap-3 rounded-lg border border-border bg-card p-4">
-          <p className="text-sm text-muted-foreground">
-            Seed the default task types and states for your ward. You can then
-            customize names, durations, and state assignees below.
-          </p>
-          <ul className="flex flex-col gap-1">
-            {taskTypes.map((t) => {
-              const available = t.isBuiltIn || t.states.length > 0;
-              return (
-                <li key={t.type} className="flex items-center gap-2 text-sm">
-                  <span
-                    className={cn(
-                      "flex size-4 items-center justify-center rounded-full",
-                      available ? "bg-primary text-primary-foreground" : "border border-border",
-                    )}
-                  >
-                    {available && <IconCheck className="size-3" />}
-                  </span>
-                  <span>{t.name}</span>
-                  {t.isBuiltIn && (
-                    <span className="text-xs text-muted-foreground">(always available)</span>
-                  )}
-                </li>
-              );
-            })}
-          </ul>
-          <div className="flex flex-wrap gap-2">
-            <Button
-              disabled={allSeeded}
-              onClick={() => run(() => seedTaskDefaults(), "Defaults seeded.")}
-            >
-              Seed defaults
-            </Button>
-            <Button variant="outline" onClick={() => setResetOpen(true)}>
-              Reset to defaults
-            </Button>
-          </div>
-        </div>
-      </section>
-
-      {/* B. Task types editor */}
       <section className="flex flex-col gap-3">
         <h2 className="text-lg font-medium">Task types</h2>
         <div className="flex flex-col gap-3 rounded-lg border border-border bg-card p-4">
-          <ul className="flex flex-col gap-3">
-            {dbTypes.map((t) => (
-              <TaskTypeEditorRow
-                key={t.type}
-                type={t.type}
-                name={t.name}
-                durationMinutes={t.configuration.durationMinutes}
-                onSave={(name, durationMinutes) =>
-                  run(
-                    () => updateTaskType(t.type, { name, durationMinutes }),
-                    "Task type updated.",
-                  )
-                }
-              />
-            ))}
-          </ul>
-          <ul className="flex flex-col gap-1">
-            {taskTypes
-              .filter((t) => t.isBuiltIn)
-              .map((t) => (
+          {dbTypes.length === 0 ? (
+            <p className="text-sm text-muted-foreground">
+              No database-backed task types have been configured.
+            </p>
+          ) : (
+            <ul className="flex flex-col gap-3">
+              {dbTypes.map((t) => (
+                <TaskTypeEditorRow
+                  key={t.type}
+                  type={t.type}
+                  name={t.name}
+                  durationMinutes={t.configuration.durationMinutes}
+                  onSave={(name, durationMinutes) =>
+                    run(
+                      () => updateTaskType(t.type, { name, durationMinutes }),
+                      "Task type updated.",
+                    )
+                  }
+                />
+              ))}
+            </ul>
+          )}
+          {defaultTypes.length > 0 && (
+            <ul className="flex flex-col gap-1">
+              {defaultTypes.map((t) => (
                 <li
                   key={t.type}
                   className="flex items-center justify-between gap-3 text-sm text-muted-foreground"
                 >
                   <span>{t.name}</span>
-                  <span>Always available</span>
+                  <span>Automatic</span>
                 </li>
               ))}
-          </ul>
+            </ul>
+          )}
         </div>
       </section>
 
-      {/* C. States editor */}
       <section className="flex flex-col gap-3">
         <h2 className="text-lg font-medium">States</h2>
         {typesWithStates.length === 0 ? (
           <p className="text-sm text-muted-foreground">
-            No states seeded yet. Click &ldquo;Seed defaults&rdquo; above to configure states.
+            No states are configured for this ward.
           </p>
         ) : (
           <div className="flex flex-col gap-4">
@@ -154,41 +97,14 @@ export function TasksSettingsView({
                 key={t.type}
                 typeDef={t}
                 userItems={userItems}
-                onSave={(stateId, userId) =>
-                  run(() => updateStateAssignee(stateId, userId), "State updated.")
+                onSave={(taskType, state, userId) =>
+                  run(() => updateStateAssignee(taskType, state, userId), "State updated.")
                 }
               />
             ))}
           </div>
         )}
       </section>
-
-      <Dialog open={resetOpen} onOpenChange={setResetOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Reset to defaults?</DialogTitle>
-            <DialogDescription>
-              This deletes and re-seeds all task types and states for your ward. Any
-              assignee configured on states will be cleared. Existing tasks are not
-              affected.
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setResetOpen(false)}>
-              Cancel
-            </Button>
-            <Button
-              variant="destructive"
-              onClick={() => {
-                setResetOpen(false);
-                run(() => resetTaskDefaults(), "Defaults reset.");
-              }}
-            >
-              Reset
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
     </div>
   );
 }
@@ -252,14 +168,14 @@ function StatesCard({
 }: {
   typeDef: TaskTypeDef;
   userItems: { value: string; label: string }[];
-  onSave: (stateId: string, userId: string | null) => void;
+  onSave: (taskType: string, state: string, userId: string | null) => void;
 }) {
   return (
     <div className="flex flex-col gap-2 rounded-lg border border-border bg-card p-4">
       <h3 className="font-medium">{typeDef.name}</h3>
       <ul className="flex flex-col gap-2">
         {typeDef.states.map((s) => (
-          <li key={s.id ?? s.state} className="flex flex-col gap-2 sm:flex-row sm:items-center">
+          <li key={s.state} className="flex flex-col gap-2 sm:flex-row sm:items-center">
             <span className="text-sm sm:w-64">
               {s.label}
               {s.state_group === "closed" && (
@@ -270,9 +186,7 @@ function StatesCard({
               <Combobox
                 items={userItems}
                 value={s.assign_to_user_id}
-                onChange={(v) => {
-                  if (s.id) onSave(s.id, v);
-                }}
+                onChange={(v) => onSave(typeDef.type, s.state, v)}
                 placeholder="Keep current assignee"
                 searchPlaceholder="Search users…"
                 emptyText="No users found."
