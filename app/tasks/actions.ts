@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { getCurrentUser } from "@/lib/auth/dal";
 import { prisma } from "@/lib/prisma";
 import { loadTaskTypes } from "@/lib/tasks/loader";
-import { findStateDef, findTypeDef, getPreviousState } from "@/lib/tasks/utils";
+import { findTaskState, findTaskType, getPreviousState } from "@/lib/tasks/utils";
 
 export async function createTask(input: {
   type: string;
@@ -15,7 +15,7 @@ export async function createTask(input: {
 }) {
   const user = await getCurrentUser();
   const taskTypes = await loadTaskTypes(user.ward_id);
-  const typeDef = findTypeDef(taskTypes, input.type);
+  const typeDef = findTaskType(taskTypes, input.type);
   if (!typeDef) throw new Error(`Unknown task type "${input.type}".`);
   if (!typeDef.enabled) throw new Error(`Task type "${input.type}" is disabled.`);
   const initialState = typeDef.states[0];
@@ -80,10 +80,10 @@ export async function changeTaskState(taskId: string, toState: string) {
   if (!task) throw new Error("Task not found.");
 
   const taskTypes = await loadTaskTypes(user.ward_id);
-  const typeDef = findTypeDef(taskTypes, task.type);
+  const typeDef = findTaskType(taskTypes, task.type);
   if (!typeDef) throw new Error("Task type not found.");
 
-  const targetState = findStateDef(typeDef, toState);
+  const targetState = findTaskState(typeDef, toState);
   if (!targetState) throw new Error(`Unknown state "${toState}".`);
 
   const assignToUserId = targetState.assign_to_user_id;
@@ -179,10 +179,10 @@ export async function reopenTask(taskId: string) {
   if (!task) throw new Error("Task not found.");
 
   const taskTypes = await loadTaskTypes(user.ward_id);
-  const typeDef = findTypeDef(taskTypes, task.type);
+  const typeDef = findTaskType(taskTypes, task.type);
   if (!typeDef) throw new Error("Task type not found.");
 
-  const current = findStateDef(typeDef, task.state);
+  const current = findTaskState(typeDef, task.state);
   const newState = current?.state_group === "closed"
     ? (getPreviousState(typeDef, task.state)?.state ?? task.state)
     : task.state;

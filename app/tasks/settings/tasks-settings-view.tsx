@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Combobox } from "@/components/ui/combobox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import type { TaskTypeDef, WardUser } from "@/lib/tasks/types";
+import type { TaskType, WardUser } from "@/lib/tasks/types";
 import { updateStateAssignee, updateTaskType } from "./actions";
 
 export function TasksSettingsView({
@@ -15,7 +15,7 @@ export function TasksSettingsView({
   taskTypes,
 }: {
   users: WardUser[];
-  taskTypes: TaskTypeDef[];
+  taskTypes: TaskType[];
 }) {
   const router = useRouter();
   const [, start] = useTransition();
@@ -166,7 +166,7 @@ function StatesCard({
   userItems,
   onSave,
 }: {
-  typeDef: TaskTypeDef;
+  typeDef: TaskType;
   userItems: { value: string; label: string }[];
   onSave: (taskType: string, state: string, userId: string | null) => void;
 }) {

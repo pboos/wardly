@@ -2,7 +2,7 @@
 
 import { IconCheck } from "@tabler/icons-react";
 import { cn } from "@/lib/utils";
-import type { TaskStateDef } from "@/lib/tasks/types";
+import type { TaskState } from "@/lib/tasks/types";
 
 /**
  * Low-level progress ring.
@@ -91,7 +91,7 @@ export function StatusProgressIcon({
 
 /**
  * Wrapper around `StatusProgressIcon` that pulls `color` and
- * `progress_percentage` from a `TaskStateDef`. Use this everywhere a task
+ * `progress_percentage` from a `TaskState`. Use this everywhere a task
  * state is visualised so the colour/progress mapping stays in one place.
  */
 export function TaskStateIcon({
@@ -99,7 +99,7 @@ export function TaskStateIcon({
   size,
   className,
 }: {
-  stateDef: TaskStateDef;
+  stateDef: TaskState;
   size?: number;
   className?: string;
 }) {

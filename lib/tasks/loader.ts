@@ -1,6 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { DEFAULT_TASK_TYPES, parseConfiguration } from "./defaults";
-import type { TaskTypeDef, TaskStateDef, StateGroup } from "./types";
+import type { TaskType, TaskState, StateGroup } from "./types";
 import { withProgress } from "./utils";
 
 /**
@@ -22,7 +22,7 @@ import { withProgress } from "./utils";
  * Returns a single array — the source of truth for what task types exist
  * for this ward.
  */
-export async function loadTaskTypes(wardId: string): Promise<TaskTypeDef[]> {
+export async function loadTaskTypes(wardId: string): Promise<TaskType[]> {
   const [taskTypeRows, stateRows, assignmentRows] = await Promise.all([
     prisma.task_type.findMany({
       where: { ward_id: wardId },
@@ -38,7 +38,7 @@ export async function loadTaskTypes(wardId: string): Promise<TaskTypeDef[]> {
     }),
   ]);
 
-  const statesByType = new Map<string, TaskStateDef[]>();
+  const statesByType = new Map<string, TaskState[]>();
   for (const s of stateRows) {
     const list = statesByType.get(s.task_type) ?? [];
     list.push({
@@ -61,7 +61,7 @@ export async function loadTaskTypes(wardId: string): Promise<TaskTypeDef[]> {
     assignmentsByType.set(assignment.task_type, assignmentsByState);
   }
 
-  function withAssignments(taskType: string, states: TaskStateDef[]): TaskStateDef[] {
+  function withAssignments(taskType: string, states: TaskState[]): TaskState[] {
     const assignmentsByState = assignmentsByType.get(taskType);
 
     return withProgress(
@@ -95,7 +95,7 @@ export async function loadTaskTypes(wardId: string): Promise<TaskTypeDef[]> {
     };
   });
 
-  const customTypes: TaskTypeDef[] = taskTypeRows
+  const customTypes: TaskType[] = taskTypeRows
     .filter((row) => !defaultTypeNames.has(row.type))
     .map((row) => ({
       type: row.type,

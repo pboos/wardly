@@ -11,7 +11,7 @@ export type TaskTypeConfiguration = {
 /** State group classification for lifecycle grouping. */
 export type StateGroup = "not_started" | "active" | "closed";
 
-export type TaskStateDef = {
+export type TaskState = {
   /** Omitted in seed data; present when loaded from the database. */
   id?: string;
   state: string;
@@ -27,7 +27,7 @@ export type TaskStateDef = {
 /** Origin of a resolved task type definition. */
 export type TaskTypeSource = "default" | "override" | "custom";
 
-export type TaskTypeDef = {
+export type TaskType = {
   type: string;
   name: string;
   name_short: string;
@@ -37,7 +37,7 @@ export type TaskTypeDef = {
   enabled: boolean;
   /** Whether this definition is automatic, overridden, or database-only. */
   source: TaskTypeSource;
-  states: TaskStateDef[];
+  states: TaskState[];
 };
 
 /** Client shape of a task row. */

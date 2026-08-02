@@ -4,7 +4,7 @@ import { getCurrentUser } from "@/lib/auth/dal";
 import { prisma } from "@/lib/prisma";
 import { Button } from "@/components/ui/button";
 import { loadTaskTypes } from "@/lib/tasks/loader";
-import type { TaskTypeDef, WardUser } from "@/lib/tasks/types";
+import type { WardUser } from "@/lib/tasks/types";
 import { TasksSettingsView } from "./tasks-settings-view";
 
 export default async function TaskSettingsPage() {
@@ -21,7 +21,6 @@ export default async function TaskSettingsPage() {
   ]);
 
   const mappedUsers: WardUser[] = users;
-  const taskTypeDefs: TaskTypeDef[] = taskTypes;
 
   return (
     <div className="flex flex-col gap-6">
@@ -33,7 +32,7 @@ export default async function TaskSettingsPage() {
         </Button>
         <h1 className="text-2xl font-semibold text-foreground">Task settings</h1>
       </header>
-      <TasksSettingsView users={mappedUsers} taskTypes={taskTypeDefs} />
+      <TasksSettingsView users={mappedUsers} taskTypes={taskTypes} />
     </div>
   );
 }

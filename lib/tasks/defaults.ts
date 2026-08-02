@@ -1,11 +1,11 @@
-import type { TaskTypeDef, TaskTypeConfiguration } from "./types";
+import type { TaskType, TaskTypeConfiguration } from "./types";
 import { withDefaultStateValues } from "./utils";
 
 /**
  * Automatic task types available to every ward. A matching `task_type` row
  * can override their metadata and lifecycle without duplicating this data.
  */
-export const DEFAULT_TASK_TYPES: TaskTypeDef[] = withDefaultStateValues([
+export const DEFAULT_TASK_TYPES: TaskType[] = withDefaultStateValues([
   {
     type: "todo",
     name: "Task",

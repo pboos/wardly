@@ -5,7 +5,7 @@ import { prisma } from "@/lib/prisma";
 import { Button } from "@/components/ui/button";
 import { PAST_LIMIT } from "@/lib/tasks/types";
 import { loadTaskTypes } from "@/lib/tasks/loader";
-import type { Task, TaskTypeDef, WardMember, WardUser } from "@/lib/tasks/types";
+import type { Task, WardMember, WardUser } from "@/lib/tasks/types";
 import { TasksView } from "./tasks-view";
 
 export default async function TasksPage() {
@@ -47,7 +47,6 @@ export default async function TasksPage() {
   const mappedPast: Task[] = pastTasks.map(mapTask);
   const mappedUsers: WardUser[] = users;
   const mappedMembers: WardMember[] = members;
-  const taskTypeDefs: TaskTypeDef[] = taskTypes;
 
   return (
     <div className="flex flex-col gap-6">
@@ -65,7 +64,7 @@ export default async function TasksPage() {
         pastTasks={mappedPast}
         users={mappedUsers}
         members={mappedMembers}
-        taskTypes={taskTypeDefs}
+        taskTypes={taskTypes}
         currentUserId={user.id}
       />
     </div>

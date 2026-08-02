@@ -6,7 +6,7 @@ import { prisma } from "@/lib/prisma";
 import { DEFAULT_TASK_TYPES, parseConfiguration } from "@/lib/tasks/defaults";
 import { loadTaskTypes } from "@/lib/tasks/loader";
 import type { TaskTypeConfiguration } from "@/lib/tasks/types";
-import { findStateDef, findTypeDef } from "@/lib/tasks/utils";
+import { findTaskState, findTaskType } from "@/lib/tasks/utils";
 
 export async function updateTaskType(
   type: string,
@@ -56,8 +56,8 @@ export async function updateStateAssignee(
   const wardId = user.ward_id;
 
   const taskTypes = await loadTaskTypes(wardId);
-  const typeDef = findTypeDef(taskTypes, taskType);
-  if (!typeDef || !findStateDef(typeDef, state)) {
+  const typeDef = findTaskType(taskTypes, taskType);
+  if (!typeDef || !findTaskState(typeDef, state)) {
     throw new Error("Task state not found.");
   }
 

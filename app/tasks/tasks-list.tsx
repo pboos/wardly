@@ -47,12 +47,12 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { UserAvatar } from "@/components/user-avatar";
 import { cn } from "@/lib/utils";
-import { findStateDef, findTypeDef } from "@/lib/tasks/utils";
+import { findTaskState, findTaskType } from "@/lib/tasks/utils";
 import type {
   StateGroup,
   Task,
-  TaskStateDef,
-  TaskTypeDef,
+  TaskState,
+  TaskType,
   WardMember,
   WardUser,
 } from "@/lib/tasks/types";
@@ -86,7 +86,7 @@ export function TasksList({
   tasks: Task[];
   users: WardUser[];
   members: WardMember[];
-  taskTypes: TaskTypeDef[];
+  taskTypes: TaskType[];
   past: boolean;
 }) {
   const router = useRouter();
@@ -158,7 +158,7 @@ export function TasksList({
               </TableHeader>
               <TableBody>
                 {localTasks.map((task) => {
-                  const typeDef = findTypeDef(taskTypes, task.type);
+                  const typeDef = findTaskType(taskTypes, task.type);
                   const memberName = getMemberName(task);
 
                   return (
@@ -233,8 +233,8 @@ export function TasksList({
           onClose={() => setEditTaskId(null)}
           onSave={(draft) => {
             const id = editTask.id;
-            const typeDef = findTypeDef(taskTypes, editTask.type);
-            const targetStateDef = typeDef ? findStateDef(typeDef, draft.state) : null;
+            const typeDef = findTaskType(taskTypes, editTask.type);
+            const targetStateDef = typeDef ? findTaskState(typeDef, draft.state) : null;
             const isClosed = targetStateDef?.state_group === "closed";
             const stateAssignTo = targetStateDef?.assign_to_user_id ?? null;
 
@@ -292,12 +292,12 @@ function StatusCell({
   onChangeState,
 }: {
   task: Task;
-  taskTypes: TaskTypeDef[];
+  taskTypes: TaskType[];
   onChangeState: (toState: string, isClosed: boolean, assignToUserId: string | null) => void;
 }) {
-  const typeDef = findTypeDef(taskTypes, task.type);
+  const typeDef = findTaskType(taskTypes, task.type);
   if (!typeDef) return null;
-  const stateDef = findStateDef(typeDef, task.state);
+  const stateDef = findTaskState(typeDef, task.state);
   if (!stateDef) return null;
 
   return (
@@ -321,7 +321,7 @@ function StatePicker({
   align = "start",
   buttonClassName,
 }: {
-  typeDef: TaskTypeDef;
+  typeDef: TaskType;
   value: string;
   onSelect: (toState: string, isClosed: boolean, assignToUserId: string | null) => void;
   showLabel?: boolean;
@@ -329,10 +329,10 @@ function StatePicker({
   buttonClassName?: string;
 }) {
   const [open, setOpen] = useState(false);
-  const current = findStateDef(typeDef, value);
+  const current = findTaskState(typeDef, value);
   if (!current) return null;
 
-  const grouped: Record<StateGroup, TaskStateDef[]> = {
+  const grouped: Record<StateGroup, TaskState[]> = {
     not_started: [],
     active: [],
     closed: [],
@@ -403,7 +403,7 @@ function StatePicker({
   );
 }
 
-function TypeBadge({ taskType, size }: { taskType: TaskTypeDef | undefined, size?: "big" | "small" | undefined }) {
+function TypeBadge({ taskType, size }: { taskType: TaskType | undefined, size?: "big" | "small" | undefined }) {
   const name = taskType?.name ?? "-";
   const short = taskType?.name_short ?? name.slice(0, 2);
   const color = taskType?.color ?? "#71717a";
@@ -576,7 +576,7 @@ function EditTaskModal({
   onSave,
 }: {
   task: Task;
-  taskTypes: TaskTypeDef[];
+  taskTypes: TaskType[];
   memberItems: Item[];
   userItems: Item[];
   onClose: () => void;
@@ -588,7 +588,7 @@ function EditTaskModal({
     description: string | null;
   }) => void;
 }) {
-  const typeDef = findTypeDef(taskTypes, task.type);
+  const typeDef = findTaskType(taskTypes, task.type);
   const showTitle = typeDef?.configuration.showTaskTitle ?? true;
 
   const [title, setTitle] = useState(task.title ?? "");

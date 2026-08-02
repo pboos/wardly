@@ -17,7 +17,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
-import type { Task, TaskTypeDef, WardMember, WardUser } from "@/lib/tasks/types";
+import type { Task, TaskType, WardMember, WardUser } from "@/lib/tasks/types";
 import { createTask } from "./actions";
 import { TasksList } from "./tasks-list";
 
@@ -35,7 +35,7 @@ export function TasksView({
   pastTasks: Task[];
   users: WardUser[];
   members: WardMember[];
-  taskTypes: TaskTypeDef[];
+  taskTypes: TaskType[];
   currentUserId: string;
 }) {
   const router = useRouter();
@@ -188,7 +188,7 @@ function NewTaskForm({
   typeSelectRef: React.RefObject<HTMLButtonElement | null>;
   memberItems: { value: string; label: string }[];
   userItems: { value: string; label: string }[];
-  taskTypes: TaskTypeDef[];
+  taskTypes: TaskType[];
   onEnter: (e: React.KeyboardEvent) => void;
   onSubmit: () => void;
 }) {
@@ -290,7 +290,7 @@ function Filters({
 }: {
   filter: Filter;
   onFilterChange: (f: Filter) => void;
-  taskTypes: TaskTypeDef[];
+  taskTypes: TaskType[];
 }) {
   const typeItems = taskTypes.map((t) => ({ value: t.type, label: t.name }));
   const selectedType = typeof filter === "string" && filter !== "all" && filter !== "mine" ? filter : null;
@@ -353,7 +353,7 @@ function PastTasks({
   tasks: Task[];
   users: WardUser[];
   members: WardMember[];
-  taskTypes: TaskTypeDef[];
+  taskTypes: TaskType[];
 }) {
   const [open, setOpen] = useState(false);
   if (tasks.length === 0) return null;
