@@ -18,6 +18,9 @@ import {
   updateAssignment,
   updateMeetingInformation,
   updateSundayMeetingSettings,
+  bootstrapSundayMeeting,
+  createSundayMeetingAfterLatest,
+  createSundayMeetingBeforeEarliest,
 } from "@/lib/sunday-meetings/service";
 import { addSuggestedTaskToMeeting } from "@/lib/sunday-meetings/tasks";
 import type {
@@ -173,5 +176,23 @@ export async function updateSundayMeetingWardSettings(input: {
 }) {
   const user = await getCurrentUser();
   await updateSundayMeetingSettings(user.ward_id, input);
+  revalidateSundayMeetingRoutes();
+}
+
+export async function addSundayMeetingBeforeEarliest() {
+  const user = await getCurrentUser();
+  await createSundayMeetingBeforeEarliest(user.ward_id);
+  revalidateSundayMeetingRoutes();
+}
+
+export async function addSundayMeetingAfterLatest() {
+  const user = await getCurrentUser();
+  await createSundayMeetingAfterLatest(user.ward_id);
+  revalidateSundayMeetingRoutes();
+}
+
+export async function bootstrapSundaySchedule() {
+  const user = await getCurrentUser();
+  await bootstrapSundayMeeting(user.ward_id);
   revalidateSundayMeetingRoutes();
 }

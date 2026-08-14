@@ -8,6 +8,7 @@ import {
   IconArrowLeft,
   IconArrowRight,
   IconChevronRight,
+  IconPlus,
   IconSettings,
 } from "@tabler/icons-react";
 import { Button } from "@/components/ui/button";
@@ -68,14 +69,26 @@ import {
   updateSundayMeetingInformation,
   updateSundayMeetingType,
   updateSundayMeetingWardSettings,
+  addSundayMeetingAfterLatest,
+  addSundayMeetingBeforeEarliest,
+  bootstrapSundaySchedule,
 } from "./actions";
 import { SundayPersonDialog } from "./sunday-person-dialog";
+import { SundayScheduleBoundaryAction } from "./sunday-schedule-boundary-action";
 
 type ScheduleData = {
   range: { start: string; end: string; dates: string[] };
   contentLocale: string;
   timeZone: string;
   rows: SundayMeetingScheduleRow[];
+  earliestDate: string | null;
+  latestDate: string | null;
+  hasEarlier: boolean;
+  hasLater: boolean;
+  showBefore: boolean;
+  showAfter: boolean;
+  earlierCursor: string;
+  laterCursor: string;
 };
 
 export function SundayScheduleView({
@@ -105,9 +118,6 @@ export function SundayScheduleView({
     });
   }
 
-  const previousAnchor = shiftMonths(schedule.range.start, -3);
-  const nextAnchor = shiftMonths(schedule.range.end, 3);
-
   return (
     <div className="flex flex-col gap-6">
       <header className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
@@ -120,18 +130,22 @@ export function SundayScheduleView({
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
-          <Button variant="outline" size="sm" asChild>
-            <Link href={`/meetings/sunday?anchor=${previousAnchor}`}>
-              <IconArrowLeft data-icon="inline-start" />
-              Earlier
-            </Link>
-          </Button>
-          <Button variant="outline" size="sm" asChild>
-            <Link href={`/meetings/sunday?anchor=${nextAnchor}`}>
-              Later
-              <IconArrowRight data-icon="inline-end" />
-            </Link>
-          </Button>
+          {schedule.hasEarlier && (
+            <Button variant="outline" size="sm" asChild>
+              <Link href={`/meetings/sunday?before=${schedule.earlierCursor}`}>
+                <IconArrowLeft data-icon="inline-start" />
+                Earlier
+              </Link>
+            </Button>
+          )}
+          {schedule.hasLater && (
+            <Button variant="outline" size="sm" asChild>
+              <Link href={`/meetings/sunday?after=${schedule.laterCursor}`}>
+                Later
+                <IconArrowRight data-icon="inline-end" />
+              </Link>
+            </Button>
+          )}
           <SundaySettingsDialog
             contentLocale={schedule.contentLocale}
             timeZone={schedule.timeZone}
@@ -145,51 +159,104 @@ export function SundayScheduleView({
         </div>
       </header>
 
-      <div className="hidden md:block">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Date</TableHead>
-              <TableHead>Type</TableHead>
-              <TableHead>Leading</TableHead>
-              <TableHead>Organist(s)</TableHead>
-              <TableHead>Conductor(s)</TableHead>
-              <TableHead>Opening hymn</TableHead>
-              <TableHead>Sacrament hymn</TableHead>
-              <TableHead>Interlude hymn</TableHead>
-              <TableHead>Closing hymn</TableHead>
-              <TableHead>Information</TableHead>
-              <TableHead>Opening prayer</TableHead>
-              <TableHead>Closing prayer</TableHead>
-              {Array.from({ length: speakerColumns }, (_, index) => (
-                <TableHead key={index}>Speaker {index + 1}</TableHead>
-              ))}
-            </TableRow>
-          </TableHeader>
-          <TableBody>
+      {schedule.rows.length === 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle>No Sunday meetings yet</CardTitle>
+            <CardDescription>
+              Start the persisted schedule with the ward-local current or upcoming Sunday.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Button type="button" onClick={() => run(bootstrapSundaySchedule, "Could not start the Sunday schedule.")}>
+              <IconPlus data-icon="inline-start" />
+              Add current Sunday
+            </Button>
+          </CardContent>
+        </Card>
+      )}
+
+      {schedule.rows.length > 0 && (
+        <>
+          <div className="hidden md:block">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Date</TableHead>
+                  <TableHead>Type</TableHead>
+                  <TableHead>Leading</TableHead>
+                  <TableHead>Organist(s)</TableHead>
+                  <TableHead>Conductor(s)</TableHead>
+                  <TableHead>Opening hymn</TableHead>
+                  <TableHead>Sacrament hymn</TableHead>
+                  <TableHead>Interlude hymn</TableHead>
+                  <TableHead>Closing hymn</TableHead>
+                  <TableHead>Information</TableHead>
+                  <TableHead>Opening prayer</TableHead>
+                  <TableHead>Closing prayer</TableHead>
+                  {Array.from({ length: speakerColumns }, (_, index) => (
+                    <TableHead key={index}>Speaker {index + 1}</TableHead>
+                  ))}
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {schedule.showBefore && (
+                  <SundayScheduleBoundaryAction
+                    desktop
+                    colSpan={12 + speakerColumns}
+                    accessibleName="Add Sunday before the earliest meeting"
+                    action={() => addSundayMeetingBeforeEarliest()}
+                    run={run}
+                  />
+                )}
+                {schedule.rows.map((row) => (
+                  <ScheduleTableRow
+                    key={row.meeting.id}
+                    row={row}
+                    speakerColumns={speakerColumns}
+                    members={members}
+                    run={run}
+                  />
+                ))}
+                {schedule.showAfter && (
+                  <SundayScheduleBoundaryAction
+                    desktop
+                    colSpan={12 + speakerColumns}
+                    accessibleName="Add Sunday after the latest meeting"
+                    action={() => addSundayMeetingAfterLatest()}
+                    run={run}
+                  />
+                )}
+              </TableBody>
+            </Table>
+          </div>
+
+          <div className="flex flex-col gap-3 md:hidden">
+            {schedule.showBefore && (
+              <SundayScheduleBoundaryAction
+                accessibleName="Add Sunday before the earliest meeting"
+                action={() => addSundayMeetingBeforeEarliest()}
+                run={run}
+              />
+            )}
             {schedule.rows.map((row) => (
-              <ScheduleTableRow
+              <ScheduleMobileCard
                 key={row.meeting.id}
                 row={row}
-                speakerColumns={speakerColumns}
                 members={members}
                 run={run}
               />
             ))}
-          </TableBody>
-        </Table>
-      </div>
-
-      <div className="flex flex-col gap-3 md:hidden">
-        {schedule.rows.map((row) => (
-          <ScheduleMobileCard
-            key={row.meeting.id}
-            row={row}
-            members={members}
-            run={run}
-          />
-        ))}
-      </div>
+            {schedule.showAfter && (
+              <SundayScheduleBoundaryAction
+                accessibleName="Add Sunday after the latest meeting"
+                action={() => addSundayMeetingAfterLatest()}
+                run={run}
+              />
+            )}
+          </div>
+        </>
+      )}
     </div>
   );
 }
@@ -800,10 +867,4 @@ function formatDate(date: string): string {
     year: "numeric",
     timeZone: "UTC",
   }).format(new Date(`${date}T12:00:00Z`));
-}
-
-function shiftMonths(date: string, months: number): string {
-  const value = new Date(`${date}T00:00:00Z`);
-  value.setUTCMonth(value.getUTCMonth() + months);
-  return value.toISOString().slice(0, 10);
 }

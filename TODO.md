@@ -1,6 +1,20 @@
 # Next features
+Fix the following in the sunday schedule (meetings). Keep a docs/SUNDAY_MEETING.md that is a memory of the important input needed for working on this feature. Keep it as concise and short as possible. If already there and something changes, update it.
+
+Agents to delegate to:
+- @explore - for finding code (do not ask to interpret code, just to find and return the code with path and code - saying what line numbers they are at)
+- @architect - for architecture questions
+- @code - for writing the code implementation
+- @code-review - ror a code review
+
+Task to do:
+{{ TASK }}
+
+----
+
 -> FOR SUNDAY MEETING -> on task_type status have a boolean if that status is to be presented in sacrament. Maybe even as what? Not sure on that one. But at least something to be clear it is the state to be done in sacrament meeting.
 Fixes on sunday planning list
+
 - do not automatically generate past and future sundays
   - have a button at the bottom to add a new one after last existing sunday.
   - have a button at the top to add a new one before first sunday

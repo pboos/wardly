@@ -4,11 +4,17 @@ import {
   assertSunday,
   localToday,
   nextSunday,
-  scheduleRange,
+  upcomingSunday,
 } from "./calendar";
 import { createOrLoadSundayMeeting } from "./service";
 import { generateSupportText, resolveHymn, resolvePresider } from "./support";
 import { loadSundayMeetingTaskCandidates } from "./tasks";
+import {
+  SUNDAY_SCHEDULE_POLICY,
+  getScheduleBoundaryVisibility,
+  safeSundayCursor,
+  shouldFallbackToDefaultSchedule,
+} from "./schedule";
 import {
   isLocalMeetingType,
   isSundayMeetingItemType,
@@ -234,33 +240,123 @@ function toScheduleRow(
 
 export async function loadSundaySchedule(
   wardId: string,
-  anchorDate?: string,
+  options: { anchor?: string; before?: string; after?: string } = {},
 ) {
   const settings = await getSundayMeetingSettings(wardId);
-  const range = scheduleRange(settings.time_zone, anchorDate);
+  const currentSunday = upcomingSunday(localToday(settings.time_zone));
+  const before = safeSundayCursor(options.before);
+  const after = safeSundayCursor(options.after);
+  const anchor = safeSundayCursor(options.anchor);
+  const [earliest, latest] = await Promise.all([
+    prisma.sunday_meeting.findFirst({
+      where: { ward_id: wardId },
+      orderBy: { date: "asc" },
+      select: { date: true },
+    }),
+    prisma.sunday_meeting.findFirst({
+      where: { ward_id: wardId },
+      orderBy: { date: "desc" },
+      select: { date: true },
+    }),
+  ]);
 
-  // Schedule rows are created when first viewed; run this serially so the
-  // second-Sunday default can see a first-Sunday special meeting if present.
-  for (const date of range.dates) {
-    await createOrLoadSundayMeeting(wardId, date);
+  async function loadPage(
+    where: Prisma.sunday_meetingWhereInput,
+    order: "asc" | "desc",
+    take: number,
+  ): Promise<MeetingRecord[]> {
+    const rows = await prisma.sunday_meeting.findMany({
+      where,
+      orderBy: { date: order },
+      take,
+      include: meetingInclude,
+    });
+    return order === "desc" ? rows.reverse() : rows;
   }
 
-  const records = await prisma.sunday_meeting.findMany({
-    where: {
-      ward_id: wardId,
-      date: { gte: range.start, lte: range.end },
-    },
-    orderBy: { date: "asc" },
-    include: meetingInclude,
-  });
+  async function loadDefaultPage(): Promise<MeetingRecord[]> {
+    const [earlier, upcoming] = await Promise.all([
+      loadPage(
+        { ward_id: wardId, date: { lt: currentSunday } },
+        "desc",
+        SUNDAY_SCHEDULE_POLICY.priorLimit,
+      ),
+      loadPage(
+        { ward_id: wardId, date: { gte: currentSunday } },
+        "asc",
+        SUNDAY_SCHEDULE_POLICY.currentLimit,
+      ),
+    ]);
+    return [...earlier, ...upcoming];
+  }
+
+  async function loadSelectedPage(): Promise<MeetingRecord[]> {
+    if (before) {
+      return loadPage(
+        { ward_id: wardId, date: { lt: before } },
+        "desc",
+        SUNDAY_SCHEDULE_POLICY.cursorPageLimit,
+      );
+    }
+    if (after) {
+      return loadPage(
+        { ward_id: wardId, date: { gt: after } },
+        "asc",
+        SUNDAY_SCHEDULE_POLICY.cursorPageLimit,
+      );
+    }
+    if (anchor) {
+      const [earlier, upcoming] = await Promise.all([
+        loadPage(
+          { ward_id: wardId, date: { lt: anchor } },
+          "desc",
+          SUNDAY_SCHEDULE_POLICY.priorLimit,
+        ),
+        loadPage(
+          { ward_id: wardId, date: { gte: anchor } },
+          "asc",
+          SUNDAY_SCHEDULE_POLICY.currentLimit,
+        ),
+      ]);
+      return [...earlier, ...upcoming];
+    }
+    return loadDefaultPage();
+  }
+
+  // A cursor may be valid but point beyond the persisted history. Fall back
+  // to the normal persisted page rather than presenting a creation bootstrap.
+  let selected = await loadSelectedPage();
+  if (
+    shouldFallbackToDefaultSchedule(
+      selected.length,
+      Boolean(earliest),
+      Boolean(before || after || anchor),
+    )
+  ) {
+    selected = await loadDefaultPage();
+  }
+  const firstDate = selected[0]?.date ?? currentSunday;
+  const lastDate = selected.at(-1)?.date ?? currentSunday;
+  const earliestDate = earliest?.date;
+  const latestDate = latest?.date;
+  const boundaryVisibility = getScheduleBoundaryVisibility(
+    selected.map((record) => record.date),
+    earliestDate ?? null,
+    latestDate ?? null,
+  );
 
   return {
-    range,
+    range: { start: firstDate, end: lastDate, dates: selected.map((record) => record.date) },
     contentLocale: settings.content_locale,
     timeZone: settings.time_zone,
-    rows: records.map((record) =>
+    rows: selected.map((record) =>
       toScheduleRow(mapSundayMeeting(record), settings.content_locale),
     ),
+    earliestDate: earliestDate ?? null,
+    latestDate: latestDate ?? null,
+    ...boundaryVisibility,
+    earlierCursor: firstDate,
+    laterCursor: lastDate,
   };
 }
 

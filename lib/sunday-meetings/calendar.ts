@@ -167,3 +167,13 @@ export function nextSunday(date: string): string {
   assertSunday(date);
   return addDays(date, 7);
 }
+
+export function previousSunday(date: string): string {
+  assertSunday(date);
+  return addDays(date, -7);
+}
+
+export function upcomingSunday(date: string): string {
+  const current = parseLocalDate(date);
+  return addDays(date, (7 - current.getUTCDay()) % 7);
+}

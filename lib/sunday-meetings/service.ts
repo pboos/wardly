@@ -6,7 +6,10 @@ import {
   defaultMeetingTypeForSunday,
   firstSundayOfMonth,
   isFirstSundayOfMonth,
+  localToday,
   nextSunday,
+  previousSunday,
+  upcomingSunday,
 } from "./calendar";
 import {
   ITEM_ASSIGNMENT_ROLES,
@@ -257,6 +260,58 @@ export async function createOrLoadSundayMeeting(
   return prisma.$transaction((tx) =>
     createOrLoadSundayMeetingInTransaction(tx, wardId, date, requestedType),
   );
+}
+
+export async function createSundayMeetingBeforeEarliest(wardId: string) {
+  return prisma.$transaction(async (tx) => {
+    await requireWard(tx, wardId);
+    const earliest = await tx.sunday_meeting.findFirst({
+      where: { ward_id: wardId },
+      orderBy: { date: "asc" },
+      select: { date: true },
+    });
+    if (!earliest) fail("There is no persisted Sunday meeting to extend.");
+    return createOrLoadSundayMeetingInTransaction(
+      tx,
+      wardId,
+      previousSunday(earliest.date),
+    );
+  });
+}
+
+export async function createSundayMeetingAfterLatest(wardId: string) {
+  return prisma.$transaction(async (tx) => {
+    await requireWard(tx, wardId);
+    const latest = await tx.sunday_meeting.findFirst({
+      where: { ward_id: wardId },
+      orderBy: { date: "desc" },
+      select: { date: true },
+    });
+    if (!latest) fail("There is no persisted Sunday meeting to extend.");
+    return createOrLoadSundayMeetingInTransaction(
+      tx,
+      wardId,
+      nextSunday(latest.date),
+    );
+  });
+}
+
+export async function bootstrapSundayMeeting(wardId: string) {
+  return prisma.$transaction(async (tx) => {
+    const ward = await requireWard(tx, wardId);
+    const existing = await tx.sunday_meeting.findFirst({
+      where: { ward_id: wardId },
+      select: { id: true },
+    });
+    if (existing) {
+      fail("The Sunday schedule already contains a persisted meeting.");
+    }
+    return createOrLoadSundayMeetingInTransaction(
+      tx,
+      wardId,
+      upcomingSunday(localToday(ward.time_zone)),
+    );
+  });
 }
 
 async function agendaItems(
