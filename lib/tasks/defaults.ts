@@ -73,7 +73,7 @@ export const DEFAULT_TASK_TYPES: TaskType[] = withDefaultStateValues([
     states: [
       { state: "todo", label: "To do", color: "#3b82f6", state_group: "not_started", assign_to_user_id: null },
       { state: "talk_to_person", label: "Talk to person", color: "#0ea5e9", state_group: "active", assign_to_user_id: null },
-      { state: "in_front_of_ward", label: "Sustain in front of ward", color: "#06b6d4", state_group: "active", assign_to_user_id: null },
+      { state: "in_front_of_ward", label: "Sustain in front of ward", color: "#06b6d4", state_group: "active", assign_to_user_id: null, sunday_meeting_item_type: "calling_sustain" },
       { state: "set_apart", label: "Set apart", color: "#14b8a6", state_group: "active", assign_to_user_id: null },
       { state: "record", label: "Record in LCR", color: "#64748b", state_group: "active", assign_to_user_id: null },
       { state: "done", label: "Done", color: "#22c55e", state_group: "closed", assign_to_user_id: null },
@@ -93,7 +93,7 @@ export const DEFAULT_TASK_TYPES: TaskType[] = withDefaultStateValues([
       { state: "sustain", label: "Sustain in front of quorum", color: "#7e22ce", state_group: "active", assign_to_user_id: null },
       { state: "confer_ordain", label: "(Confer &) Ordain", color: "#b45309", state_group: "active", assign_to_user_id: null },
       { state: "record", label: "Record in LCR", color: "#0f766e", state_group: "active", assign_to_user_id: null },
-      { state: "in_front_of_ward", label: "In front of ward", color: "#7e22ce", state_group: "active", assign_to_user_id: null },
+      { state: "in_front_of_ward", label: "In front of ward", color: "#7e22ce", state_group: "active", assign_to_user_id: null, sunday_meeting_item_type: "priesthood_aaronic_inform" },
       { state: "done", label: "Done", color: "#15803d", state_group: "closed", assign_to_user_id: null },
     ],
   },
@@ -126,7 +126,7 @@ export const DEFAULT_TASK_TYPES: TaskType[] = withDefaultStateValues([
     states: [
       { state: "todo", label: "To do", color: "#3b82f6", state_group: "not_started", assign_to_user_id: null },
       { state: "talk_to_person", label: "Talk to person", color: "#0ea5e9", state_group: "active", assign_to_user_id: null },
-      { state: "in_front_of_ward", label: "In front of ward", color: "#06b6d4", state_group: "active", assign_to_user_id: null },
+      { state: "in_front_of_ward", label: "In front of ward", color: "#06b6d4", state_group: "active", assign_to_user_id: null, sunday_meeting_item_type: "calling_release" },
       { state: "record", label: "Record in LCR", color: "#64748b", state_group: "active", assign_to_user_id: null },
       { state: "done", label: "Done", color: "#22c55e", state_group: "closed", assign_to_user_id: null },
     ],

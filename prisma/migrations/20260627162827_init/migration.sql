@@ -3,6 +3,8 @@ CREATE TABLE "ward" (
     "id" TEXT NOT NULL PRIMARY KEY,
     "name" TEXT NOT NULL,
     "type" TEXT NOT NULL DEFAULT 'ward',
+    "content_locale" TEXT NOT NULL DEFAULT 'en',
+    "time_zone" TEXT NOT NULL DEFAULT 'UTC',
     "created_at" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updated_at" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
@@ -110,6 +112,7 @@ CREATE TABLE "task_type_state" (
     "color" TEXT NOT NULL DEFAULT '#3b82f6',
     "order_index" INTEGER NOT NULL DEFAULT 0,
     "state_group" TEXT NOT NULL DEFAULT 'active',
+    "sunday_meeting_item_type" TEXT,
     "created_at" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updated_at" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT "task_type_state_ward_id_fkey" FOREIGN KEY ("ward_id") REFERENCES "ward" ("id") ON DELETE CASCADE ON UPDATE CASCADE
@@ -161,3 +164,97 @@ CREATE UNIQUE INDEX "task_type_state_ward_id_task_type_state_key" ON "task_type_
 
 -- CreateIndex
 CREATE INDEX "task_type_state_assignment_assign_to_user_id_idx" ON "task_type_state_assignment"("assign_to_user_id");
+
+-- CreateTable
+CREATE TABLE "sunday_meeting" (
+    "id" TEXT NOT NULL PRIMARY KEY,
+    "ward_id" TEXT NOT NULL,
+    "date" TEXT NOT NULL,
+    "type" TEXT NOT NULL,
+    "information" TEXT,
+    "created_at" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updated_at" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT "sunday_meeting_ward_id_fkey" FOREIGN KEY ("ward_id") REFERENCES "ward" ("id") ON DELETE CASCADE ON UPDATE CASCADE
+);
+
+-- CreateTable
+CREATE TABLE "sunday_meeting_item" (
+    "id" TEXT NOT NULL PRIMARY KEY,
+    "sunday_meeting_id" TEXT NOT NULL,
+    "type" TEXT NOT NULL,
+    "section" TEXT NOT NULL,
+    "standard_slot" TEXT,
+    "order_index" INTEGER NOT NULL,
+    "content" TEXT,
+    "hymn_number" INTEGER,
+    "task_id" TEXT,
+    "created_at" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updated_at" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT "sunday_meeting_item_sunday_meeting_id_fkey" FOREIGN KEY ("sunday_meeting_id") REFERENCES "sunday_meeting" ("id") ON DELETE CASCADE ON UPDATE CASCADE,
+    CONSTRAINT "sunday_meeting_item_task_id_fkey" FOREIGN KEY ("task_id") REFERENCES "task" ("id") ON DELETE RESTRICT ON UPDATE CASCADE,
+    CONSTRAINT "sunday_meeting_item_hymn_number_check" CHECK ("hymn_number" IS NULL OR "hymn_number" > 0)
+);
+
+-- CreateTable
+CREATE TABLE "sunday_meeting_person_assignment" (
+    "id" TEXT NOT NULL PRIMARY KEY,
+    "sunday_meeting_id" TEXT NOT NULL,
+    "sunday_meeting_item_id" TEXT,
+    "role" TEXT NOT NULL,
+    "member_id" TEXT,
+    "free_text_name" TEXT,
+    "order_index" INTEGER NOT NULL DEFAULT 0,
+    "visitor_role" TEXT,
+    "visitor_role_custom" TEXT,
+    "is_presiding_override" BOOLEAN NOT NULL DEFAULT false,
+    "created_at" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updated_at" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT "sunday_meeting_person_assignment_sunday_meeting_id_fkey" FOREIGN KEY ("sunday_meeting_id") REFERENCES "sunday_meeting" ("id") ON DELETE CASCADE ON UPDATE CASCADE,
+    CONSTRAINT "sunday_meeting_person_assignment_sunday_meeting_item_id_fkey" FOREIGN KEY ("sunday_meeting_item_id") REFERENCES "sunday_meeting_item" ("id") ON DELETE CASCADE ON UPDATE CASCADE,
+    CONSTRAINT "sunday_meeting_person_assignment_member_id_fkey" FOREIGN KEY ("member_id") REFERENCES "member" ("id") ON DELETE RESTRICT ON UPDATE CASCADE,
+    CONSTRAINT "sunday_meeting_person_assignment_person_xor_check" CHECK (
+      ("member_id" IS NOT NULL AND "free_text_name" IS NULL)
+      OR
+      ("member_id" IS NULL AND COALESCE(length(trim("free_text_name")), 0) > 0)
+    ),
+    CONSTRAINT "sunday_meeting_person_assignment_presiding_check" CHECK ("is_presiding_override" IN (0, 1))
+);
+
+-- CreateIndex
+CREATE UNIQUE INDEX "sunday_meeting_ward_id_date_key" ON "sunday_meeting"("ward_id", "date");
+
+-- CreateIndex
+CREATE INDEX "sunday_meeting_ward_id_type_date_idx" ON "sunday_meeting"("ward_id", "type", "date");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "sunday_meeting_item_sunday_meeting_id_order_index_key" ON "sunday_meeting_item"("sunday_meeting_id", "order_index");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "sunday_meeting_item_sunday_meeting_id_standard_slot_key" ON "sunday_meeting_item"("sunday_meeting_id", "standard_slot");
+
+-- CreateIndex
+CREATE INDEX "sunday_meeting_item_task_id_idx" ON "sunday_meeting_item"("task_id");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "idx_sunday_meeting_assignment_meeting_role_order_unique"
+ON "sunday_meeting_person_assignment"("sunday_meeting_id", "role", "order_index")
+WHERE "sunday_meeting_item_id" IS NULL;
+
+-- CreateIndex
+CREATE UNIQUE INDEX "idx_sunday_meeting_assignment_item_role_order_unique"
+ON "sunday_meeting_person_assignment"("sunday_meeting_item_id", "role", "order_index")
+WHERE "sunday_meeting_item_id" IS NOT NULL;
+
+-- CreateIndex
+CREATE UNIQUE INDEX "idx_sunday_meeting_assignment_one_leader"
+ON "sunday_meeting_person_assignment"("sunday_meeting_id")
+WHERE "role" = 'leader' AND "sunday_meeting_item_id" IS NULL;
+
+-- CreateIndex
+CREATE UNIQUE INDEX "idx_sunday_meeting_assignment_one_presiding_override"
+ON "sunday_meeting_person_assignment"("sunday_meeting_id")
+WHERE "role" = 'visitor' AND "sunday_meeting_item_id" IS NULL AND "is_presiding_override" = 1;
+
+-- CreateIndex
+CREATE INDEX "sunday_meeting_person_assignment_member_id_role_sunday_meeting_id_idx"
+ON "sunday_meeting_person_assignment"("member_id", "role", "sunday_meeting_id");

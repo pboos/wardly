@@ -37,6 +37,8 @@ const NAV_ITEMS: NavItem[] = [
     href: "/meetings",
     match: "/meetings",
     children: [
+      { label: "Sunday schedule", href: "/meetings/sunday" },
+      { label: "Sunday leading", href: "/meetings/sunday/leading" },
       { label: "Bishopric", href: "/meetings/bishopric" },
       { label: "Ward council", href: "/meetings/ward-council" },
     ],

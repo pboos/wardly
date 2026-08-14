@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import { DEFAULT_TASK_TYPES, parseConfiguration } from "./defaults";
 import type { TaskType, TaskState, StateGroup } from "./types";
+import type { SundayMeetingTaskItemType } from "@/lib/sunday-meetings/types";
 import { withProgress } from "./utils";
 
 /**
@@ -50,6 +51,8 @@ export async function loadTaskTypes(wardId: string): Promise<TaskType[]> {
       state_group: s.state_group as StateGroup,
       progress_percentage: 0,
       assign_to_user_id: null,
+      sunday_meeting_item_type:
+        (s.sunday_meeting_item_type as SundayMeetingTaskItemType | null) ?? null,
     });
     statesByType.set(s.task_type, list);
   }

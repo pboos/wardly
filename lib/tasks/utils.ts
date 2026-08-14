@@ -1,7 +1,19 @@
-import type { StateGroup, TaskType, TaskState } from "./types";
+import type {
+  StateGroup,
+  TaskType,
+  TaskState,
+} from "./types";
+import type { SundayMeetingTaskItemType } from "@/lib/sunday-meetings/types";
 
 type DefaultTaskType = Omit<TaskType, "states"> & {
-  states: Array<Omit<TaskState, "order_index" | "progress_percentage">>;
+  states: Array<
+    Omit<
+      TaskState,
+      "order_index" | "progress_percentage" | "sunday_meeting_item_type"
+    > & {
+      sunday_meeting_item_type?: SundayMeetingTaskItemType | null;
+    }
+  >;
 };
 
 /** Add state order and progress values implied by a default definition's order. */
@@ -11,7 +23,11 @@ export function withDefaultStateValues(
   return taskTypes.map((taskType) => ({
     ...taskType,
     states: withProgress(
-      taskType.states.map((state, order_index) => ({ ...state, order_index })),
+      taskType.states.map((state, order_index) => ({
+        ...state,
+        order_index,
+        sunday_meeting_item_type: state.sunday_meeting_item_type ?? null,
+      })),
     ),
   }));
 }

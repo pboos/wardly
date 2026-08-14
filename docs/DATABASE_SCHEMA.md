@@ -1,34 +1,36 @@
 # Database Schema
 
-SQLite database schema for the Wardly application.
+SQLite database schema for Wardly.
 
-- All timestamps are stored as `TEXT` using `CURRENT_TIMESTAMP` (UTC, ISO‑8601).
-- All primary keys are UUIDs stored as `TEXT`.
-- Table names are **singular** (e.g. `ward`, `user`, `member`).
-- Every table has `created_at` and `updated_at` columns.
+- Primary keys are UUIDs stored as `TEXT`.
+- Timestamps use `CURRENT_TIMESTAMP` and map to Prisma `DateTime` values.
+- Table names are singular and lowercase.
+- Foreign keys are ward-scoped wherever a record belongs to a ward.
 
 ---
 
 ## 1. `ward`
 
-A ward (local congregation) that a bishop sets up.
+The ward owns its members, users, task configuration, and Sunday-meeting schedule.
 
 ```sql
 CREATE TABLE ward (
-  id          TEXT PRIMARY KEY,
-  name        TEXT NOT NULL,
-  type        TEXT NOT NULL DEFAULT 'ward',  -- 'ward' | 'branch'
-  created_at  TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  updated_at  TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+  id              TEXT PRIMARY KEY,
+  name            TEXT NOT NULL,
+  type            TEXT NOT NULL DEFAULT 'ward',
+  content_locale  TEXT NOT NULL DEFAULT 'en',
+  time_zone       TEXT NOT NULL DEFAULT 'UTC',
+  created_at      TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at      TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 ```
+
+- `content_locale` is the ward-language BCP 47 locale used for hymn catalogs and leading text.
+- `time_zone` is the IANA zone used to determine the current local date and Sunday.
 
 ---
 
 ## 2. `user`
-
-A person who can log in. Belongs to a ward. Has an email and a display name.
-The JWT issued at login contains `id`, `email`, and `name`.
 
 ```sql
 CREATE TABLE user (
@@ -39,11 +41,7 @@ CREATE TABLE user (
   created_at  TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
   updated_at  TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
-```
 
-### Indexes
-
-```sql
 CREATE UNIQUE INDEX idx_user_email ON user (email);
 CREATE INDEX idx_user_ward_id ON user (ward_id);
 ```
@@ -52,14 +50,8 @@ CREATE INDEX idx_user_ward_id ON user (ward_id);
 
 ## 3. `login`
 
-Magic‑link / code login session. Created when a user requests a login.
-
-- `token_hash` — SHA‑256 hash of the random token sent as a link in the email (immediate login). Only the hash is stored; the plaintext token lives only in the email link.
-- `code_hash` — SHA‑256 hash of the 6‑character human‑readable code (uppercase, no ambiguous chars like `0`, `O`, `1`, `I`) that can be entered on the login page. Only the hash is stored; the plaintext code lives only in the email.
-- `attempts` — counter for failed code attempts; after 3 the entry is invalidated.
-- redirect_path TEXT — the sanitized original path to return to after login; null = fall back to /.
-- Both token and code expire 5 minutes after `created_at`. A cleanup job deletes rows older than 5 minutes.
-- Once used successfully (or failed, or expired) the row should be deleted.
+Magic-link and verification-code login state. Rows expire five minutes after
+`created_at` and are deleted once used or exhausted.
 
 ```sql
 CREATE TABLE login (
@@ -67,14 +59,10 @@ CREATE TABLE login (
   token_hash    TEXT NOT NULL,
   code_hash     TEXT NOT NULL,
   attempts      INTEGER NOT NULL DEFAULT 0,
-  redirect_path TEXT,  -- sanitized original path; null = fall back to /
+  redirect_path TEXT,
   created_at    TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
-```
 
-### Indexes
-
-```sql
 CREATE UNIQUE INDEX idx_login_token_hash ON login (token_hash);
 CREATE INDEX idx_login_created_at ON login (created_at);
 ```
@@ -83,15 +71,7 @@ CREATE INDEX idx_login_created_at ON login (created_at);
 
 ## 4. `member`
 
-A member of the ward. Imported via sync or CSV. The `id` never changes so that history (talks, prayers, interviews) stays linked to the right person.
-
-Status
-- `active` — member is part of the ward and should be shown in lists.
-- `moved` — member has moved out. Kept for history but hidden from default lists.
-- `unknown` — member is not known in the ward. Might have also moved.
-- `unknown_address` — the address the member lives at is not correct anymore.
-- `no_contact` — member requested to not get contacted by the church.
-- `hidden` — member is hidden for other reasons.
+Members are retained for assignment history even after moving away.
 
 ```sql
 CREATE TABLE member (
@@ -102,126 +82,176 @@ CREATE TABLE member (
   gender       TEXT NOT NULL,
   birth_date   TEXT,
   email        TEXT,
-  is_baptized  BOOLEAN NOT NULL CHECK (is_baptized IN (0, 1)),
-  status       TEXT NOT NULL DEFAULT 'active',  -- 'active' | 'moved' | 'unknown' | 'unknown_address' | 'no_contact'
+  is_baptized  BOOLEAN NOT NULL,
+  status       TEXT NOT NULL DEFAULT 'active',
   created_at   TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
   updated_at   TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
-```
 
-### Indexes
- 
-```sql
 CREATE INDEX idx_member_ward_id ON member (ward_id);
 CREATE INDEX idx_member_ward_status ON member (ward_id, status);
 ```
 
 ---
 
-## 5. `meeting`
+## 5. `sunday_meeting`
 
-A scheduled meeting of a given type (bishopric meeting, ward council meeting, etc.).
-Has a date and a type. Agenda items reference one or more meetings.
+One lazily created schedule record for a ward's local Sunday. The `date` is a
+local `YYYY-MM-DD` calendar date, not a UTC timestamp.
 
 ```sql
-CREATE TABLE meeting (
+CREATE TABLE sunday_meeting (
   id          TEXT PRIMARY KEY,
   ward_id     TEXT NOT NULL REFERENCES ward (id) ON DELETE CASCADE,
-  type        TEXT NOT NULL,  -- 'bishopric' | 'ward_council' | 'youth_council' | ...
-  date        TEXT NOT NULL,  -- ISO date of the meeting
+  date        TEXT NOT NULL,
+  type        TEXT NOT NULL,
+  information TEXT,
   created_at  TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
   updated_at  TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
+
+CREATE UNIQUE INDEX idx_sunday_meeting_ward_date
+  ON sunday_meeting (ward_id, date);
+CREATE INDEX idx_sunday_meeting_ward_type_date
+  ON sunday_meeting (ward_id, type, date);
 ```
 
-### Indexes
+`type` is one of:
+
+```text
+sacrament
+fast_testimony
+ward_conference
+childrens_sacrament_presentation
+stake_conference
+general_conference
+```
+
+Stake and General Conference records are date/type-only and have no local
+agenda or person assignments.
+
+---
+
+## 6. `sunday_meeting_item`
+
+The canonical, ordered sacrament-meeting agenda. Person names live in
+`sunday_meeting_person_assignment`, not on the agenda item itself.
 
 ```sql
-CREATE INDEX idx_meeting_ward_id ON meeting (ward_id);
-CREATE INDEX idx_meeting_ward_type_date ON meeting (ward_id, type, date);
+CREATE TABLE sunday_meeting_item (
+  id                TEXT PRIMARY KEY,
+  sunday_meeting_id TEXT NOT NULL REFERENCES sunday_meeting (id) ON DELETE CASCADE,
+  type              TEXT NOT NULL,
+  section           TEXT NOT NULL,
+  standard_slot     TEXT,
+  order_index       INTEGER NOT NULL,
+  content           TEXT,
+  hymn_number       INTEGER CHECK (hymn_number IS NULL OR hymn_number > 0),
+  task_id           TEXT REFERENCES task (id) ON DELETE RESTRICT,
+  created_at        TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at        TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE UNIQUE INDEX idx_sunday_meeting_item_order
+  ON sunday_meeting_item (sunday_meeting_id, order_index);
+CREATE UNIQUE INDEX idx_sunday_meeting_item_standard_slot
+  ON sunday_meeting_item (sunday_meeting_id, standard_slot);
+CREATE INDEX idx_sunday_meeting_item_task_id
+  ON sunday_meeting_item (task_id);
+```
+
+- `section` is `opening`, `business`, `sacrament`, `program`, or `closing`.
+- Nullable `standard_slot` values allow unlimited custom items while making each
+  fixed slot unique per meeting.
+- Fixed slots are `opening_hymn`, `opening_prayer`, `sacrament_hymn`,
+  `interlude`, `primary_presentation`, `closing_hymn`, and `closing_prayer`.
+- `task_id` is a one-way link. A task can later leave its suggested state without
+  removing the agenda item.
+
+Supported item types:
+
+```text
+hymn
+prayer
+talk
+sacrament_blessing
+sacrament_passing
+musical_number
+primary_presentation
+calling_sustain
+calling_release
+priesthood_aaronic_inform
+child_naming_blessing
+member_welcome
+convert_confirmation
+announcement
+ward_business
+custom_program
+transition
+conductor_text
 ```
 
 ---
 
-## 6. `agenda_item`
+## 7. `sunday_meeting_person_assignment`
 
-An item discussed in one or more meetings. An item can reference multiple meetings so that a recurring topic keeps its history.
-
-- `duration` — planned duration in minutes (for the timer / alarm).
-- `status` — lifecycle of the item: `open`, `done`, `carry_over`.
-- `carry_after` — if `carry_over`, the number of meetings to defer before it appears again.
+Every named assignment is exactly one of a historical ward-member reference or
+a free-text name. The direct `sunday_meeting_id` is retained for both
+meeting-level and item-level assignments so scope can be enforced efficiently.
 
 ```sql
-CREATE TABLE agenda_item (
-  id            TEXT PRIMARY KEY,
-  ward_id       TEXT NOT NULL REFERENCES ward (id) ON DELETE CASCADE,
-  title         TEXT NOT NULL,
-  description   TEXT,
-  duration      INTEGER NOT NULL DEFAULT 5,  -- minutes
-  status        TEXT NOT NULL DEFAULT 'open',  -- 'open' | 'done' | 'carry_over'
-  carry_after   INTEGER,  -- number of meetings to defer
-  created_at    TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  updated_at    TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+CREATE TABLE sunday_meeting_person_assignment (
+  id                      TEXT PRIMARY KEY,
+  sunday_meeting_id       TEXT NOT NULL REFERENCES sunday_meeting (id) ON DELETE CASCADE,
+  sunday_meeting_item_id  TEXT REFERENCES sunday_meeting_item (id) ON DELETE CASCADE,
+  role                    TEXT NOT NULL,
+  member_id               TEXT REFERENCES member (id) ON DELETE RESTRICT,
+  free_text_name          TEXT,
+  order_index             INTEGER NOT NULL DEFAULT 0,
+  visitor_role            TEXT,
+  visitor_role_custom     TEXT,
+  is_presiding_override   BOOLEAN NOT NULL DEFAULT FALSE,
+  created_at              TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at              TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  CHECK (
+    (member_id IS NOT NULL AND free_text_name IS NULL)
+    OR
+    (member_id IS NULL AND COALESCE(length(trim(free_text_name)), 0) > 0)
+  ),
+  CHECK (is_presiding_override IN (0, 1))
 );
 ```
 
-### Indexes
+Meeting-level roles are `leader`, `organist`, `music_conductor`, and `visitor`.
+Item-level roles are `prayer`, `speaker`, `sacrament_blesser`,
+`sacrament_passer`, `performer`, `subject`, and `officiant`.
 
 ```sql
-CREATE INDEX idx_agenda_item_ward_id ON agenda_item (ward_id);
-CREATE INDEX idx_agenda_item_status ON agenda_item (status);
+CREATE UNIQUE INDEX idx_sunday_meeting_assignment_meeting_role_order
+  ON sunday_meeting_person_assignment (sunday_meeting_id, role, order_index)
+  WHERE sunday_meeting_item_id IS NULL;
+CREATE UNIQUE INDEX idx_sunday_meeting_assignment_item_role_order
+  ON sunday_meeting_person_assignment (sunday_meeting_item_id, role, order_index)
+  WHERE sunday_meeting_item_id IS NOT NULL;
+CREATE UNIQUE INDEX idx_sunday_meeting_assignment_one_leader
+  ON sunday_meeting_person_assignment (sunday_meeting_id)
+  WHERE role = 'leader' AND sunday_meeting_item_id IS NULL;
+CREATE UNIQUE INDEX idx_sunday_meeting_assignment_one_presiding_override
+  ON sunday_meeting_person_assignment (sunday_meeting_id)
+  WHERE role = 'visitor'
+    AND sunday_meeting_item_id IS NULL
+    AND is_presiding_override = 1;
+CREATE INDEX idx_sunday_meeting_assignment_member_role_meeting
+  ON sunday_meeting_person_assignment (member_id, role, sunday_meeting_id);
 ```
 
----
-
-## 7. `meeting_agenda_item` (junction)
-
-Links an agenda item to the meetings where it was/is discussed.
-Also stores per‑meeting notes and the decision taken in that meeting.
-
-```sql
-CREATE TABLE meeting_agenda_item (
-  id              TEXT PRIMARY KEY,
-  meeting_id      TEXT NOT NULL REFERENCES meeting (id) ON DELETE CASCADE,
-  agenda_item_id  TEXT NOT NULL REFERENCES agenda_item (id) ON DELETE CASCADE,
-  order_index     INTEGER NOT NULL DEFAULT 0,
-  notes           TEXT,
-  decision        TEXT,  -- 'done' | 'carry_over_next' | 'carry_over_two'
-  created_at      TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  updated_at      TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
-);
-```
-
-### Indexes
-
-```sql
-CREATE INDEX idx_meeting_agenda_item_meeting_id ON meeting_agenda_item (meeting_id);
-CREATE INDEX idx_meeting_agenda_item_agenda_item_id ON meeting_agenda_item (agenda_item_id);
-CREATE UNIQUE INDEX idx_meeting_agenda_item_unique ON meeting_agenda_item (meeting_id, agenda_item_id);
-```
+SQLite partial unique indexes are intentionally maintained in the initial SQL
+migration because Prisma 7.8 cannot express unique partial indexes in its
+schema DSL.
 
 ---
 
 ## 8. `task`
-
-A generic task. Covers interviews (temple, youth, calling, check‑in) and action items.
-The `type` field distinguishes the kind of task; the `state` field tracks its progress.
-
-- `type` — one of the automatic task types or a ward-specific custom type.
-- `state` — current state in the task's lifecycle (e.g. for temple recommend: `todo` → `organize_stake` → `stake_interview` → `print_handout` → `done`).
-- `assigned_user_id` — the bishopric member currently responsible. When the state changes this can be reassigned (e.g. temple recommend done → secretary for stake organization).
-- `member_id` — the ward member the task is about (optional; avoids duplicating names).
-- `due_date` — optional due date.
-- `priority` — `urgent` | `normal` | `whenever`.
-- `duration_minutes` — expected length (defaults per type, e.g. temple = 30, calling = 10, check-in = 15). Copied onto the task at creation from the resolved task-type configuration; `todo` has no default (left null).
-- `completed_at` — ISO‑8601 timestamp set when the task enters a final state; cleared if the task is reopened. Needed for the "past tasks" view ordered by completion date.
-- Final states are defined by the resolved task-type lifecycle (e.g. `done`).
-
-> **Deviation from earlier schema doc:**
-> - `agenda_item_id` (and its index `idx_task_agenda_item_id`) have been **removed** for now. They will be re-added in a later migration when agenda linking lands. Phase 1 has no `meeting_agenda_item` usage.
-> - `completed_at TEXT` has been **added** (nullable, ISO‑8601). Not in the original schema.
-> - `hidden` column dropped (not used in phase 1).
-> - `type` literals renamed: `temple_interview` → `temple_recommend`, `limited_temple_interview` → `temple_recommend_limited`, `calling_interview` → `calling`, `action_item` → `todo`.
 
 ```sql
 CREATE TABLE task (
@@ -234,17 +264,13 @@ CREATE TABLE task (
   assigned_user_id  TEXT REFERENCES user (id) ON DELETE SET NULL,
   member_id         TEXT REFERENCES member (id) ON DELETE SET NULL,
   due_date          TEXT,
-  priority          TEXT NOT NULL DEFAULT 'normal',  -- 'urgent' | 'normal' | 'whenever'
+  priority          TEXT NOT NULL DEFAULT 'normal',
   duration_minutes  INTEGER,
-  completed_at      TEXT,  -- set when state reaches a final state; cleared on reopen
+  completed_at      TEXT,
   created_at        TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
   updated_at        TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
-```
 
-### Indexes
-
-```sql
 CREATE INDEX idx_task_ward_id ON task (ward_id);
 CREATE INDEX idx_task_ward_type_state ON task (ward_id, type, state);
 CREATE INDEX idx_task_assigned_user_id ON task (assigned_user_id);
@@ -256,58 +282,62 @@ CREATE INDEX idx_task_ward_completed ON task (ward_id, completed_at);
 
 ---
 
-## 9. `task_type_state`
+## 9. `task_type`
 
-Defines a ward-specific replacement lifecycle for a task type. When a ward has
-state rows for a code-defined type, these rows replace that type's automatic
-state sequence. Otherwise, the code-defined sequence remains in use.
-
-- `label` — display label.
-- `color` — hex color string used as the background of the state in dropdowns and buttons.
-- `state_group` — lifecycle group: `not_started`, `active`, or `closed`. Replaces the
-  former `is_final` boolean. `todo` is `not_started`, `done` is `closed`, all others are
-  `active`. `completed_at` is set when a task enters a `closed` state.
-
-> **Deviation from earlier schema doc:** renamed from `task_state` to `task_type_state`.
-> `is_final BOOLEAN` has been replaced with `state_group TEXT` — a three-way
-> classification (`not_started` | `active` | `closed`).
+Optional ward overrides and custom task types. The composite key is
+`(ward_id, type)`.
 
 ```sql
-CREATE TABLE task_type_state (
-  id                  TEXT PRIMARY KEY,
-  ward_id             TEXT NOT NULL REFERENCES ward (id) ON DELETE CASCADE,
-  task_type           TEXT NOT NULL,
-  state               TEXT NOT NULL,
-  label               TEXT NOT NULL,
-  color               TEXT NOT NULL DEFAULT '#3b82f6',
-  order_index         INTEGER NOT NULL DEFAULT 0,
-  state_group         TEXT NOT NULL DEFAULT 'active',
-  created_at          TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  updated_at          TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+CREATE TABLE task_type (
+  ward_id       TEXT NOT NULL REFERENCES ward (id) ON DELETE CASCADE,
+  type          TEXT NOT NULL,
+  name          TEXT NOT NULL,
+  name_short    TEXT NOT NULL DEFAULT 'T',
+  color         TEXT NOT NULL DEFAULT '#71717a',
+  configuration TEXT NOT NULL DEFAULT '{}',
+  enabled       BOOLEAN NOT NULL DEFAULT TRUE,
+  created_at    TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at    TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (ward_id, type)
 );
-```
-
-### Indexes
-
-```sql
-CREATE INDEX idx_task_type_state_type ON task_type_state (task_type);
-CREATE INDEX idx_task_type_state_ward_id ON task_type_state (ward_id);
-CREATE UNIQUE INDEX idx_task_type_state_ward_type_state_unique ON task_type_state (ward_id, task_type, state);
 ```
 
 ---
 
-## 10. `task_type_state_assignment`
+## 10. `task_type_state`
 
-Stores an optional per-ward assignee overlay for a resolved task state. The
-overlay applies to both code-defined and database-defined state sequences.
+Ward-scoped lifecycle states for task types.
 
-- `(ward_id, task_type, state)` — identifies the resolved state to customize.
-- `assign_to_user_id` — when set, a task entering this state is reassigned to
-  that user. The user must belong to the same ward.
-- No row means the task keeps its current `assigned_user_id`. Clearing an
-  assignment deletes the row. A deleted user leaves a row with `NULL` through
-  the `SET NULL` relation, which has the same keep-current behavior.
+```sql
+CREATE TABLE task_type_state (
+  id                        TEXT PRIMARY KEY,
+  ward_id                   TEXT NOT NULL REFERENCES ward (id) ON DELETE CASCADE,
+  task_type                 TEXT NOT NULL,
+  state                     TEXT NOT NULL,
+  label                     TEXT NOT NULL,
+  color                     TEXT NOT NULL DEFAULT '#3b82f6',
+  order_index               INTEGER NOT NULL DEFAULT 0,
+  state_group               TEXT NOT NULL DEFAULT 'active',
+  sunday_meeting_item_type  TEXT,
+  created_at                TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at                TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX idx_task_type_state_type ON task_type_state (task_type);
+CREATE INDEX idx_task_type_state_ward_id ON task_type_state (ward_id);
+CREATE UNIQUE INDEX idx_task_type_state_ward_type_state
+  ON task_type_state (ward_id, task_type, state);
+```
+
+`sunday_meeting_item_type` is nullable. When set, it must be one of
+`calling_sustain`, `calling_release`, or `priesthood_aaronic_inform`, and
+causes tasks currently in that state to be listed as Sunday-meeting candidates.
+
+---
+
+## 11. `task_type_state_assignment`
+
+Optional user-assignment overlay for each resolved task lifecycle state.
 
 ```sql
 CREATE TABLE task_type_state_assignment (
@@ -323,48 +353,3 @@ CREATE TABLE task_type_state_assignment (
 CREATE INDEX idx_task_type_state_assignment_user_id
   ON task_type_state_assignment (assign_to_user_id);
 ```
-
----
-
-## 11. `task_type`
-
-Optional per-ward overrides and custom task types. Composite primary key
-`(ward_id, type)` — no separate `id` column. A row with the same `type` as a
-code-defined default overrides that default's type-level metadata; a row with a
-new `type` defines a custom type.
-
-- `type` — code-defined types are `todo`, `temple_recommend`,
-  `temple_recommend_limited`, `youth_interview`, `calling`,
-  `priesthood_aaronic`, `priesthood_melchizedek`, `calling_release`, and
-  `check_in`. Matching rows override an automatic definition; other values are
-  custom types.
-- `name` — display name (e.g. "Temple recommend").
-- `name_short` — abbreviated label, max 4 characters (e.g. "T", "TL", "CALL", "CI", "Y"). Always rendered in a fixed-width slot for alignment.
-- `color` — hex color string used as the background of the type badge in the UI.
-- `configuration` — JSON string. `durationMinutes` is copied onto a `task` row at
-  creation time (so a task keeps its duration even if the type default later changes).
-  `showTaskTitle` controls whether the title field is shown for tasks of this type.
-- `enabled` — defaults to `TRUE`. Disabled types cannot be selected or created
-  as new tasks, but their resolved definitions remain available for existing
-  tasks.
-
-When a matching row has no `task_type_state` rows, the code-defined lifecycle
-continues to apply. When it has state rows, those rows replace the automatic
-lifecycle for that ward.
-
-```sql
-CREATE TABLE task_type (
-  ward_id           TEXT NOT NULL REFERENCES ward (id) ON DELETE CASCADE,
-  type              TEXT NOT NULL,
-  name              TEXT NOT NULL,
-  name_short        TEXT NOT NULL DEFAULT 'T',
-  color             TEXT NOT NULL DEFAULT '#71717a',
-  configuration     TEXT NOT NULL DEFAULT '{}',
-  enabled           BOOLEAN NOT NULL DEFAULT TRUE,
-  created_at        TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  updated_at        TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  PRIMARY KEY (ward_id, type)
-);
-```
-
-No extra indexes needed — the composite primary key covers lookups by `(ward_id, type)`.
