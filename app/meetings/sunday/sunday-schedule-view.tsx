@@ -74,8 +74,11 @@ import {
 } from "./actions";
 import { SundayPersonDialog } from "./sunday-person-dialog";
 import { SundayScheduleBoundaryAction } from "./sunday-schedule-boundary-action";
+import { cn } from "@/lib/utils";
+import { getSundayScheduleDisplayState } from "@/lib/sunday-meetings/schedule";
 
 type ScheduleData = {
+  currentSunday: string;
   range: { start: string; end: string };
   contentLocale: string;
   timeZone: string;
@@ -179,7 +182,9 @@ export function SundayScheduleView({
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Date</TableHead>
+                  <TableHead className="sticky left-0 z-20 bg-background">
+                    Date
+                  </TableHead>
                   <TableHead>Type</TableHead>
                   <TableHead>Leading</TableHead>
                   <TableHead>Organist(s)</TableHead>
@@ -213,6 +218,7 @@ export function SundayScheduleView({
                     speakerColumns={speakerColumns}
                     members={members}
                     run={run}
+                    currentSunday={schedule.currentSunday}
                   />
                 ))}
                 {schedule.showAfter && (
@@ -242,6 +248,7 @@ export function SundayScheduleView({
                 meeting={row}
                 members={members}
                 run={run}
+                currentSunday={schedule.currentSunday}
               />
             ))}
             {schedule.showAfter && (
@@ -267,17 +274,35 @@ function ScheduleTableRow({
   speakerColumns,
   members,
   run,
+  currentSunday,
 }: {
   meeting: SundayMeeting;
   speakerColumns: number;
   members: SundayMeetingMemberHistory[];
   run: (action: () => Promise<unknown>, errorMessage: string) => void;
+  currentSunday: string;
 }) {
   const local = isLocalMeetingType(meeting.type);
+  const displayState = getSundayScheduleDisplayState(meeting.type, meeting.date, currentSunday);
+  const rowClassName = cn(
+    "group",
+    displayState.hasSubtleFill &&
+      "bg-yellow-100/60 hover:bg-yellow-100/60 dark:bg-yellow-900/20 dark:hover:bg-yellow-900/20",
+    displayState.isCurrent &&
+      "font-semibold [&>td]:border-y-2 [&>td:first-child]:border-l-2 [&>td:last-child]:border-r-2 [&>td]:border-primary",
+  );
+  const dateCellClassName = cn(
+    "sticky left-0 z-10 bg-background",
+    displayState.hasSubtleFill
+      ? "group-hover:bg-yellow-100/60 dark:group-hover:bg-yellow-900/20"
+      : "group-hover:bg-muted/50",
+    displayState.hasSubtleFill &&
+      "bg-yellow-100/60 dark:bg-yellow-900/20",
+  );
 
   return (
-    <TableRow>
-      <TableCell className="font-medium">
+    <TableRow className={rowClassName}>
+      <TableCell className={cn("font-medium", dateCellClassName)}>
         <Link
           className="underline-offset-4 hover:underline"
           href={`/meetings/sunday/leading?date=${meeting.date}`}
@@ -351,15 +376,23 @@ function ScheduleMobileCard({
   meeting,
   members,
   run,
+  currentSunday,
 }: {
   meeting: SundayMeeting;
   members: SundayMeetingMemberHistory[];
   run: (action: () => Promise<unknown>, errorMessage: string) => void;
+  currentSunday: string;
 }) {
   const local = isLocalMeetingType(meeting.type);
+  const displayState = getSundayScheduleDisplayState(meeting.type, meeting.date, currentSunday);
 
   return (
-    <Card>
+    <Card
+      className={cn(
+        displayState.hasSubtleFill && "bg-yellow-100/60 dark:bg-yellow-900/20",
+        displayState.isCurrent && "font-semibold ring-2 ring-primary",
+      )}
+    >
       <CardHeader className="gap-3">
         <div className="flex items-start justify-between gap-3">
           <div className="flex flex-col gap-1">

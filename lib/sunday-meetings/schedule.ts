@@ -1,10 +1,22 @@
 import { isSunday } from "./calendar.ts";
+import type { SundayMeetingType } from "./types";
 
 export const SUNDAY_SCHEDULE_POLICY = {
   priorLimit: 3,
   currentLimit: 12,
   cursorPageLimit: 16,
 } as const;
+
+export function getSundayScheduleDisplayState(
+  type: SundayMeetingType,
+  date: string,
+  currentSunday: string,
+) {
+  return {
+    isCurrent: date === currentSunday,
+    hasSubtleFill: type !== "sacrament" && type !== "fast_testimony",
+  } as const;
+}
 
 export function safeSundayCursor(value: string | undefined): string | undefined {
   if (!value) return undefined;

@@ -279,6 +279,7 @@ export async function loadSundaySchedule(
   );
 
   return {
+    currentSunday,
     range: { start: firstDate, end: lastDate },
     contentLocale: settings.content_locale,
     timeZone: settings.time_zone,

@@ -3,26 +3,14 @@ Fix the following in the sunday schedule (meetings). Keep a docs/SUNDAY_MEETING.
 
 Agents to delegate to:
 - @explore - for finding code (do not ask to interpret code, just to find and return the code with path and code - saying what line numbers they are at)
-- @architect - for architecture questions
-- @code - for writing the code implementation
+- @architect - for architecture questions - give it related context you already got through @explore and by yourself
+- @code - for writing the code implementation - give it a plan you or @architect made for this change so it is clear in what way to implement it.
 - @code-review - ror a code review
 
 Task to do:
 {{ TASK }}
 
 ----
-
-- ✅do not automatically generate past and future sundays
-  - ✅have a button at the bottom to add a new one after last existing sunday.
-  - ✅have a button at the top to add a new one before first sunday
-  - ✅earlier/later buttons on the screen do not generate new ones if none on that page. they are hidden in case there are no previous / next sundays
-- ✅on a page only show 16 sundays. by default show previous 3, current 12
-
-- different background colors for the rows
-  - today or upcoming sunday with bold text and border around whole row
-  - all non sacrament or fast and testimony ones with a slightly yellow background
-  - the sacrament/fast and testimony ones have no background as they are now
-- keep date frozen on left when scrolling right
 
 -> FOR SUNDAY MEETING -> on task_type status have a boolean if that status is to be presented in sacrament. Maybe even as what? Not sure on that one. But at least something to be clear it is the state to be done in sacrament meeting.
 Fixes on sunday planning list
@@ -33,6 +21,9 @@ Fixes on sunday planning list
 
 - when loading, can we load them quicker instead of loading each and then for each doing another load for the rows. can we not just get sundays and then all items for all sundays and those then correctly split up again for each sunday? so that we can reduce quries to db which slows the page load down. find ways to improve the loading speed without making the code difficult to read.
 - TODO meeting leader: just allow selecting from ???
+
+
+--> leading view separate from detail view? two completely different views might make sense
 
 on leading view
 - no previous / next
