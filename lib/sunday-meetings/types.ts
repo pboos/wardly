@@ -206,26 +206,6 @@ export type SundayMeeting = {
   presider: SundayMeetingAssignment | null;
 };
 
-export type HymnReference = {
-  number: number | null;
-  title: string | null;
-  text: string | null;
-};
-
-export type SundayMeetingScheduleRow = {
-  meeting: SundayMeeting;
-  leader: string | null;
-  organists: string[];
-  conductors: string[];
-  openingHymn: HymnReference | null;
-  sacramentHymn: HymnReference | null;
-  interludeHymn: HymnReference | null;
-  closingHymn: HymnReference | null;
-  openingPrayer: string | null;
-  closingPrayer: string | null;
-  speakers: Array<string | null>;
-};
-
 export type SundayMeetingTaskCandidate = {
   id: string;
   itemType: SundayMeetingTaskItemType;

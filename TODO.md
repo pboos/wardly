@@ -12,20 +12,20 @@ Task to do:
 
 ----
 
--> FOR SUNDAY MEETING -> on task_type status have a boolean if that status is to be presented in sacrament. Maybe even as what? Not sure on that one. But at least something to be clear it is the state to be done in sacrament meeting.
-Fixes on sunday planning list
-
-- do not automatically generate past and future sundays
-  - have a button at the bottom to add a new one after last existing sunday.
-  - have a button at the top to add a new one before first sunday
-  - earlier/later buttons on the screen do not generate new ones if none on that page. they are hidden in case there are no previous / next sundays
-- on a page only show 16 sundays. by default show previous 3, current 12
+- ✅do not automatically generate past and future sundays
+  - ✅have a button at the bottom to add a new one after last existing sunday.
+  - ✅have a button at the top to add a new one before first sunday
+  - ✅earlier/later buttons on the screen do not generate new ones if none on that page. they are hidden in case there are no previous / next sundays
+- ✅on a page only show 16 sundays. by default show previous 3, current 12
 
 - different background colors for the rows
   - today or upcoming sunday with bold text and border around whole row
   - all non sacrament or fast and testimony ones with a slightly yellow background
   - the sacrament/fast and testimony ones have no background as they are now
 - keep date frozen on left when scrolling right
+
+-> FOR SUNDAY MEETING -> on task_type status have a boolean if that status is to be presented in sacrament. Maybe even as what? Not sure on that one. But at least something to be clear it is the state to be done in sacrament meeting.
+Fixes on sunday planning list
 
 - editing
   - on edit hymn: no dialog, in line edit. when pressing enter, save it. on enter in text field it should save it. instead of d

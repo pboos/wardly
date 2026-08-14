@@ -1,5 +1,4 @@
 import type {
-  HymnReference,
   SundayMeeting,
   SundayMeetingAssignment,
   SundayMeetingItem,
@@ -16,19 +15,6 @@ export function resolvePresider(
         assignment.role === "visitor" && assignment.isPresidingOverride,
     ) ?? null
   );
-}
-
-export function resolveHymn(
-  number: number | null,
-  contentLocale: string,
-): HymnReference {
-  // TODO: Replace this placeholder with ward-language JSON hymn catalogs.
-  void contentLocale;
-  return {
-    number,
-    title: number === null ? null : `Hymn ${number}`,
-    text: null,
-  };
 }
 
 function namesFor(

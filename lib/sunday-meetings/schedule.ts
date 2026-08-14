@@ -1,3 +1,5 @@
+import { isSunday } from "./calendar.ts";
+
 export const SUNDAY_SCHEDULE_POLICY = {
   priorLimit: 3,
   currentLimit: 12,
@@ -7,15 +9,7 @@ export const SUNDAY_SCHEDULE_POLICY = {
 export function safeSundayCursor(value: string | undefined): string | undefined {
   if (!value) return undefined;
   try {
-    if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return undefined;
-    const [year, month, day] = value.split("-").map(Number);
-    const date = new Date(Date.UTC(year, month - 1, day));
-    if (
-      date.getUTCFullYear() !== year ||
-      date.getUTCMonth() !== month - 1 ||
-      date.getUTCDate() !== day
-    ) return undefined;
-    return date.getUTCDay() === 0 ? value : undefined;
+    return isSunday(value) ? value : undefined;
   } catch {
     return undefined;
   }

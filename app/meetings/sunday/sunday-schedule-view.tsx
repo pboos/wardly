@@ -49,7 +49,6 @@ import type {
   SundayMeeting,
   SundayMeetingItem,
   SundayMeetingMemberHistory,
-  SundayMeetingScheduleRow,
   SundayMeetingStandardSlot,
   SundayMeetingType,
 } from "@/lib/sunday-meetings/types";
@@ -77,12 +76,10 @@ import { SundayPersonDialog } from "./sunday-person-dialog";
 import { SundayScheduleBoundaryAction } from "./sunday-schedule-boundary-action";
 
 type ScheduleData = {
-  range: { start: string; end: string; dates: string[] };
+  range: { start: string; end: string };
   contentLocale: string;
   timeZone: string;
-  rows: SundayMeetingScheduleRow[];
-  earliestDate: string | null;
-  latestDate: string | null;
+  rows: SundayMeeting[];
   hasEarlier: boolean;
   hasLater: boolean;
   showBefore: boolean;
@@ -102,7 +99,7 @@ export function SundayScheduleView({
   const [, startTransition] = useTransition();
   const speakerColumns = Math.max(
     3,
-    ...schedule.rows.map((row) => row.speakers.length),
+    ...schedule.rows.map(speakerCount),
   );
 
   function run(action: () => Promise<unknown>, errorMessage: string) {
@@ -211,8 +208,8 @@ export function SundayScheduleView({
                 )}
                 {schedule.rows.map((row) => (
                   <ScheduleTableRow
-                    key={row.meeting.id}
-                    row={row}
+                    key={row.id}
+                    meeting={row}
                     speakerColumns={speakerColumns}
                     members={members}
                     run={run}
@@ -241,8 +238,8 @@ export function SundayScheduleView({
             )}
             {schedule.rows.map((row) => (
               <ScheduleMobileCard
-                key={row.meeting.id}
-                row={row}
+                key={row.id}
+                meeting={row}
                 members={members}
                 run={run}
               />
@@ -261,18 +258,21 @@ export function SundayScheduleView({
   );
 }
 
+function speakerCount(meeting: SundayMeeting): number {
+  return meeting.items.filter((item) => item.type === "talk").length;
+}
+
 function ScheduleTableRow({
-  row,
+  meeting,
   speakerColumns,
   members,
   run,
 }: {
-  row: SundayMeetingScheduleRow;
+  meeting: SundayMeeting;
   speakerColumns: number;
   members: SundayMeetingMemberHistory[];
   run: (action: () => Promise<unknown>, errorMessage: string) => void;
 }) {
-  const { meeting } = row;
   const local = isLocalMeetingType(meeting.type);
 
   return (
@@ -348,15 +348,14 @@ function ScheduleTableRow({
 }
 
 function ScheduleMobileCard({
-  row,
+  meeting,
   members,
   run,
 }: {
-  row: SundayMeetingScheduleRow;
+  meeting: SundayMeeting;
   members: SundayMeetingMemberHistory[];
   run: (action: () => Promise<unknown>, errorMessage: string) => void;
 }) {
-  const { meeting } = row;
   const local = isLocalMeetingType(meeting.type);
 
   return (
@@ -408,7 +407,7 @@ function ScheduleMobileCard({
           <MobileEditorRow label="Closing prayer">
             <PrayerCell meeting={meeting} slot="closing_prayer" local members={members} />
           </MobileEditorRow>
-          {Array.from({ length: Math.max(3, row.speakers.length) }, (_, index) => (
+          {Array.from({ length: Math.max(3, speakerCount(meeting)) }, (_, index) => (
             <MobileEditorRow key={index} label={`Speaker ${index + 1}`}>
               <SpeakerCell meeting={meeting} index={index} local members={members} />
             </MobileEditorRow>

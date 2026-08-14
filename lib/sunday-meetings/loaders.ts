@@ -7,7 +7,8 @@ import {
   upcomingSunday,
 } from "./calendar";
 import { createOrLoadSundayMeeting } from "./service";
-import { generateSupportText, resolveHymn, resolvePresider } from "./support";
+import { generateSupportText, resolvePresider } from "./support";
+import { buildSundayMeetingMemberHistory } from "./history";
 import { loadSundayMeetingTaskCandidates } from "./tasks";
 import {
   SUNDAY_SCHEDULE_POLICY,
@@ -22,12 +23,10 @@ import {
   isSundayMeetingStandardSlot,
   isSundayMeetingType,
   isSundayMeetingVisitorRole,
-  type AssignmentDate,
   type SundayMeeting,
   type SundayMeetingAssignment,
   type SundayMeetingItem,
   type SundayMeetingMemberHistory,
-  type SundayMeetingScheduleRow,
   type SundayMeetingStandardSlot,
 } from "./types";
 
@@ -172,72 +171,6 @@ export async function loadSundayMeeting(
   return record ? mapSundayMeeting(record) : null;
 }
 
-function itemForSlot(meeting: SundayMeeting, slot: string): SundayMeetingItem | null {
-  return meeting.items.find((item) => item.standardSlot === slot) ?? null;
-}
-
-function scheduleHymn(
-  meeting: SundayMeeting,
-  slot: string,
-  contentLocale: string,
-) {
-  const item = itemForSlot(meeting, slot);
-  if (!item) {
-    return null;
-  }
-  if (item.type === "musical_number") {
-    return {
-      number: null,
-      title: item.content ?? "Musical number",
-      text: null,
-    };
-  }
-  return resolveHymn(item.hymnNumber, contentLocale);
-}
-
-function personForSlot(
-  meeting: SundayMeeting,
-  slot: string,
-  role: string,
-): string | null {
-  return (
-    itemForSlot(meeting, slot)?.assignments.find(
-      (assignment) => assignment.role === role,
-    )?.name ?? null
-  );
-}
-
-function toScheduleRow(
-  meeting: SundayMeeting,
-  contentLocale: string,
-): SundayMeetingScheduleRow {
-  return {
-    meeting,
-    leader:
-      meeting.assignments.find((assignment) => assignment.role === "leader")
-        ?.name ?? null,
-    organists: meeting.assignments
-      .filter((assignment) => assignment.role === "organist")
-      .map((assignment) => assignment.name),
-    conductors: meeting.assignments
-      .filter((assignment) => assignment.role === "music_conductor")
-      .map((assignment) => assignment.name),
-    openingHymn: scheduleHymn(meeting, "opening_hymn", contentLocale),
-    sacramentHymn: scheduleHymn(meeting, "sacrament_hymn", contentLocale),
-    interludeHymn: scheduleHymn(meeting, "interlude", contentLocale),
-    closingHymn: scheduleHymn(meeting, "closing_hymn", contentLocale),
-    openingPrayer: personForSlot(meeting, "opening_prayer", "prayer"),
-    closingPrayer: personForSlot(meeting, "closing_prayer", "prayer"),
-    speakers: meeting.items
-      .filter((item) => item.type === "talk")
-      .map(
-        (item) =>
-          item.assignments.find((assignment) => assignment.role === "speaker")
-            ?.name ?? null,
-      ),
-  };
-}
-
 export async function loadSundaySchedule(
   wardId: string,
   options: { anchor?: string; before?: string; after?: string } = {},
@@ -346,14 +279,10 @@ export async function loadSundaySchedule(
   );
 
   return {
-    range: { start: firstDate, end: lastDate, dates: selected.map((record) => record.date) },
+    range: { start: firstDate, end: lastDate },
     contentLocale: settings.content_locale,
     timeZone: settings.time_zone,
-    rows: selected.map((record) =>
-      toScheduleRow(mapSundayMeeting(record), settings.content_locale),
-    ),
-    earliestDate: earliestDate ?? null,
-    latestDate: latestDate ?? null,
+    rows: selected.map(mapSundayMeeting),
     ...boundaryVisibility,
     earlierCursor: firstDate,
     laterCursor: lastDate,
@@ -421,51 +350,7 @@ export async function loadSundayMeetingMemberHistory(
     }),
   ]);
 
-  function dateFor(
-    memberId: string,
-    role: "speaker" | "prayer",
-    direction: "past" | "future",
-  ): AssignmentDate | null {
-    const matching = assignments
-      .filter(
-        (assignment) =>
-          assignment.member_id === memberId && assignment.role === role,
-      )
-      .filter((assignment) =>
-        direction === "past"
-          ? assignment.sunday_meeting.date < today
-          : assignment.sunday_meeting.date >= today,
-      )
-      .sort((left, right) =>
-        direction === "past"
-          ? right.sunday_meeting.date.localeCompare(left.sunday_meeting.date)
-          : left.sunday_meeting.date.localeCompare(right.sunday_meeting.date),
-      );
-    const match = matching[0];
-    if (!match || !isSundayMeetingType(match.sunday_meeting.type)) {
-      return null;
-    }
-    return {
-      date: match.sunday_meeting.date,
-      meetingType: match.sunday_meeting.type,
-    };
-  }
-
-  return members
-    .map((member) => ({
-      id: member.id,
-      name: `${member.first_name} ${member.last_name}`.trim(),
-      status: member.status,
-      lastTalk: dateFor(member.id, "speaker", "past"),
-      nextTalk: dateFor(member.id, "speaker", "future"),
-      lastPrayer: dateFor(member.id, "prayer", "past"),
-      nextPrayer: dateFor(member.id, "prayer", "future"),
-    }))
-    .sort((left, right) => {
-      const leftDate = left.lastTalk?.date ?? left.lastPrayer?.date ?? "";
-      const rightDate = right.lastTalk?.date ?? right.lastPrayer?.date ?? "";
-      return leftDate.localeCompare(rightDate);
-    });
+  return buildSundayMeetingMemberHistory(members, assignments, today, isSundayMeetingType);
 }
 
 export async function loadLeadingSundayMeeting(
