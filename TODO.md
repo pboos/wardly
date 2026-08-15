@@ -12,12 +12,14 @@ Task to do:
 
 ----
 
+🚧🚧🚧🚧
+- editing without dialog
+  - on edit hymn: no dialog, in line edit. when pressing enter, save it. on enter in text field it should save it.
+  - people cells: no dialog, show people as chips that also have an X to remove them again. When clicking inside the box one can type which will list the members to select from. If no member and just enter, then it will be a free text name. Maybe for the chip different color for member and free text name. backspace if on the left there is a chip should delete that person. this should be an own component that can be reused on each field and reports back the members and free text names. it can also be limited to just allow 1 for the cells that only have one person assigned (opening prayer, lead, ...).
+  - free text (Information): keep this one as it is for now.
+
 -> FOR SUNDAY MEETING -> on task_type status have a boolean if that status is to be presented in sacrament. Maybe even as what? Not sure on that one. But at least something to be clear it is the state to be done in sacrament meeting.
 Fixes on sunday planning list
-
-- editing
-  - on edit hymn: no dialog, in line edit. when pressing enter, save it. on enter in text field it should save it. instead of d
-  - TODO maybe each sell just to be a text field (or similar). if person, then it lists the members and one can type. If enter without selecting a member, then it will be a non member. And if multiple are possible, then have it shown as a badge. backspace will delete the previous one, after it allows again adding one (member or non member from ward).
 
 - when loading, can we load them quicker instead of loading each and then for each doing another load for the rows. can we not just get sundays and then all items for all sundays and those then correctly split up again for each sunday? so that we can reduce quries to db which slows the page load down. find ways to improve the loading speed without making the code difficult to read.
 - TODO meeting leader: just allow selecting from ???

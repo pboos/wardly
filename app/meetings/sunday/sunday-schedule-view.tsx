@@ -63,7 +63,6 @@ import {
   removeSundayPerson,
   replaceSundayItemPerson,
   setSundayMeetingLeader,
-  updateSundayPerson,
   updateSundayAgendaItem,
   updateSundayMeetingInformation,
   updateSundayMeetingType,
@@ -72,7 +71,8 @@ import {
   addSundayMeetingBeforeEarliest,
   bootstrapSundaySchedule,
 } from "./actions";
-import { SundayPersonDialog } from "./sunday-person-dialog";
+import { SundayInlinePeopleEditor } from "./sunday-inline-people-editor";
+import { SundayInlineHymnEditor } from "./sunday-inline-hymn-editor";
 import { SundayScheduleBoundaryAction } from "./sunday-schedule-boundary-action";
 import { cn } from "@/lib/utils";
 import { getSundayScheduleDisplayState } from "@/lib/sunday-meetings/schedule";
@@ -500,13 +500,14 @@ function LeaderPicker({
 }) {
   const leader = meeting.assignments.find((assignment) => assignment.role === "leader") ?? null;
   return (
-    <SundayPersonDialog
-      assignment={leader}
+    <SundayInlinePeopleEditor
+      label="Meeting leader"
+      assignments={leader ? [leader] : []}
       members={members}
-      title="Meeting leader"
-      triggerLabel="Assign leader"
-      onSave={(input) => setSundayMeetingLeader(meeting.id, input)}
-      onRemove={leader ? () => setSundayMeetingLeader(meeting.id, null) : undefined}
+      maxPeople={1}
+      onAdd={(input) => setSundayMeetingLeader(meeting.id, input)}
+      onReplace={(input) => setSundayMeetingLeader(meeting.id, input)}
+      onRemove={() => setSundayMeetingLeader(meeting.id, null)}
     />
   );
 }
@@ -524,28 +525,14 @@ function MeetingPeopleCell({
   const label = role === "organist" ? "Organist" : "Music conductor";
 
   return (
-    <div className="flex min-w-32 flex-wrap gap-1">
-      {assignments.map((assignment) => (
-        <SundayPersonDialog
-          key={assignment.id}
-          assignment={assignment}
-          members={members}
-          title={label}
-          triggerVariant="secondary"
-          triggerClassName="max-w-36 truncate"
-          onSave={(input) => updateSundayPerson(assignment.id, input)}
-          onRemove={() => removeSundayPerson(assignment.id)}
-        />
-      ))}
-      <SundayPersonDialog
-        assignment={null}
-        members={members}
-        title={label}
-        triggerLabel={`Add ${label.toLowerCase()}`}
-        triggerVariant="outline"
-        onSave={(input) => addSundayMeetingPerson(meeting.id, role, input).then(() => undefined)}
-      />
-    </div>
+    <SundayInlinePeopleEditor
+      label={label}
+      assignments={assignments}
+      members={members}
+      onAdd={(input) => addSundayMeetingPerson(meeting.id, role, input)}
+      onReplace={(input) => addSundayMeetingPerson(meeting.id, role, input)}
+      onRemove={(assignment) => removeSundayPerson(assignment.id)}
+    />
   );
 }
 
@@ -561,111 +548,7 @@ function HymnCell({
   const item = findSlot(meeting, slot);
   if (!local || !item) return <EmptyCell />;
 
-  return <HymnDialog item={item} allowMusicalNumber={slot === "interlude"} />;
-}
-
-function HymnDialog({
-  item,
-  allowMusicalNumber,
-}: {
-  item: SundayMeetingItem;
-  allowMusicalNumber: boolean;
-}) {
-  const router = useRouter();
-  const id = useState(() => `hymn-${item.id}`)[0];
-  const [, startTransition] = useTransition();
-  const [open, setOpen] = useState(false);
-  const [kind, setKind] = useState<"hymn" | "musical_number">(
-    item.type === "musical_number" ? "musical_number" : "hymn",
-  );
-  const [number, setNumber] = useState(item.hymnNumber?.toString() ?? "");
-  const [description, setDescription] = useState(item.content ?? "");
-
-  function save() {
-    const hymnNumber = number.trim() ? Number(number) : null;
-    startTransition(async () => {
-      try {
-        await updateSundayAgendaItem(item.id, {
-          type: kind,
-          hymnNumber: kind === "hymn" ? hymnNumber : null,
-          content: kind === "musical_number" ? description : null,
-        });
-        setOpen(false);
-        router.refresh();
-      } catch (error) {
-        toast.error(error instanceof Error ? error.message : "Could not update hymn.");
-      }
-    });
-  }
-
-  const label = item.type === "musical_number"
-    ? item.content || "Musical number"
-    : item.hymnNumber
-      ? `Hymn ${item.hymnNumber}`
-      : "Assign hymn";
-
-  return (
-    <>
-      <Button type="button" variant="ghost" size="sm" onClick={() => setOpen(true)}>
-        {label}
-      </Button>
-      <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Music item</DialogTitle>
-          </DialogHeader>
-          <FieldGroup>
-            {allowMusicalNumber && (
-              <Field>
-                <FieldLabel htmlFor={`${id}-kind`}>Item type</FieldLabel>
-                <Select value={kind} onValueChange={(value) => setKind(value as "hymn" | "musical_number")}>
-                  <SelectTrigger id={`${id}-kind`} className="w-full">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectGroup>
-                      <SelectItem value="hymn">Hymn</SelectItem>
-                      <SelectItem value="musical_number">Musical number</SelectItem>
-                    </SelectGroup>
-                  </SelectContent>
-                </Select>
-              </Field>
-            )}
-            {kind === "hymn" ? (
-              <Field>
-                <FieldLabel htmlFor={`${id}-number`}>Hymn number</FieldLabel>
-                <Input
-                  id={`${id}-number`}
-                  type="number"
-                  inputMode="numeric"
-                  min={1}
-                  value={number}
-                  onChange={(event) => setNumber(event.target.value)}
-                  placeholder="For example, 100"
-                />
-              </Field>
-            ) : (
-              <Field>
-                <FieldLabel htmlFor={`${id}-description`}>Description</FieldLabel>
-                <Input
-                  id={`${id}-description`}
-                  value={description}
-                  onChange={(event) => setDescription(event.target.value)}
-                  placeholder="Musical number details"
-                />
-              </Field>
-            )}
-          </FieldGroup>
-          <DialogFooter>
-            <Button type="button" variant="outline" onClick={() => setOpen(false)}>
-              Cancel
-            </Button>
-            <Button type="button" onClick={save}>Save</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-    </>
-  );
+  return <SundayInlineHymnEditor item={item} allowMusicalNumber={slot === "interlude"} onSave={(payload) => updateSundayAgendaItem(item.id, payload)} />;
 }
 
 function InformationCell({ meeting }: { meeting: SundayMeeting }) {
@@ -696,14 +579,14 @@ function PrayerCell({
   const assignment = item.assignments.find((candidate) => candidate.role === "prayer") ?? null;
   const title = slot === "opening_prayer" ? "Opening prayer" : "Closing prayer";
   return (
-    <SundayPersonDialog
-      assignment={assignment}
+    <SundayInlinePeopleEditor
+      assignments={assignment ? [assignment] : []}
       members={members}
-      title={title}
-      triggerLabel="Assign prayer"
-      roleWithHistory="prayer"
-      onSave={(input) => replaceSundayItemPerson(item.id, "prayer", input)}
-      onRemove={assignment ? () => replaceSundayItemPerson(item.id, "prayer", null) : undefined}
+      label={title}
+      maxPeople={1}
+      onAdd={(input) => replaceSundayItemPerson(item.id, "prayer", input)}
+      onReplace={(input) => replaceSundayItemPerson(item.id, "prayer", input)}
+      onRemove={() => replaceSundayItemPerson(item.id, "prayer", null)}
     />
   );
 }
@@ -727,24 +610,23 @@ function SpeakerCell({
   const assignment = item?.assignments.find((candidate) => candidate.role === "speaker") ?? null;
 
   return (
-    <SundayPersonDialog
-      assignment={assignment}
+    <SundayInlinePeopleEditor
+      assignments={assignment ? [assignment] : []}
       members={members}
-      title={`Speaker ${index + 1}`}
-      triggerLabel="Assign speaker"
-      roleWithHistory="speaker"
-      onSave={async (input) => {
+      label={`Speaker ${index + 1}`}
+      maxPeople={1}
+      onAdd={async (input) => {
         const talkId = item?.id ?? await addSundayAgendaItem(meeting.id, {
           type: "talk",
           section: "program",
         });
         await replaceSundayItemPerson(talkId, "speaker", input);
       }}
-      onRemove={
-        item && assignment
-          ? () => replaceSundayItemPerson(item.id, "speaker", null)
-          : undefined
-      }
+      onReplace={async (input) => {
+        const talkId = item?.id ?? await addSundayAgendaItem(meeting.id, { type: "talk", section: "program" });
+        await replaceSundayItemPerson(talkId, "speaker", input);
+      }}
+      onRemove={() => item ? replaceSundayItemPerson(item.id, "speaker", null) : Promise.resolve()}
     />
   );
 }
