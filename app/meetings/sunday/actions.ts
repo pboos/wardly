@@ -3,40 +3,66 @@
 import { revalidatePath } from "next/cache";
 import { getCurrentUser } from "@/lib/auth/dal";
 import {
-  addAgendaItem,
-  addItemAssignment,
-  addMeetingAssignment,
+  addSundayItem,
+  bootstrapSundayMeeting,
   carryForwardItem,
   changeMeetingType,
-  deleteAgendaItem,
-  removeAssignment,
-  reorderAgenda,
-  replaceItemAssignment,
-  setMeetingLeader,
-  setPresidingVisitor,
-  updateAgendaItem,
-  updateAssignment,
-  updateMeetingInformation,
-  updateSundayMeetingSettings,
-  bootstrapSundayMeeting,
   createSundayMeetingAfterLatest,
   createSundayMeetingBeforeEarliest,
+  deleteSundayItem,
+  moveSundayItem,
+  updateMeetingInformation,
+  updateSundayItem,
+  updateSundayMeetingSettings,
+  upsertSundayItem,
+} from "@/lib/sunday-meetings/service";
+import type {
+  AddSundayItemInput,
+  MoveSundayItemInput,
+  UpdateSundayItemInput,
+  UpsertSundayItemInput,
 } from "@/lib/sunday-meetings/service";
 import { addSuggestedTaskToMeeting } from "@/lib/sunday-meetings/tasks";
-import type {
-  AddAgendaItemInput,
-  UpdateAgendaItemInput,
-} from "@/lib/sunday-meetings/service";
-import type {
-  SundayMeetingAssignmentInput,
-  SundayMeetingAssignmentRole,
-  SundayMeetingItemAssignmentRole,
-  SundayMeetingType,
-} from "@/lib/sunday-meetings/types";
+import type { SundayMeetingType } from "@/lib/sunday-meetings/types";
 
 function revalidateSundayMeetingRoutes(): void {
   revalidatePath("/meetings/sunday");
   revalidatePath("/meetings/sunday/leading");
+}
+
+/**
+ * Server actions receive untyped client payloads. Assert the object shape up
+ * front so malformed input fails with a clear error; the service layer
+ * validates the semantic rules (type/section membership, person XOR,
+ * hymn number, …).
+ */
+function assertPlainObject(value: unknown, message: string): void {
+  if (typeof value !== "object" || value === null || Array.isArray(value)) {
+    throw new Error(message);
+  }
+}
+
+function assertOptionalText(value: unknown, message: string): void {
+  if (value !== undefined && value !== null && typeof value !== "string") {
+    throw new Error(message);
+  }
+}
+
+function assertOptionalPerson(value: unknown): void {
+  if (value === undefined || value === null) {
+    return;
+  }
+  assertPlainObject(value, "Person input must be an object.");
+  const person = value as { memberId?: unknown; personName?: unknown };
+  assertOptionalText(person.memberId, "Person member must be a member id.");
+  assertOptionalText(person.personName, "Person name must be text.");
+}
+
+function assertOptionalMetadata(value: unknown): void {
+  if (value === undefined || value === null) {
+    return;
+  }
+  assertPlainObject(value, "Item metadata must be an object.");
 }
 
 export async function updateSundayMeetingType(
@@ -59,100 +85,68 @@ export async function updateSundayMeetingInformation(
 
 export async function addSundayAgendaItem(
   meetingId: string,
-  input: AddAgendaItemInput,
+  input: AddSundayItemInput,
 ) {
+  assertPlainObject(input, "Agenda item input must be an object.");
+  assertOptionalText(input.content, "Agenda item content must be text.");
+  assertOptionalPerson(input.person);
+  assertOptionalMetadata(input.metadata);
+  assertOptionalText(input.afterItemId, "Agenda position must be an item id.");
   const user = await getCurrentUser();
-  const id = await addAgendaItem(user.ward_id, meetingId, input);
+  const id = await addSundayItem(user.ward_id, meetingId, input);
   revalidateSundayMeetingRoutes();
   return id;
 }
 
 export async function updateSundayAgendaItem(
   itemId: string,
-  input: UpdateAgendaItemInput,
+  input: UpdateSundayItemInput,
 ) {
+  assertPlainObject(input, "Agenda item input must be an object.");
+  assertOptionalText(input.content, "Agenda item content must be text.");
+  assertOptionalPerson(input.person);
+  assertOptionalMetadata(input.metadata);
   const user = await getCurrentUser();
-  await updateAgendaItem(user.ward_id, itemId, input);
+  await updateSundayItem(user.ward_id, itemId, input);
   revalidateSundayMeetingRoutes();
 }
 
 export async function deleteSundayAgendaItem(itemId: string) {
   const user = await getCurrentUser();
-  await deleteAgendaItem(user.ward_id, itemId);
+  await deleteSundayItem(user.ward_id, itemId);
   revalidateSundayMeetingRoutes();
 }
 
-export async function reorderSundayAgenda(
+/** Slot cells, leader, and presiding: find-first-by type+section, update or create. */
+export async function upsertSundaySlotItem(
   meetingId: string,
-  orderedItemIds: string[],
+  input: UpsertSundayItemInput,
 ) {
+  assertPlainObject(input, "Slot item input must be an object.");
+  assertOptionalText(input.content, "Slot item content must be text.");
+  assertOptionalPerson(input.person);
+  assertOptionalMetadata(input.metadata);
   const user = await getCurrentUser();
-  await reorderAgenda(user.ward_id, meetingId, orderedItemIds);
+  await upsertSundayItem(user.ward_id, meetingId, input);
   revalidateSundayMeetingRoutes();
 }
 
-export async function setSundayMeetingLeader(
-  meetingId: string,
-  input: SundayMeetingAssignmentInput | null,
-) {
-  const user = await getCurrentUser();
-  await setMeetingLeader(user.ward_id, meetingId, input);
-  revalidateSundayMeetingRoutes();
-}
-
-export async function addSundayMeetingPerson(
-  meetingId: string,
-  role: SundayMeetingAssignmentRole,
-  input: SundayMeetingAssignmentInput,
-) {
-  const user = await getCurrentUser();
-  const id = await addMeetingAssignment(user.ward_id, meetingId, role, input);
-  revalidateSundayMeetingRoutes();
-  return id;
-}
-
-export async function addSundayItemPerson(
+/** Places an agenda item after another item and/or into another section. */
+export async function moveSundayAgendaItem(
   itemId: string,
-  role: SundayMeetingItemAssignmentRole,
-  input: SundayMeetingAssignmentInput,
+  input: MoveSundayItemInput,
 ) {
+  assertPlainObject(input, "Agenda move input must be an object.");
+  assertOptionalText(input.afterItemId, "Agenda position must be an item id.");
+  if (
+    input.position !== undefined &&
+    input.position !== "start" &&
+    input.position !== "end"
+  ) {
+    throw new Error("Agenda position must be 'start' or 'end'.");
+  }
   const user = await getCurrentUser();
-  const id = await addItemAssignment(user.ward_id, itemId, role, input);
-  revalidateSundayMeetingRoutes();
-  return id;
-}
-
-export async function replaceSundayItemPerson(
-  itemId: string,
-  role: SundayMeetingItemAssignmentRole,
-  input: SundayMeetingAssignmentInput | null,
-) {
-  const user = await getCurrentUser();
-  await replaceItemAssignment(user.ward_id, itemId, role, input);
-  revalidateSundayMeetingRoutes();
-}
-
-export async function updateSundayPerson(
-  assignmentId: string,
-  input: SundayMeetingAssignmentInput,
-) {
-  const user = await getCurrentUser();
-  await updateAssignment(user.ward_id, assignmentId, input);
-  revalidateSundayMeetingRoutes();
-}
-
-export async function removeSundayPerson(assignmentId: string) {
-  const user = await getCurrentUser();
-  await removeAssignment(user.ward_id, assignmentId);
-  revalidateSundayMeetingRoutes();
-}
-
-export async function setSundayPresidingVisitor(
-  meetingId: string,
-  assignmentId: string | null,
-) {
-  const user = await getCurrentUser();
-  await setPresidingVisitor(user.ward_id, meetingId, assignmentId);
+  await moveSundayItem(user.ward_id, itemId, input);
   revalidateSundayMeetingRoutes();
 }
 

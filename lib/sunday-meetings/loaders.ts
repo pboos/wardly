@@ -5,147 +5,119 @@ import {
   localToday,
   nextSunday,
   upcomingSunday,
-} from "./calendar";
-import { createOrLoadSundayMeeting } from "./service";
-import { generateSupportText, resolvePresider } from "./support";
-import { buildSundayMeetingMemberHistory } from "./history";
-import { loadSundayMeetingTaskCandidates } from "./tasks";
+} from "./calendar.ts";
+import { createOrLoadSundayMeeting } from "./service.ts";
+import { generateSupportText, resolvePresider } from "./support.ts";
+import { buildSundayMeetingMemberHistory } from "./history.ts";
+import { loadSundayMeetingTaskCandidates } from "./tasks.ts";
 import {
   SUNDAY_SCHEDULE_POLICY,
   getScheduleBoundaryVisibility,
   safeSundayCursor,
   shouldFallbackToDefaultSchedule,
-} from "./schedule";
+} from "./schedule.ts";
+import { sortSundayItems } from "./order.ts";
 import {
   isLocalMeetingType,
   isSundayMeetingItemType,
   isSundayMeetingSection,
-  isSundayMeetingStandardSlot,
   isSundayMeetingType,
-  isSundayMeetingVisitorRole,
+  parseItemMetadata,
   type SundayMeeting,
-  type SundayMeetingAssignment,
   type SundayMeetingItem,
   type SundayMeetingMemberHistory,
-  type SundayMeetingStandardSlot,
-} from "./types";
+  type SundayMeetingTaskSummary,
+} from "./types.ts";
 
-const meetingInclude = {
-  sunday_meeting_item: {
-    orderBy: { order_index: "asc" },
-    include: {
-      sunday_meeting_person_assignment: {
-        orderBy: { order_index: "asc" },
-        include: {
-          member: { select: { first_name: true, last_name: true } },
-        },
-      },
-      task: {
-        select: {
-          id: true,
-          title: true,
-          description: true,
-          member: { select: { first_name: true, last_name: true } },
-        },
-      },
-    },
-  },
-  sunday_meeting_person_assignment: {
-    where: { sunday_meeting_item_id: null },
-    orderBy: { order_index: "asc" },
-    include: {
+const itemInclude = {
+  member: { select: { first_name: true, last_name: true } },
+  task: {
+    select: {
+      id: true,
+      title: true,
+      description: true,
       member: { select: { first_name: true, last_name: true } },
     },
   },
+} satisfies Prisma.sunday_meeting_itemInclude;
+
+const meetingInclude = {
+  sunday_meeting_item: { include: itemInclude },
 } satisfies Prisma.sunday_meetingInclude;
+
+type ItemRecord = Prisma.sunday_meeting_itemGetPayload<{
+  include: typeof itemInclude;
+}>;
 
 type MeetingRecord = Prisma.sunday_meetingGetPayload<{
   include: typeof meetingInclude;
 }>;
 
-function fullName(
+type MeetingRow = Pick<
+  MeetingRecord,
+  "id" | "ward_id" | "date" | "type" | "information"
+>;
+
+function memberDisplayName(
   member: { first_name: string; last_name: string } | null,
-  freeTextName: string | null,
-): string {
-  if (member) {
-    return `${member.first_name} ${member.last_name}`.trim();
-  }
-  return freeTextName ?? "Unknown person";
+): string | null {
+  return member ? `${member.first_name} ${member.last_name}`.trim() : null;
 }
 
-function mapAssignment(
-  assignment: MeetingRecord["sunday_meeting_person_assignment"][number] | MeetingRecord["sunday_meeting_item"][number]["sunday_meeting_person_assignment"][number],
-): SundayMeetingAssignment {
+function mapTask(task: ItemRecord["task"]): SundayMeetingTaskSummary | null {
+  if (!task) {
+    return null;
+  }
   return {
-    id: assignment.id,
-    sundayMeetingId: assignment.sunday_meeting_id,
-    sundayMeetingItemId: assignment.sunday_meeting_item_id,
-    role: assignment.role as SundayMeetingAssignment["role"],
-    memberId: assignment.member_id,
-    freeTextName: assignment.free_text_name,
-    name: fullName(assignment.member, assignment.free_text_name),
-    orderIndex: assignment.order_index,
-    visitorRole: isSundayMeetingVisitorRole(assignment.visitor_role)
-      ? assignment.visitor_role
-      : null,
-    visitorRoleCustom: assignment.visitor_role_custom,
-    isPresidingOverride: assignment.is_presiding_override,
+    id: task.id,
+    title: task.title,
+    description: task.description,
+    memberName: memberDisplayName(task.member),
   };
 }
 
-function mapItem(
-  item: MeetingRecord["sunday_meeting_item"][number],
-): SundayMeetingItem {
-  if (!isSundayMeetingItemType(item.type) || !isSundayMeetingSection(item.section)) {
+function mapItem(item: ItemRecord): SundayMeetingItem {
+  if (
+    !isSundayMeetingItemType(item.type) ||
+    !isSundayMeetingSection(item.section)
+  ) {
     throw new Error("Sunday meeting contains an invalid agenda item.");
-  }
-  let standardSlot: SundayMeetingStandardSlot | null = null;
-  if (item.standard_slot) {
-    if (!isSundayMeetingStandardSlot(item.standard_slot)) {
-      throw new Error("Sunday meeting contains an invalid standard slot.");
-    }
-    standardSlot = item.standard_slot;
   }
   return {
     id: item.id,
     sundayMeetingId: item.sunday_meeting_id,
     type: item.type,
     section: item.section,
-    standardSlot,
     orderIndex: item.order_index,
     content: item.content,
-    hymnNumber: item.hymn_number,
+    metadata: parseItemMetadata(item.metadata),
+    personMemberId: item.person_member_id,
+    personName: item.person_name,
+    personNameResolved:
+      memberDisplayName(item.member) ?? item.person_name ?? null,
     taskId: item.task_id,
-    task: item.task
-      ? {
-          id: item.task.id,
-          title: item.task.title,
-          description: item.task.description,
-          memberName: item.task.member
-            ? `${item.task.member.first_name} ${item.task.member.last_name}`.trim()
-            : null,
-        }
-      : null,
-    assignments: item.sunday_meeting_person_assignment.map(mapAssignment),
+    task: mapTask(item.task),
+    createdAt: item.created_at.toISOString(),
   };
 }
 
-export function mapSundayMeeting(record: MeetingRecord): SundayMeeting {
+export function mapSundayMeeting(
+  record: MeetingRow & { sunday_meeting_item: readonly ItemRecord[] },
+): SundayMeeting {
   if (!isSundayMeetingType(record.type)) {
     throw new Error("Sunday meeting contains an invalid meeting type.");
   }
-  const assignments = record.sunday_meeting_person_assignment.map(mapAssignment);
+  const items = sortSundayItems(record.sunday_meeting_item.map(mapItem));
   const meeting: SundayMeeting = {
     id: record.id,
     wardId: record.ward_id,
     date: record.date,
     type: record.type,
     information: record.information,
-    items: record.sunday_meeting_item.map(mapItem),
-    assignments,
+    items,
     presider: null,
   };
-  meeting.presider = resolvePresider(assignments);
+  meeting.presider = resolvePresider(meeting);
   return meeting;
 }
 
@@ -180,34 +152,35 @@ export async function loadSundaySchedule(
   const before = safeSundayCursor(options.before);
   const after = safeSundayCursor(options.after);
   const anchor = safeSundayCursor(options.anchor);
-  const [earliest, latest] = await Promise.all([
-    prisma.sunday_meeting.findFirst({
-      where: { ward_id: wardId },
-      orderBy: { date: "asc" },
-      select: { date: true },
-    }),
-    prisma.sunday_meeting.findFirst({
-      where: { ward_id: wardId },
-      orderBy: { date: "desc" },
-      select: { date: true },
-    }),
-  ]);
+  const boundaries = await prisma.sunday_meeting.aggregate({
+    where: { ward_id: wardId },
+    _min: { date: true },
+    _max: { date: true },
+  });
+  const earliestDate = boundaries._min.date;
+  const latestDate = boundaries._max.date;
 
   async function loadPage(
     where: Prisma.sunday_meetingWhereInput,
     order: "asc" | "desc",
     take: number,
-  ): Promise<MeetingRecord[]> {
+  ): Promise<MeetingRow[]> {
     const rows = await prisma.sunday_meeting.findMany({
       where,
       orderBy: { date: order },
       take,
-      include: meetingInclude,
+      select: {
+        id: true,
+        ward_id: true,
+        date: true,
+        type: true,
+        information: true,
+      },
     });
     return order === "desc" ? rows.reverse() : rows;
   }
 
-  async function loadDefaultPage(): Promise<MeetingRecord[]> {
+  async function loadDefaultPage(): Promise<MeetingRow[]> {
     const [earlier, upcoming] = await Promise.all([
       loadPage(
         { ward_id: wardId, date: { lt: currentSunday } },
@@ -223,7 +196,7 @@ export async function loadSundaySchedule(
     return [...earlier, ...upcoming];
   }
 
-  async function loadSelectedPage(): Promise<MeetingRecord[]> {
+  async function loadSelectedPage(): Promise<MeetingRow[]> {
     if (before) {
       return loadPage(
         { ward_id: wardId, date: { lt: before } },
@@ -262,7 +235,7 @@ export async function loadSundaySchedule(
   if (
     shouldFallbackToDefaultSchedule(
       selected.length,
-      Boolean(earliest),
+      earliestDate !== null,
       Boolean(before || after || anchor),
     )
   ) {
@@ -270,20 +243,36 @@ export async function loadSundaySchedule(
   }
   const firstDate = selected[0]?.date ?? currentSunday;
   const lastDate = selected.at(-1)?.date ?? currentSunday;
-  const earliestDate = earliest?.date;
-  const latestDate = latest?.date;
   const boundaryVisibility = getScheduleBoundaryVisibility(
     selected.map((record) => record.date),
-    earliestDate ?? null,
-    latestDate ?? null,
+    earliestDate,
+    latestDate,
   );
+
+  // One batched query for every item on the selected Sundays.
+  const meetingIds = selected.map((record) => record.id);
+  const itemRecords = await prisma.sunday_meeting_item.findMany({
+    where: { sunday_meeting_id: { in: meetingIds } },
+    include: itemInclude,
+  });
+  const itemsByMeeting = new Map<string, ItemRecord[]>();
+  for (const item of itemRecords) {
+    const group = itemsByMeeting.get(item.sunday_meeting_id) ?? [];
+    group.push(item);
+    itemsByMeeting.set(item.sunday_meeting_id, group);
+  }
 
   return {
     currentSunday,
     range: { start: firstDate, end: lastDate },
     contentLocale: settings.content_locale,
     timeZone: settings.time_zone,
-    rows: selected.map(mapSundayMeeting),
+    rows: selected.map((record) =>
+      mapSundayMeeting({
+        ...record,
+        sunday_meeting_item: itemsByMeeting.get(record.id) ?? [],
+      }),
+    ),
     ...boundaryVisibility,
     earlierCursor: firstDate,
     laterCursor: lastDate,
@@ -331,27 +320,40 @@ export async function loadSundayMeetingMemberHistory(
 ): Promise<SundayMeetingMemberHistory[]> {
   const resolvedTimeZone = timeZone ?? (await getSundayMeetingSettings(wardId)).time_zone;
   const today = localToday(resolvedTimeZone);
-  const [members, assignments] = await Promise.all([
+  const [members, itemRecords] = await Promise.all([
     prisma.member.findMany({
       where: { ward_id: wardId },
       select: { id: true, first_name: true, last_name: true, status: true },
       orderBy: [{ last_name: "asc" }, { first_name: "asc" }],
     }),
-    prisma.sunday_meeting_person_assignment.findMany({
+    prisma.sunday_meeting_item.findMany({
       where: {
-        member_id: { not: null },
-        role: { in: ["speaker", "prayer"] },
+        person_member_id: { not: null },
+        type: { in: ["talk", "prayer"] },
         sunday_meeting: { ward_id: wardId },
       },
       select: {
-        member_id: true,
-        role: true,
+        person_member_id: true,
+        type: true,
         sunday_meeting: { select: { date: true, type: true } },
       },
     }),
   ]);
 
-  return buildSundayMeetingMemberHistory(members, assignments, today, isSundayMeetingType);
+  return buildSundayMeetingMemberHistory(
+    members,
+    itemRecords.flatMap((item) =>
+      item.person_member_id
+        ? {
+            memberId: item.person_member_id,
+            type: item.type,
+            sunday_meeting: item.sunday_meeting,
+          }
+        : [],
+    ),
+    today,
+    isSundayMeetingType,
+  );
 }
 
 export async function loadLeadingSundayMeeting(
@@ -371,9 +373,7 @@ export async function loadLeadingSundayMeeting(
       : Promise.resolve([]),
     loadSundayMeetingMemberHistory(wardId, settings.time_zone),
   ]);
-  const leader = meeting.assignments.find(
-    (assignment) => assignment.role === "leader",
-  );
+  const leader = meeting.items.find((item) => item.type === "leader");
 
   return {
     meeting,

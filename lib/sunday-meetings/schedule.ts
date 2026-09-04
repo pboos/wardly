@@ -1,5 +1,5 @@
 import { isSunday } from "./calendar.ts";
-import type { SundayMeetingType } from "./types";
+import type { SundayMeetingType } from "./types.ts";
 
 export const SUNDAY_SCHEDULE_POLICY = {
   priorLimit: 3,

@@ -44,6 +44,11 @@ export const SUNDAY_MEETING_ITEM_TYPES = [
   "custom_program",
   "transition",
   "conductor_text",
+  "leader",
+  "organist",
+  "music_conductor",
+  "visitor",
+  "presiding",
 ] as const;
 
 export type SundayMeetingItemType = (typeof SUNDAY_MEETING_ITEM_TYPES)[number];
@@ -60,6 +65,7 @@ export const SUNDAY_MEETING_TASK_ITEM_TYPES = [
 ] as const satisfies readonly SundayMeetingTaskItemType[];
 
 export const SUNDAY_MEETING_SECTIONS = [
+  "participants",
   "opening",
   "business",
   "sacrament",
@@ -69,95 +75,13 @@ export const SUNDAY_MEETING_SECTIONS = [
 
 export type SundayMeetingSection = (typeof SUNDAY_MEETING_SECTIONS)[number];
 
-export const SUNDAY_MEETING_STANDARD_SLOTS = [
-  "opening_hymn",
-  "opening_prayer",
-  "sacrament_hymn",
-  "interlude",
-  "primary_presentation",
-  "closing_hymn",
-  "closing_prayer",
-] as const;
+/** Structured extras on an item row, stored as JSON in `metadata`. */
+export type SundayItemMetadata = { hymnNumber?: number };
 
-export type SundayMeetingStandardSlot =
-  (typeof SUNDAY_MEETING_STANDARD_SLOTS)[number];
-
-export const MEETING_ASSIGNMENT_ROLES = [
-  "leader",
-  "organist",
-  "music_conductor",
-  "visitor",
-] as const;
-
-export type SundayMeetingAssignmentRole =
-  (typeof MEETING_ASSIGNMENT_ROLES)[number];
-
-export const ITEM_ASSIGNMENT_ROLES = [
-  "prayer",
-  "speaker",
-  "sacrament_blesser",
-  "sacrament_passer",
-  "performer",
-  "subject",
-  "officiant",
-] as const;
-
-export type SundayMeetingItemAssignmentRole =
-  (typeof ITEM_ASSIGNMENT_ROLES)[number];
-
-export const VISITOR_ROLES = [
-  "stake_president",
-  "high_council",
-  "general_authority",
-  "other_authority",
-  "custom",
-] as const;
-
-export type SundayMeetingVisitorRole = (typeof VISITOR_ROLES)[number];
-
-export const VISITOR_ROLE_LABELS: Record<SundayMeetingVisitorRole, string> = {
-  stake_president: "Stake President",
-  high_council: "High Council",
-  general_authority: "General Authority",
-  other_authority: "Other visiting authority",
-  custom: "Custom role",
-};
-
-export const ITEM_ROLE_BY_TYPE: Record<
-  SundayMeetingItemType,
-  readonly SundayMeetingItemAssignmentRole[]
-> = {
-  hymn: [],
-  prayer: ["prayer"],
-  talk: ["speaker"],
-  sacrament_blessing: ["sacrament_blesser"],
-  sacrament_passing: ["sacrament_passer"],
-  musical_number: ["performer"],
-  primary_presentation: ["performer"],
-  calling_sustain: ["subject", "officiant"],
-  calling_release: ["subject", "officiant"],
-  priesthood_aaronic_inform: ["subject", "officiant"],
-  child_naming_blessing: ["subject", "officiant"],
-  member_welcome: ["subject"],
-  convert_confirmation: ["subject", "officiant"],
-  announcement: [],
-  ward_business: [],
-  custom_program: ["performer", "subject", "officiant"],
-  transition: [],
-  conductor_text: [],
-};
-
-export const SINGLE_ITEM_ASSIGNMENT_ROLES = ["prayer", "speaker"] as const;
-
-export type SundayMeetingPersonInput = {
+/** One person on an item row: either a ward member or free text, or neither. */
+export type SundayPersonInput = {
   memberId: string | null;
-  freeTextName: string | null;
-};
-
-export type SundayMeetingAssignmentInput = SundayMeetingPersonInput & {
-  visitorRole?: SundayMeetingVisitorRole | null;
-  visitorRoleCustom?: string | null;
-  isPresidingOverride?: boolean;
+  personName: string | null;
 };
 
 export type SundayMeetingTaskSummary = {
@@ -167,32 +91,22 @@ export type SundayMeetingTaskSummary = {
   memberName: string | null;
 };
 
-export type SundayMeetingAssignment = {
-  id: string;
-  sundayMeetingId: string;
-  sundayMeetingItemId: string | null;
-  role: SundayMeetingAssignmentRole | SundayMeetingItemAssignmentRole;
-  memberId: string | null;
-  freeTextName: string | null;
-  name: string;
-  orderIndex: number;
-  visitorRole: SundayMeetingVisitorRole | null;
-  visitorRoleCustom: string | null;
-  isPresidingOverride: boolean;
-};
-
 export type SundayMeetingItem = {
   id: string;
   sundayMeetingId: string;
   type: SundayMeetingItemType;
   section: SundayMeetingSection;
-  standardSlot: SundayMeetingStandardSlot | null;
-  orderIndex: number;
+  /** Manual override of the default order; null = default order. */
+  orderIndex: number | null;
   content: string | null;
-  hymnNumber: number | null;
+  metadata: SundayItemMetadata | null;
+  personMemberId: string | null;
+  personName: string | null;
+  /** Member display name or free-text person; null when the row has no person. */
+  personNameResolved: string | null;
   taskId: string | null;
   task: SundayMeetingTaskSummary | null;
-  assignments: SundayMeetingAssignment[];
+  createdAt: string;
 };
 
 export type SundayMeeting = {
@@ -201,9 +115,10 @@ export type SundayMeeting = {
   date: string;
   type: SundayMeetingType;
   information: string | null;
+  /** All persisted items in final order (section, sort key, creation). */
   items: SundayMeetingItem[];
-  assignments: SundayMeetingAssignment[];
-  presider: SundayMeetingAssignment | null;
+  /** The `presiding` item, if the meeting has one. */
+  presider: SundayMeetingItem | null;
 };
 
 export type SundayMeetingTaskCandidate = {
@@ -275,24 +190,6 @@ export function isSundayMeetingSection(
   );
 }
 
-export function isSundayMeetingStandardSlot(
-  value: unknown,
-): value is SundayMeetingStandardSlot {
-  return (
-    typeof value === "string" &&
-    (SUNDAY_MEETING_STANDARD_SLOTS as readonly string[]).includes(value)
-  );
-}
-
-export function isSundayMeetingVisitorRole(
-  value: unknown,
-): value is SundayMeetingVisitorRole {
-  return (
-    typeof value === "string" &&
-    (VISITOR_ROLES as readonly string[]).includes(value)
-  );
-}
-
 export function isLocalMeetingType(
   type: SundayMeetingType,
 ): type is (typeof LOCAL_SUNDAY_MEETING_TYPES)[number] {
@@ -313,9 +210,22 @@ export function isCarryForwardEligible(type: SundayMeetingItemType): boolean {
   ].includes(type);
 }
 
-export function itemAllowsRole(
-  type: SundayMeetingItemType,
-  role: SundayMeetingItemAssignmentRole,
-): boolean {
-  return ITEM_ROLE_BY_TYPE[type].includes(role);
+/**
+ * Safely parse an item's JSON metadata. Invalid JSON and non-objects yield
+ * null, and only known keys with valid value types are kept.
+ */
+export function parseItemMetadata(raw: string | null): SundayItemMetadata | null {
+  if (!raw) {
+    return null;
+  }
+  try {
+    const parsed: unknown = JSON.parse(raw);
+    if (typeof parsed !== "object" || parsed === null || Array.isArray(parsed)) {
+      return null;
+    }
+    const hymnNumber = (parsed as Record<string, unknown>).hymnNumber;
+    return typeof hymnNumber === "number" ? { hymnNumber } : null;
+  } catch {
+    return null;
+  }
 }

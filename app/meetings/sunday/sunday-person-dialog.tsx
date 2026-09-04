@@ -5,7 +5,6 @@ import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { IconPlus, IconTrash } from "@tabler/icons-react";
 import { Button } from "@/components/ui/button";
-import { Checkbox } from "@/components/ui/checkbox";
 import { Combobox } from "@/components/ui/combobox";
 import {
   Dialog,
@@ -14,12 +13,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import {
-  Field,
-  FieldContent,
-  FieldGroup,
-  FieldLabel,
-} from "@/components/ui/field";
+import { Field, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import {
   Select,
@@ -30,58 +24,52 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import type {
-  SundayMeetingAssignment,
-  SundayMeetingAssignmentInput,
+  SundayMeetingItem,
   SundayMeetingMemberHistory,
-  SundayMeetingVisitorRole,
+  SundayPersonInput,
 } from "@/lib/sunday-meetings/types";
-import { VISITOR_ROLE_LABELS } from "@/lib/sunday-meetings/types";
 
-type PersonRoleWithHistory = "speaker" | "prayer" | null;
+type HistoryRole = "speaker" | "prayer" | null;
 
+/**
+ * Dialog for the person (and optional detail text) of one agenda item.
+ * `item` is null when the backing row does not exist yet — the parent's
+ * onSave/onDelete wire the add/update/delete item actions.
+ */
 export function SundayPersonDialog({
-  assignment,
+  item,
   members,
   title,
   triggerLabel,
+  detailLabel,
   roleWithHistory = null,
-  visitor = false,
   triggerVariant = "ghost",
   triggerClassName,
   onSave,
-  onRemove,
+  onDelete,
 }: {
-  assignment: SundayMeetingAssignment | null;
+  item: SundayMeetingItem | null;
   members: SundayMeetingMemberHistory[];
   title: string;
   triggerLabel?: string;
-  roleWithHistory?: PersonRoleWithHistory;
-  visitor?: boolean;
+  /** Label of the optional single-line detail field saved as item content. */
+  detailLabel?: string;
+  roleWithHistory?: HistoryRole;
   triggerVariant?: "default" | "outline" | "ghost" | "secondary";
   triggerClassName?: string;
-  onSave: (input: SundayMeetingAssignmentInput) => Promise<void>;
-  onRemove?: () => Promise<void>;
+  onSave: (person: SundayPersonInput, roleText: string | null) => Promise<void>;
+  onDelete?: () => Promise<void>;
 }) {
   const router = useRouter();
   const id = useId();
   const [, startTransition] = useTransition();
   const [open, setOpen] = useState(false);
-  const [freeText, setFreeText] = useState(Boolean(assignment?.freeTextName));
+  const [freeText, setFreeText] = useState(Boolean(item?.personName));
   const [memberId, setMemberId] = useState<string | null>(
-    assignment?.memberId ?? null,
+    item?.personMemberId ?? null,
   );
-  const [freeTextName, setFreeTextName] = useState(
-    assignment?.freeTextName ?? "",
-  );
-  const [visitorRole, setVisitorRole] = useState<SundayMeetingVisitorRole | null>(
-    assignment?.visitorRole ?? null,
-  );
-  const [visitorRoleCustom, setVisitorRoleCustom] = useState(
-    assignment?.visitorRoleCustom ?? "",
-  );
-  const [isPresidingOverride, setIsPresidingOverride] = useState(
-    assignment?.isPresidingOverride ?? false,
-  );
+  const [freeTextName, setFreeTextName] = useState(item?.personName ?? "");
+  const [detail, setDetail] = useState(item?.content ?? "");
 
   const memberItems = members.map((member) => ({
     value: member.id,
@@ -90,29 +78,20 @@ export function SundayPersonDialog({
   const selectedMember = members.find((member) => member.id === memberId) ?? null;
 
   function resetDraft() {
-    setFreeText(Boolean(assignment?.freeTextName));
-    setMemberId(assignment?.memberId ?? null);
-    setFreeTextName(assignment?.freeTextName ?? "");
-    setVisitorRole(assignment?.visitorRole ?? null);
-    setVisitorRoleCustom(assignment?.visitorRoleCustom ?? "");
-    setIsPresidingOverride(assignment?.isPresidingOverride ?? false);
+    setFreeText(Boolean(item?.personName));
+    setMemberId(item?.personMemberId ?? null);
+    setFreeTextName(item?.personName ?? "");
+    setDetail(item?.content ?? "");
   }
 
   function handleSave() {
-    const input: SundayMeetingAssignmentInput = {
-      memberId: freeText ? null : memberId,
-      freeTextName: freeText ? freeTextName : null,
-      ...(visitor
-        ? {
-            visitorRole,
-            visitorRoleCustom,
-            isPresidingOverride,
-          }
-        : {}),
-    };
+    const person: SundayPersonInput = freeText
+      ? { memberId: null, personName: freeTextName }
+      : { memberId, personName: null };
+    const roleText = detail.trim() || null;
     startTransition(async () => {
       try {
-        await onSave(input);
+        await onSave(person, roleText);
         setOpen(false);
         router.refresh();
       } catch (error) {
@@ -121,11 +100,11 @@ export function SundayPersonDialog({
     });
   }
 
-  function handleRemove() {
-    if (!onRemove) return;
+  function handleDelete() {
+    if (!onDelete) return;
     startTransition(async () => {
       try {
-        await onRemove();
+        await onDelete();
         setOpen(false);
         router.refresh();
       } catch (error) {
@@ -152,7 +131,7 @@ export function SundayPersonDialog({
           setOpen(true);
         }}
       >
-        {assignment?.name ?? (
+        {item?.personNameResolved ?? (
           <>
             <IconPlus data-icon="inline-start" />
             {triggerLabel ?? "Assign"}
@@ -211,72 +190,27 @@ export function SundayPersonDialog({
               </Field>
             )}
 
+            {detailLabel && (
+              <Field>
+                <FieldLabel htmlFor={`${id}-detail`}>{detailLabel}</FieldLabel>
+                <Input
+                  id={`${id}-detail`}
+                  value={detail}
+                  onChange={(event) => setDetail(event.target.value)}
+                  placeholder={detailLabel}
+                />
+              </Field>
+            )}
+
             {history && (
               <p className="text-sm text-muted-foreground">
                 Latest past: {history.last ? history.last.date : "Never"}. Upcoming: {history.next ? history.next.date : "None"}.
               </p>
             )}
-
-            {visitor && (
-              <>
-                <Field>
-                  <FieldLabel htmlFor={`${id}-visitor-role`}>Visitor role</FieldLabel>
-                  <Select
-                    value={visitorRole ?? "none"}
-                    onValueChange={(value) =>
-                      setVisitorRole(
-                        value === "none" ? null : (value as SundayMeetingVisitorRole),
-                      )
-                    }
-                  >
-                    <SelectTrigger id={`${id}-visitor-role`} className="w-full">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectGroup>
-                        <SelectItem value="none">No role specified</SelectItem>
-                        {Object.entries(VISITOR_ROLE_LABELS).map(([value, label]) => (
-                          <SelectItem key={value} value={value}>
-                            {label}
-                          </SelectItem>
-                        ))}
-                      </SelectGroup>
-                    </SelectContent>
-                  </Select>
-                </Field>
-
-                {visitorRole === "custom" && (
-                  <Field>
-                    <FieldLabel htmlFor={`${id}-visitor-custom-role`}>
-                      Custom role
-                    </FieldLabel>
-                    <Input
-                      id={`${id}-visitor-custom-role`}
-                      value={visitorRoleCustom}
-                      onChange={(event) => setVisitorRoleCustom(event.target.value)}
-                      placeholder="Role or title"
-                    />
-                  </Field>
-                )}
-
-                <Field orientation="horizontal">
-                  <Checkbox
-                    id={`${id}-presiding`}
-                    checked={isPresidingOverride}
-                    onCheckedChange={(checked) => setIsPresidingOverride(checked === true)}
-                  />
-                  <FieldContent>
-                    <FieldLabel htmlFor={`${id}-presiding`}>
-                      This visitor presides
-                    </FieldLabel>
-                  </FieldContent>
-                </Field>
-              </>
-            )}
           </FieldGroup>
           <DialogFooter>
-            {onRemove && (
-              <Button type="button" variant="destructive" onClick={handleRemove}>
+            {onDelete && (
+              <Button type="button" variant="destructive" onClick={handleDelete}>
                 <IconTrash data-icon="inline-start" />
                 Remove
               </Button>

@@ -1,4 +1,4 @@
-import type { SundayMeetingType } from "./types";
+import type { SundayMeetingType } from "./types.ts";
 
 const ISO_DATE = /^\d{4}-\d{2}-\d{2}$/;
 

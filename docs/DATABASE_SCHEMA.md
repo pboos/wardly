@@ -128,14 +128,23 @@ general_conference
 ```
 
 Stake and General Conference records are date/type-only and have no local
-agenda or person assignments.
+agenda items.
+
+Creating a meeting does NOT create any item rows. The expected items are
+derived from the meeting `type` in code and persisted lazily, only when real
+data (a person, `content`, or `metadata`) is entered — see
+[`sunday_meeting_item`](#6-sunday_meeting_item).
 
 ---
 
 ## 6. `sunday_meeting_item`
 
-The canonical, ordered sacrament-meeting agenda. Person names live in
-`sunday_meeting_person_assignment`, not on the agenda item itself.
+The persisted sacrament-meeting agenda. People live directly on the item
+(`person_member_id` or `person_name`), at most one person per row. Meetings are
+created without items; expected items are derived from the meeting `type` in
+code and persisted lazily only when data is entered. A row is deleted again
+once it has no person, no non-empty `content`, and no non-empty `metadata`
+(explicit exceptions such as `transition` aside).
 
 ```sql
 CREATE TABLE sunday_meeting_item (
@@ -143,34 +152,53 @@ CREATE TABLE sunday_meeting_item (
   sunday_meeting_id TEXT NOT NULL REFERENCES sunday_meeting (id) ON DELETE CASCADE,
   type              TEXT NOT NULL,
   section           TEXT NOT NULL,
-  standard_slot     TEXT,
-  order_index       INTEGER NOT NULL,
+  order_index       REAL,
   content           TEXT,
-  hymn_number       INTEGER CHECK (hymn_number IS NULL OR hymn_number > 0),
+  metadata          TEXT,
+  person_member_id  TEXT REFERENCES member (id) ON DELETE RESTRICT,
+  person_name       TEXT,
   task_id           TEXT REFERENCES task (id) ON DELETE RESTRICT,
   created_at        TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  updated_at        TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+  updated_at        TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  CHECK (NOT (person_member_id IS NOT NULL AND person_name IS NOT NULL))
 );
 
-CREATE UNIQUE INDEX idx_sunday_meeting_item_order
-  ON sunday_meeting_item (sunday_meeting_id, order_index);
-CREATE UNIQUE INDEX idx_sunday_meeting_item_standard_slot
-  ON sunday_meeting_item (sunday_meeting_id, standard_slot);
-CREATE INDEX idx_sunday_meeting_item_task_id
-  ON sunday_meeting_item (task_id);
+CREATE INDEX idx_sunday_meeting_item_meeting ON sunday_meeting_item (sunday_meeting_id);
+CREATE INDEX idx_sunday_meeting_item_member  ON sunday_meeting_item (person_member_id);
+CREATE INDEX idx_sunday_meeting_item_task    ON sunday_meeting_item (task_id);
+
+-- At most one conducting leader and one presiding item per meeting
+-- (declared in the initial SQL migration; Prisma cannot express unique
+-- partial indexes).
+CREATE UNIQUE INDEX idx_sunday_meeting_item_one_leader
+  ON sunday_meeting_item (sunday_meeting_id) WHERE type = 'leader';
+CREATE UNIQUE INDEX idx_sunday_meeting_item_one_presiding
+  ON sunday_meeting_item (sunday_meeting_id) WHERE type = 'presiding';
 ```
 
-- `section` is `opening`, `business`, `sacrament`, `program`, or `closing`.
-- Nullable `standard_slot` values allow unlimited custom items while making each
-  fixed slot unique per meeting.
-- Fixed slots are `opening_hymn`, `opening_prayer`, `sacrament_hymn`,
-  `interlude`, `primary_presentation`, `closing_hymn`, and `closing_prayer`.
-- `task_id` is a one-way link. A task can later leave its suggested state without
-  removing the agenda item.
+| Column | Meaning |
+| --- | --- |
+| `type` | Item classification; includes the person/context types listed below. |
+| `section` | `participants`, `opening`, `business`, `sacrament`, `program`, or `closing`. |
+| `order_index` | Nullable manual override of the default order; `NULL` = default order (defined per section/item type in code). |
+| `content` | Free text: talk topic, visitor role text, announcement text, … |
+| `metadata` | JSON object. First key: `hymnNumber` (number, > 0). |
+| `person_member_id` | Ward member reference. At most one person per row. |
+| `person_name` | Free-text person (visitor, missionary, …). Never both person columns. |
+| `task_id` | Optional task link for calling/release/priesthood items. A task can later leave its suggested state without removing the agenda item. |
+
+One item row holds at most one person. Groups with several people (multiple
+sacrament passers, organists, visitors) are simply several item rows of the
+same type; they sort together by default.
 
 Supported item types:
 
 ```text
+leader
+organist
+music_conductor
+visitor
+presiding
 hymn
 prayer
 talk
@@ -191,67 +219,40 @@ transition
 conductor_text
 ```
 
----
+Person/context types (new; they hold the people that were previously
+meeting-level assignments, all in section `participants`):
 
-## 7. `sunday_meeting_person_assignment`
+| Type | Person | `content` |
+| --- | --- | --- |
+| `leader` | Who conducts the meeting | — |
+| `organist` | Organist (one row each) | — |
+| `music_conductor` | Music conductor (one row each) | — |
+| `visitor` | Visitor | Visitor role text, e.g. "Stake President" |
+| `presiding` | Who presides | Optional role text |
 
-Every named assignment is exactly one of a historical ward-member reference or
-a free-text name. The direct `sunday_meeting_id` is retained for both
-meeting-level and item-level assignments so scope can be enforced efficiently.
+Person-carrying program/business types keep their people on the row and use
+`content` for auxiliary text (roles are manual text now):
 
-```sql
-CREATE TABLE sunday_meeting_person_assignment (
-  id                      TEXT PRIMARY KEY,
-  sunday_meeting_id       TEXT NOT NULL REFERENCES sunday_meeting (id) ON DELETE CASCADE,
-  sunday_meeting_item_id  TEXT REFERENCES sunday_meeting_item (id) ON DELETE CASCADE,
-  role                    TEXT NOT NULL,
-  member_id               TEXT REFERENCES member (id) ON DELETE RESTRICT,
-  free_text_name          TEXT,
-  order_index             INTEGER NOT NULL DEFAULT 0,
-  visitor_role            TEXT,
-  visitor_role_custom     TEXT,
-  is_presiding_override   BOOLEAN NOT NULL DEFAULT FALSE,
-  created_at              TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  updated_at              TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  CHECK (
-    (member_id IS NOT NULL AND free_text_name IS NULL)
-    OR
-    (member_id IS NULL AND COALESCE(length(trim(free_text_name)), 0) > 0)
-  ),
-  CHECK (is_presiding_override IN (0, 1))
-);
-```
+| Type | Person on the row | `content` example |
+| --- | --- | --- |
+| `prayer` | Person praying | — |
+| `talk` | Speaker | Topic |
+| `sacrament_blessing` | One blesser (one row each) | — |
+| `sacrament_passing` | One passer (one row each) | — |
+| `child_naming_blessing` | The child | "Blessed by John Doe" |
+| `member_welcome` | The new member | Introduction text |
+| `convert_confirmation` | The convert | — |
+| `calling_sustain` / `calling_release` / `priesthood_aaronic_inform` | The member concerned | Calling text (kept via the `task_id` link when added from a task) |
 
-Meeting-level roles are `leader`, `organist`, `music_conductor`, and `visitor`.
-Item-level roles are `prayer`, `speaker`, `sacrament_blesser`,
-`sacrament_passer`, `performer`, `subject`, and `officiant`.
-
-```sql
-CREATE UNIQUE INDEX idx_sunday_meeting_assignment_meeting_role_order
-  ON sunday_meeting_person_assignment (sunday_meeting_id, role, order_index)
-  WHERE sunday_meeting_item_id IS NULL;
-CREATE UNIQUE INDEX idx_sunday_meeting_assignment_item_role_order
-  ON sunday_meeting_person_assignment (sunday_meeting_item_id, role, order_index)
-  WHERE sunday_meeting_item_id IS NOT NULL;
-CREATE UNIQUE INDEX idx_sunday_meeting_assignment_one_leader
-  ON sunday_meeting_person_assignment (sunday_meeting_id)
-  WHERE role = 'leader' AND sunday_meeting_item_id IS NULL;
-CREATE UNIQUE INDEX idx_sunday_meeting_assignment_one_presiding_override
-  ON sunday_meeting_person_assignment (sunday_meeting_id)
-  WHERE role = 'visitor'
-    AND sunday_meeting_item_id IS NULL
-    AND is_presiding_override = 1;
-CREATE INDEX idx_sunday_meeting_assignment_member_role_meeting
-  ON sunday_meeting_person_assignment (member_id, role, sunday_meeting_id);
-```
-
-SQLite partial unique indexes are intentionally maintained in the initial SQL
-migration because Prisma 7.8 cannot express unique partial indexes in its
-schema DSL.
+`hymn` uses `metadata.hymnNumber`. `musical_number` may use the person columns
+for a main performer and `content` for a description. `announcement`,
+`ward_business`, `custom_program`, `transition`, `conductor_text`, and
+`primary_presentation` are unchanged in spirit. Stake and General Conference
+meetings still have no local items.
 
 ---
 
-## 8. `task`
+## 7. `task`
 
 ```sql
 CREATE TABLE task (
@@ -282,7 +283,7 @@ CREATE INDEX idx_task_ward_completed ON task (ward_id, completed_at);
 
 ---
 
-## 9. `task_type`
+## 8. `task_type`
 
 Optional ward overrides and custom task types. The composite key is
 `(ward_id, type)`.
@@ -304,7 +305,7 @@ CREATE TABLE task_type (
 
 ---
 
-## 10. `task_type_state`
+## 9. `task_type_state`
 
 Ward-scoped lifecycle states for task types.
 
@@ -335,7 +336,7 @@ causes tasks currently in that state to be listed as Sunday-meeting candidates.
 
 ---
 
-## 11. `task_type_state_assignment`
+## 10. `task_type_state_assignment`
 
 Optional user-assignment overlay for each resolved task lifecycle state.
 

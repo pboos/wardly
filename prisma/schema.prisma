@@ -75,7 +75,8 @@ model member {
 
   ward ward   @relation(fields: [ward_id], references: [id], onDelete: Cascade)
   task task[]
-  sunday_meeting_person_assignment sunday_meeting_person_assignment[]
+  // Sunday agenda items that name this member (leader, presider, speaker, …)
+  sunday_meeting_item sunday_meeting_item[]
 
   @@index([ward_id])
   @@index([ward_id, status])
@@ -171,9 +172,8 @@ model sunday_meeting {
   created_at  DateTime @default(now())
   updated_at  DateTime @default(now())
 
-  ward                             ward                             @relation(fields: [ward_id], references: [id], onDelete: Cascade)
-  sunday_meeting_item              sunday_meeting_item[]
-  sunday_meeting_person_assignment sunday_meeting_person_assignment[]
+  ward                ward                @relation(fields: [ward_id], references: [id], onDelete: Cascade)
+  sunday_meeting_item sunday_meeting_item[]
 
   @@unique([ward_id, date])
   @@index([ward_id, type, date])
@@ -184,42 +184,24 @@ model sunday_meeting_item {
   sunday_meeting_id String
   type              String
   section           String
-  standard_slot     String?
-  order_index       Int
+  order_index       Float?
   content           String?
-  hymn_number       Int?
+  metadata          String?
+  person_member_id  String?
+  person_name       String?
   task_id           String?
   created_at        DateTime @default(now())
   updated_at        DateTime @default(now())
 
-  sunday_meeting                    sunday_meeting                    @relation(fields: [sunday_meeting_id], references: [id], onDelete: Cascade)
-  task                              task?                             @relation(fields: [task_id], references: [id], onDelete: Restrict)
-  sunday_meeting_person_assignment sunday_meeting_person_assignment[]
+  sunday_meeting sunday_meeting @relation(fields: [sunday_meeting_id], references: [id], onDelete: Cascade)
+  task          task?          @relation(fields: [task_id], references: [id], onDelete: Restrict)
+  member        member?        @relation(fields: [person_member_id], references: [id], onDelete: Restrict)
 
-  @@unique([sunday_meeting_id, order_index])
-  @@unique([sunday_meeting_id, standard_slot])
+  // The person XOR CHECK (person_member_id / person_name) and the partial
+  // unique indexes (at most one 'leader' and one 'presiding' per meeting) are
+  // declared in the initial migration because Prisma 7.8 cannot express CHECK
+  // constraints or unique partial indexes in the schema DSL.
+  @@index([sunday_meeting_id])
+  @@index([person_member_id])
   @@index([task_id])
-}
-
-model sunday_meeting_person_assignment {
-  id                    String   @id @default(uuid())
-  sunday_meeting_id     String
-  sunday_meeting_item_id String?
-  role                  String
-  member_id             String?
-  free_text_name        String?
-  order_index           Int      @default(0)
-  visitor_role          String?
-  visitor_role_custom   String?
-  is_presiding_override Boolean  @default(false)
-  created_at            DateTime @default(now())
-  updated_at            DateTime @default(now())
-
-  sunday_meeting      sunday_meeting       @relation(fields: [sunday_meeting_id], references: [id], onDelete: Cascade)
-  sunday_meeting_item sunday_meeting_item? @relation(fields: [sunday_meeting_item_id], references: [id], onDelete: Cascade)
-  member              member?              @relation(fields: [member_id], references: [id], onDelete: Restrict)
-
-  // SQLite partial unique indexes are declared in the initial migration because
-  // Prisma 7.8 cannot express unique partial indexes in the schema DSL.
-  @@index([member_id, role, sunday_meeting_id])
 }

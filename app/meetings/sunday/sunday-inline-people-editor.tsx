@@ -10,18 +10,27 @@ import { Command, CommandEmpty, CommandItem, CommandList } from "@/components/ui
 import { Field, FieldLabel } from "@/components/ui/field";
 import { InputGroup, InputGroupInput } from "@/components/ui/input-group";
 import { Popover, PopoverAnchor, PopoverContent } from "@/components/ui/popover";
-import type { SundayMeetingAssignment, SundayMeetingAssignmentInput, SundayMeetingMemberHistory } from "@/lib/sunday-meetings/types";
+import type {
+  SundayMeetingItem,
+  SundayMeetingMemberHistory,
+  SundayPersonInput,
+} from "@/lib/sunday-meetings/types";
 
+/**
+ * Inline editor for a list of agenda items that each hold at most one
+ * person. Adding calls the parent's callback (upsert or create wired by the
+ * caller); removing hands the backing item back to the parent (update to
+ * clear the person, or delete the row).
+ */
 export function SundayInlinePeopleEditor({
-  label, assignments, members, maxPeople, onAdd, onReplace, onRemove,
+  label, items, members, maxPeople, onAdd, onRemove,
 }: {
   label: string;
-  assignments: SundayMeetingAssignment[];
+  items: SundayMeetingItem[];
   members: SundayMeetingMemberHistory[];
   maxPeople?: number;
-  onAdd: (input: SundayMeetingAssignmentInput) => Promise<unknown>;
-  onReplace: (input: SundayMeetingAssignmentInput) => Promise<unknown>;
-  onRemove: (assignment: SundayMeetingAssignment) => Promise<unknown>;
+  onAdd: (person: SundayPersonInput) => Promise<unknown>;
+  onRemove: (item: SundayMeetingItem) => Promise<unknown>;
 }) {
   const router = useRouter();
   const inputId = useId();
@@ -37,9 +46,9 @@ export function SundayInlinePeopleEditor({
     return members.filter((member) => !text || member.name.toLowerCase().includes(text)).slice(0, 8);
   }, [members, query]);
 
+  const people = items.filter((item) => item.personNameResolved);
   const activeMember = highlightedIndex === null ? null : matches[highlightedIndex] ?? null;
-  const canAddAnother = maxPeople === undefined || assignments.length < maxPeople;
-  const canEnter = canAddAnother;
+  const canEnter = maxPeople === undefined || people.length < maxPeople;
 
   useEffect(() => {
     if (!isPending && restoreFocusRef.current && inputRef.current && !inputRef.current.disabled) {
@@ -67,11 +76,10 @@ export function SundayInlinePeopleEditor({
       }
     });
   }
-  function submit(input: SundayMeetingAssignmentInput) {
-    const shouldReplace = maxPeople !== undefined && assignments.length >= maxPeople;
-    mutate(() => (shouldReplace ? onReplace(input) : onAdd(input)), !shouldReplace);
+  function submit(person: SundayPersonInput) {
+    mutate(() => onAdd(person), true);
   }
-  function remove(assignment: SundayMeetingAssignment) { mutate(() => onRemove(assignment), maxPeople !== 1); }
+  function remove(item: SundayMeetingItem) { mutate(() => onRemove(item), maxPeople !== 1); }
 
   return (
     <Field className="gap-1">
@@ -84,14 +92,14 @@ export function SundayInlinePeopleEditor({
           }
         }}
       >
-        {assignments.map((assignment) => (
+        {people.map((item) => (
           <Badge
-            key={assignment.id}
-            variant={assignment.memberId === null ? "destructive" : "secondary"}
+            key={item.id}
+            variant={item.personMemberId === null ? "destructive" : "secondary"}
             className="h-6 max-w-48"
           >
-            <span className="truncate">{assignment.name}</span>
-            <Button type="button" variant="ghost" size="icon-xs" disabled={isPending} aria-label={`Remove ${assignment.name} from ${label}`} onClick={() => remove(assignment)}>
+            <span className="truncate">{item.personNameResolved}</span>
+            <Button type="button" variant="ghost" size="icon-xs" disabled={isPending} aria-label={`Remove ${item.personNameResolved} from ${label}`} onClick={() => remove(item)}>
               <IconX data-icon="inline-end" />
             </Button>
           </Badge>
@@ -107,7 +115,7 @@ export function SundayInlinePeopleEditor({
               value={query}
               disabled={isPending}
               ref={inputRef}
-              placeholder={assignments.length ? undefined : `Assign ${label.toLowerCase()}`}
+              placeholder={people.length ? undefined : `Assign ${label.toLowerCase()}`}
               aria-label={label}
               aria-controls={`${inputId}-list`}
               aria-activedescendant={activeMember ? `${inputId}-member-${activeMember.id}` : undefined}
@@ -129,13 +137,13 @@ export function SundayInlinePeopleEditor({
                 } else if (event.key === "Enter") {
                   event.preventDefault();
                   if (activeMember) {
-                    submit({ memberId: activeMember.id, freeTextName: null });
+                    submit({ memberId: activeMember.id, personName: null });
                   } else {
                     const value = query.trim();
-                    if (value) submit({ memberId: null, freeTextName: value });
+                    if (value) submit({ memberId: null, personName: value });
                   }
-                } else if (event.key === "Backspace" && !query && assignments.length) {
-                  event.preventDefault(); remove(assignments[assignments.length - 1]);
+                } else if (event.key === "Backspace" && !query && people.length) {
+                  event.preventDefault(); remove(people[people.length - 1]);
                 }
               }}
             />
@@ -152,7 +160,7 @@ export function SundayInlinePeopleEditor({
                     data-selected={highlightedIndex === index ? "true" : undefined}
                     className={highlightedIndex === index ? "bg-muted text-foreground" : undefined}
                     onMouseMove={() => setHighlightedIndex(index)}
-                    onSelect={() => submit({ memberId: member.id, freeTextName: null })}
+                    onSelect={() => submit({ memberId: member.id, personName: null })}
                   >
                     {member.name}
                   </CommandItem>

@@ -5,44 +5,64 @@ import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { Field, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
-import type { UpdateAgendaItemInput } from "@/lib/sunday-meetings/service";
-import type { SundayMeetingItem } from "@/lib/sunday-meetings/types";
+import type {
+  SundayItemMetadata,
+  SundayMeetingItem,
+} from "@/lib/sunday-meetings/types";
+
+/**
+ * What a hymn/musical-number slot cell saves: a hymn number in metadata, or
+ * a free-text musical number in content. Empty values clear the slot item
+ * (the auto-delete rule removes the row).
+ */
+export type SundayHymnSlotInput = {
+  type: "hymn" | "musical_number";
+  metadata: SundayItemMetadata | null;
+  content: string | null;
+};
+
+function hymnSlotValue(item: SundayMeetingItem | null): string {
+  if (!item) return "";
+  if (item.type === "musical_number") return item.content ?? "";
+  return item.metadata?.hymnNumber?.toString() ?? "";
+}
 
 export function SundayInlineHymnEditor({
   item,
   allowMusicalNumber,
   onSave,
 }: {
-  item: SundayMeetingItem;
+  /** The slot item, or null while the virtual slot is still empty. */
+  item: SundayMeetingItem | null;
   allowMusicalNumber: boolean;
-  onSave: (input: UpdateAgendaItemInput) => Promise<unknown>;
+  onSave: (input: SundayHymnSlotInput) => Promise<unknown>;
 }) {
   const router = useRouter();
   const inputId = useId();
-  const [draft, setDraft] = useState(
-    item.type === "musical_number" ? item.content ?? "" : item.hymnNumber?.toString() ?? "",
-  );
+  const [draft, setDraft] = useState(hymnSlotValue(item));
   const [error, setError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
 
   function restoreServerValue() {
-    setDraft(item.type === "musical_number" ? item.content ?? "" : item.hymnNumber?.toString() ?? "");
+    setDraft(hymnSlotValue(item));
     setError(null);
   }
 
   function save() {
     if (isPending) return;
     const trimmed = draft.trim();
-    let payload: UpdateAgendaItemInput;
+    // An empty virtual slot has nothing to clear — skip the server round trip.
+    if (!trimmed && !item) return;
+    let payload: SundayHymnSlotInput;
     const isNumeric = /^[-+]?(?:(?:\d+\.?\d*)|(?:\.\d+))(?:e[-+]?\d+)?$/i.test(trimmed)
       || /^[-+]?Infinity$/i.test(trimmed);
 
     if (!trimmed) {
-      payload = { type: "hymn", hymnNumber: null, content: null };
+      payload = { type: "hymn", metadata: null, content: null };
     } else if (!isNumeric && allowMusicalNumber) {
-      payload = { type: "musical_number", hymnNumber: null, content: trimmed };
+      payload = { type: "musical_number", metadata: null, content: trimmed };
     } else if (/^\d+$/.test(trimmed) && Number.isSafeInteger(Number(trimmed)) && Number(trimmed) > 0) {
-      payload = { type: "hymn", hymnNumber: Number(trimmed), content: null };
+      payload = { type: "hymn", metadata: { hymnNumber: Number(trimmed) }, content: null };
     } else {
       setError("Enter a positive whole hymn number or leave the field blank.");
       return;

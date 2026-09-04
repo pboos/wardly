@@ -1,11 +1,11 @@
 import { prisma } from "@/lib/prisma";
 import { loadTaskTypes } from "@/lib/tasks/loader";
-import { addTaskItem } from "./service";
+import { addTaskItem } from "./service.ts";
 import {
   isSundayMeetingTaskItemType,
   type SundayMeetingTaskCandidateGroup,
   type SundayMeetingTaskItemType,
-} from "./types";
+} from "./types.ts";
 
 function stateKey(taskType: string, state: string): string {
   return `${taskType}\u0000${state}`;

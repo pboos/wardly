@@ -183,41 +183,18 @@ CREATE TABLE "sunday_meeting_item" (
     "sunday_meeting_id" TEXT NOT NULL,
     "type" TEXT NOT NULL,
     "section" TEXT NOT NULL,
-    "standard_slot" TEXT,
-    "order_index" INTEGER NOT NULL,
+    "order_index" REAL,
     "content" TEXT,
-    "hymn_number" INTEGER,
+    "metadata" TEXT,
+    "person_member_id" TEXT,
+    "person_name" TEXT,
     "task_id" TEXT,
     "created_at" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updated_at" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT "sunday_meeting_item_sunday_meeting_id_fkey" FOREIGN KEY ("sunday_meeting_id") REFERENCES "sunday_meeting" ("id") ON DELETE CASCADE ON UPDATE CASCADE,
     CONSTRAINT "sunday_meeting_item_task_id_fkey" FOREIGN KEY ("task_id") REFERENCES "task" ("id") ON DELETE RESTRICT ON UPDATE CASCADE,
-    CONSTRAINT "sunday_meeting_item_hymn_number_check" CHECK ("hymn_number" IS NULL OR "hymn_number" > 0)
-);
-
--- CreateTable
-CREATE TABLE "sunday_meeting_person_assignment" (
-    "id" TEXT NOT NULL PRIMARY KEY,
-    "sunday_meeting_id" TEXT NOT NULL,
-    "sunday_meeting_item_id" TEXT,
-    "role" TEXT NOT NULL,
-    "member_id" TEXT,
-    "free_text_name" TEXT,
-    "order_index" INTEGER NOT NULL DEFAULT 0,
-    "visitor_role" TEXT,
-    "visitor_role_custom" TEXT,
-    "is_presiding_override" BOOLEAN NOT NULL DEFAULT false,
-    "created_at" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updated_at" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    CONSTRAINT "sunday_meeting_person_assignment_sunday_meeting_id_fkey" FOREIGN KEY ("sunday_meeting_id") REFERENCES "sunday_meeting" ("id") ON DELETE CASCADE ON UPDATE CASCADE,
-    CONSTRAINT "sunday_meeting_person_assignment_sunday_meeting_item_id_fkey" FOREIGN KEY ("sunday_meeting_item_id") REFERENCES "sunday_meeting_item" ("id") ON DELETE CASCADE ON UPDATE CASCADE,
-    CONSTRAINT "sunday_meeting_person_assignment_member_id_fkey" FOREIGN KEY ("member_id") REFERENCES "member" ("id") ON DELETE RESTRICT ON UPDATE CASCADE,
-    CONSTRAINT "sunday_meeting_person_assignment_person_xor_check" CHECK (
-      ("member_id" IS NOT NULL AND "free_text_name" IS NULL)
-      OR
-      ("member_id" IS NULL AND COALESCE(length(trim("free_text_name")), 0) > 0)
-    ),
-    CONSTRAINT "sunday_meeting_person_assignment_presiding_check" CHECK ("is_presiding_override" IN (0, 1))
+    CONSTRAINT "sunday_meeting_item_person_member_id_fkey" FOREIGN KEY ("person_member_id") REFERENCES "member" ("id") ON DELETE RESTRICT ON UPDATE CASCADE,
+    CONSTRAINT "sunday_meeting_item_person_xor_check" CHECK (NOT ("person_member_id" IS NOT NULL AND "person_name" IS NOT NULL))
 );
 
 -- CreateIndex
@@ -227,34 +204,22 @@ CREATE UNIQUE INDEX "sunday_meeting_ward_id_date_key" ON "sunday_meeting"("ward_
 CREATE INDEX "sunday_meeting_ward_id_type_date_idx" ON "sunday_meeting"("ward_id", "type", "date");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "sunday_meeting_item_sunday_meeting_id_order_index_key" ON "sunday_meeting_item"("sunday_meeting_id", "order_index");
+CREATE INDEX "sunday_meeting_item_sunday_meeting_id_idx" ON "sunday_meeting_item"("sunday_meeting_id");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "sunday_meeting_item_sunday_meeting_id_standard_slot_key" ON "sunday_meeting_item"("sunday_meeting_id", "standard_slot");
+CREATE INDEX "sunday_meeting_item_person_member_id_idx" ON "sunday_meeting_item"("person_member_id");
 
 -- CreateIndex
 CREATE INDEX "sunday_meeting_item_task_id_idx" ON "sunday_meeting_item"("task_id");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "idx_sunday_meeting_assignment_meeting_role_order_unique"
-ON "sunday_meeting_person_assignment"("sunday_meeting_id", "role", "order_index")
-WHERE "sunday_meeting_item_id" IS NULL;
+-- Partial unique indexes (Prisma cannot express these; declared only here):
+-- at most one conducting leader and one presiding item per meeting.
+CREATE UNIQUE INDEX "idx_sunday_meeting_item_one_leader"
+ON "sunday_meeting_item"("sunday_meeting_id")
+WHERE "type" = 'leader';
 
 -- CreateIndex
-CREATE UNIQUE INDEX "idx_sunday_meeting_assignment_item_role_order_unique"
-ON "sunday_meeting_person_assignment"("sunday_meeting_item_id", "role", "order_index")
-WHERE "sunday_meeting_item_id" IS NOT NULL;
-
--- CreateIndex
-CREATE UNIQUE INDEX "idx_sunday_meeting_assignment_one_leader"
-ON "sunday_meeting_person_assignment"("sunday_meeting_id")
-WHERE "role" = 'leader' AND "sunday_meeting_item_id" IS NULL;
-
--- CreateIndex
-CREATE UNIQUE INDEX "idx_sunday_meeting_assignment_one_presiding_override"
-ON "sunday_meeting_person_assignment"("sunday_meeting_id")
-WHERE "role" = 'visitor' AND "sunday_meeting_item_id" IS NULL AND "is_presiding_override" = 1;
-
--- CreateIndex
-CREATE INDEX "sunday_meeting_person_assignment_member_id_role_sunday_meeting_id_idx"
-ON "sunday_meeting_person_assignment"("member_id", "role", "sunday_meeting_id");
+CREATE UNIQUE INDEX "idx_sunday_meeting_item_one_presiding"
+ON "sunday_meeting_item"("sunday_meeting_id")
+WHERE "type" = 'presiding';
