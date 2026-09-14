@@ -67,9 +67,7 @@ export function ScheduleMobileCard({
             </CardDescription>
           </div>
           <Button size="sm" variant="outline" asChild>
-            <Link href={`/meetings/sunday/leading?date=${meeting.date}`}>
-              Lead
-            </Link>
+            <Link href={`/meetings/sunday/${meeting.date}`}>Lead</Link>
           </Button>
         </div>
         <MeetingTypePicker

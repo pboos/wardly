@@ -5,7 +5,7 @@ import type {
   SundayMeetingMemberHistory,
 } from "@/lib/sunday-meetings/types";
 import { leaderOfMeeting } from "@/lib/sunday-meetings/slots";
-import { SundayInlinePeopleEditor } from "./sunday-inline-people-editor";
+import { SundayPeoplePicker } from "./sunday-people-picker";
 import { upsertSundaySlotItem, updateSundayAgendaItem } from "./actions";
 
 export function LeaderPicker({
@@ -17,7 +17,7 @@ export function LeaderPicker({
 }) {
   const leader = leaderOfMeeting(meeting.items);
   return (
-    <SundayInlinePeopleEditor
+    <SundayPeoplePicker
       label="Meeting leader"
       items={leader ? [leader] : []}
       members={members}

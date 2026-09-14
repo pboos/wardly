@@ -3,7 +3,7 @@ import type {
   SundayMeetingItem,
   SundayMeetingMemberHistory,
 } from "@/lib/sunday-meetings/types";
-import { SundayPersonDialog } from "./sunday-person-dialog";
+import { SundayPeoplePicker } from "./sunday-people-picker";
 import { updateSundayAgendaItem } from "./actions";
 import { PERSON_EDITORS, personTitle } from "./sunday-item-editors";
 
@@ -15,14 +15,15 @@ export function SundayItemPersonEditor({
   members: SundayMeetingMemberHistory[];
 }) {
   return (
-    <SundayPersonDialog
-      item={item}
+    <SundayPeoplePicker
+      items={[item]}
+      layout="vertical"
+      maxPeople={1}
       members={members}
-      title={personTitle(item.type)}
-      triggerLabel={`Assign ${personTitle(item.type).toLowerCase()}`}
+      label={personTitle(item.type)}
       roleWithHistory={PERSON_EDITORS[item.type]?.history ?? null}
-      onSave={(person) => updateSundayAgendaItem(item.id, { person })}
-      onDelete={() => updateSundayAgendaItem(item.id, { person: null })}
+      onAdd={(person) => updateSundayAgendaItem(item.id, { person })}
+      onRemove={() => updateSundayAgendaItem(item.id, { person: null })}
     />
   );
 }

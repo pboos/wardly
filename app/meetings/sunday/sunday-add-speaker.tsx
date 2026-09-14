@@ -1,8 +1,7 @@
 "use client";
 import type { SundayMeetingMemberHistory } from "@/lib/sunday-meetings/types";
-import { SundayPersonDialog } from "./sunday-person-dialog";
+import { SundayPeoplePicker } from "./sunday-people-picker";
 import { addSundayAgendaItem } from "./actions";
-import { hasSundayPerson } from "./sunday-leading-labels";
 
 export function SundayAddSpeaker({
   meetingId,
@@ -12,23 +11,20 @@ export function SundayAddSpeaker({
   members: SundayMeetingMemberHistory[];
 }) {
   return (
-    <SundayPersonDialog
-      item={null}
+    <SundayPeoplePicker
+      label="Speaker"
+      items={[]}
       members={members}
-      title="Speaker"
-      triggerLabel="Add speaker"
-      detailLabel="Talk topic"
+      layout="vertical"
       roleWithHistory="speaker"
-      onSave={(person, topic) =>
-        hasSundayPerson(person) || topic
-          ? addSundayAgendaItem(meetingId, {
-              type: "talk",
-              section: "program",
-              person,
-              content: topic,
-            }).then(() => undefined)
-          : Promise.resolve()
+      onAdd={(person) =>
+        addSundayAgendaItem(meetingId, {
+          type: "talk",
+          section: "program",
+          person,
+        })
       }
+      onRemove={async () => {}}
     />
   );
 }

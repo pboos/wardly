@@ -67,10 +67,7 @@ export function SundayLeadingItemRow({
       ? item.metadata?.hymnNumber
         ? `Hymn ${item.metadata.hymnNumber}`
         : "No hymn selected"
-      : item.content ||
-        item.task?.title ||
-        item.personNameResolved ||
-        "No details entered";
+      : item.content || item.task?.title || null;
   return (
     <li className="flex flex-col gap-2">
       {showSupportText &&
@@ -87,7 +84,7 @@ export function SundayLeadingItemRow({
           <CardTitle>
             {item.slot ? SLOT_LABELS[item.slot] : ITEM_LABELS[item.type]}
           </CardTitle>
-          <CardDescription>{detail}</CardDescription>
+          {detail && <CardDescription>{detail}</CardDescription>}
           <div className="flex flex-wrap items-center gap-2">
             <SundayItemContentEditor item={item} />
             {isCarryForwardEligible(item.type) && (

@@ -6,7 +6,7 @@ import type {
 } from "@/lib/sunday-meetings/types";
 import { standardAgendaForMeeting } from "@/lib/sunday-meetings/templates";
 import { findSlotItem } from "@/lib/sunday-meetings/slots";
-import { SundayInlinePeopleEditor } from "./sunday-inline-people-editor";
+import { SundayPeoplePicker } from "./sunday-people-picker";
 import { EmptyCell } from "./sunday-empty-cell";
 import { updateSundayAgendaItem, upsertSundaySlotItem } from "./actions";
 type PrayerSlot = "opening_prayer" | "closing_prayer";
@@ -28,11 +28,12 @@ export function PrayerCell({
   const title = slot === "opening_prayer" ? "Opening prayer" : "Closing prayer";
 
   return (
-    <SundayInlinePeopleEditor
+    <SundayPeoplePicker
       items={item ? [item] : []}
       members={members}
       label={title}
       maxPeople={1}
+      roleWithHistory="prayer"
       onAdd={(person) =>
         item
           ? updateSundayAgendaItem(item.id, { person })

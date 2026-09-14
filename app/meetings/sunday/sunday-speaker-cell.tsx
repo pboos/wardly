@@ -5,7 +5,7 @@ import type {
   SundayMeetingMemberHistory,
 } from "@/lib/sunday-meetings/types";
 import { speakersOfMeeting } from "@/lib/sunday-meetings/slots";
-import { SundayInlinePeopleEditor } from "./sunday-inline-people-editor";
+import { SundayPeoplePicker } from "./sunday-people-picker";
 import { EmptyCell } from "./sunday-empty-cell";
 import { updateSundayAgendaItem, addSundayAgendaItem } from "./actions";
 
@@ -26,11 +26,12 @@ export function SpeakerCell({
   const talk = speakersOfMeeting(meeting.items)[index] ?? null;
 
   return (
-    <SundayInlinePeopleEditor
+    <SundayPeoplePicker
       items={talk?.personNameResolved ? [talk] : []}
       members={members}
       label={`Speaker ${index + 1}`}
       maxPeople={1}
+      roleWithHistory="speaker"
       onAdd={(person) =>
         talk
           ? updateSundayAgendaItem(talk.id, { person })

@@ -27,7 +27,8 @@ import type { SundayMeetingType } from "@/lib/sunday-meetings/types";
 
 function revalidateSundayMeetingRoutes(): void {
   revalidatePath("/meetings/sunday");
-  revalidatePath("/meetings/sunday/leading");
+  revalidatePath("/meetings/sunday/[date]", "page");
+  revalidatePath("/meetings/sunday/upcoming");
 }
 
 /**

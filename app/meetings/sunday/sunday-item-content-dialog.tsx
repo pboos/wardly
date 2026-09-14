@@ -54,7 +54,10 @@ export function ItemContentDialog({
         type="button"
         variant="outline"
         size="sm"
-        onClick={() => setOpen(true)}
+        onClick={() => {
+          setValue(initialValue);
+          setOpen(true);
+        }}
       >
         {triggerLabel}
       </Button>

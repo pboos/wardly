@@ -1,16 +1,14 @@
-import { getCurrentUser } from "@/lib/auth/dal";
-import { loadLeadingSundayMeeting } from "@/lib/sunday-meetings/loaders";
-import { SundayLeadingView } from "../sunday-leading-view";
+import { notFound, redirect } from "next/navigation";
+import { safeSundayCursor } from "@/lib/sunday-meetings/schedule";
 
-export default async function SundayLeadingPage({
+/** Preserve bookmarks from the former leading-view route. */
+export default async function LegacySundayLeadingPage({
   searchParams,
 }: {
   searchParams: Promise<{ date?: string | string[] }>;
 }) {
-  const user = await getCurrentUser();
   const { date } = await searchParams;
-  const selectedDate = typeof date === "string" ? date : undefined;
-  const data = await loadLeadingSundayMeeting(user.ward_id, selectedDate);
-
-  return <SundayLeadingView data={data} />;
+  if (typeof date !== "string") redirect("/meetings/sunday/upcoming");
+  if (!safeSundayCursor(date)) notFound();
+  redirect(`/meetings/sunday/${date}`);
 }

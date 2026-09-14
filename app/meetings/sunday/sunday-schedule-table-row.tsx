@@ -60,7 +60,7 @@ export function ScheduleTableRow({
       <TableCell className={cn("font-medium", dateCellClassName)}>
         <Link
           className="underline-offset-4 hover:underline"
-          href={`/meetings/sunday/leading?date=${meeting.date}`}
+          href={`/meetings/sunday/${meeting.date}`}
         >
           {formatDate(meeting.date)}
         </Link>

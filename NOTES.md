@@ -4,6 +4,17 @@ This file contains notes about the ideas for wardly. Transcript notes are just s
 
 ## Instructions
 
+meetings
+- details screen cards smaller, position movement right top
+  - hymn (emoji in front for hymn), should also be opening a modal where one enters hymn number. completion shows the hymn text and when selected similar to person shows when the hymn was sung last. if not a hymn entered, then it will say that on enter it will add a musical number. musical number can not be for opening/closing hymn. So modal should have flag if it allows musical number or not.
+  - prayer should be one line (maybe with emoji in front)
+- tasks adding in (and already have them listed when planning the sunday meeting)
+- hymns: tell it to pull hymn names in german and english from the website by giving url and putting into per language json file. then to automatically show the name and also show the name when typing the hymn number.
+
+for easy local testing (myself as well as automatic by ai agent) i would like a way to have this in some way (env variable, startup flag or other recommended way)
+- demo data to play around with. this can be stored in the database on startup. but suggest a good way to have this around locally while server doesn't add this data to the database.
+- authentication bypass, so we don't need email acces. Can be login with no email sent and 123456 (or similar) code for use. or bypass login completely. suggest a good way for this
+
 
 ## Transcripts
 

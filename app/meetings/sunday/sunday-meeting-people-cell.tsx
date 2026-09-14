@@ -5,7 +5,7 @@ import type {
   SundayMeetingMemberHistory,
 } from "@/lib/sunday-meetings/types";
 import { participantsByType } from "@/lib/sunday-meetings/slots";
-import { SundayInlinePeopleEditor } from "./sunday-inline-people-editor";
+import { SundayPeoplePicker } from "./sunday-people-picker";
 import { addSundayAgendaItem, deleteSundayAgendaItem } from "./actions";
 type ParticipantType = "organist" | "music_conductor";
 
@@ -21,7 +21,7 @@ export function MeetingPeopleCell({
   const label = role === "organist" ? "Organist" : "Music conductor";
 
   return (
-    <SundayInlinePeopleEditor
+    <SundayPeoplePicker
       label={label}
       items={participantsByType(meeting.items, role)}
       members={members}

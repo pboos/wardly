@@ -98,8 +98,8 @@ export function SundayScheduleView({
             timeZone={schedule.timeZone}
           />
           <Button size="sm" asChild>
-            <Link href="/meetings/sunday/leading">
-              Open leading view
+            <Link href="/meetings/sunday/upcoming">
+              Open upcoming meeting
               <IconChevronRight data-icon="inline-end" />
             </Link>
           </Button>

@@ -43,13 +43,13 @@ export function SundayLeadingView({ data }: { data: LeadingData }) {
       <header className="flex flex-col gap-4">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <Button variant="outline" size="sm" asChild>
-            <Link href={`/meetings/sunday/leading?date=${previousDate}`}>
+            <Link href={`/meetings/sunday/${previousDate}`}>
               <IconArrowLeft data-icon="inline-start" />
               Previous Sunday
             </Link>
           </Button>
           <Button variant="outline" size="sm" asChild>
-            <Link href={`/meetings/sunday/leading?date=${nextDate}`}>
+            <Link href={`/meetings/sunday/${nextDate}`}>
               Next Sunday
               <IconArrowRight data-icon="inline-end" />
             </Link>
