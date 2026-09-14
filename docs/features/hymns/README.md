@@ -48,7 +48,9 @@ uses the ward catalog for number completion and title display in schedule and de
 ward-wide last-sung dates strictly before ward-local today. History comes from saved
 hymn entries, not attendance/completion tracking. Historical entries do not store
 a catalog language; changing ward language reinterprets their numbers. Unknown
-numbers (1–9999) remain selectable with “title unavailable”; no language fallback.
+numbers (1–9999) remain selectable in hymn-only fields with “title unavailable”;
+no language fallback. Where musical numbers are allowed, unmatched input defaults
+to a musical number and saves the entered text.
 
 ## Maintenance and verification
 

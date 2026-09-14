@@ -36,10 +36,13 @@ for the shared model and [agenda](agenda.md) for ordering and meeting-type trans
   localized titles; the highlighted choice shows the last recorded date strictly
   before ward-local today across all ward meetings. Enter or tapping selects;
   Escape/Cancel dismisses, errors retain the draft, and saving blocks duplicates.
-  Unknown numbers from 1 to 9999 show “title unavailable”.
-- With empty input, interlude offers “Enter to add a musical number”, saving
-  “Musical number” without a person. Details and performer names are edited as
-  text on the details screen. Opening, sacrament, and closing slots are hymn-only.
+  Hymn-only fields allow unknown numbers from 1 to 9999 with “title unavailable”.
+- For interlude, any nonempty input also offers “Enter to add a musical number”
+  as the last suggestion, saving the trimmed text without a person. Hymn matches
+  come first; with no catalog match, Enter saves a musical number (including
+  unknown numeric input). Empty input saves nothing. Reopening a musical number
+  prefills its text. Details and performer names can also be edited on the details
+  screen. Opening, sacrament, and closing slots are hymn-only.
   A separate Clear action retains a standard entry’s ID and position.
 - People use the shared picker described below. Schedule chips lay out horizontally
   and wrap when needed, with no permanent text input or enclosing input border.

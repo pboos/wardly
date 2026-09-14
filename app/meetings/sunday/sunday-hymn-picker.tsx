@@ -86,6 +86,9 @@ export function SundayHymnPicker({
       {open && (
         <SundayHymnPickerDialog
           initialNumber={number}
+          initialText={
+            item?.type === "musical_number" ? (item.content ?? "") : undefined
+          }
           allowMusicalNumber={allowMusicalNumber}
           canClear={Boolean(
             item && (number || item.content || item.personNameResolved),

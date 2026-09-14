@@ -21,6 +21,7 @@ import type { SundayHymnSlotInput } from "./sunday-hymn-picker";
 
 export function SundayHymnPickerDialog({
   initialNumber,
+  initialText,
   allowMusicalNumber,
   canClear,
   pending,
@@ -29,6 +30,7 @@ export function SundayHymnPickerDialog({
   onCancel,
 }: {
   initialNumber?: number;
+  initialText?: string;
   allowMusicalNumber: boolean;
   canClear: boolean;
   pending: boolean;
@@ -38,13 +40,16 @@ export function SundayHymnPickerDialog({
 }) {
   const { hymns, lastSung } = useSundayHymns();
   const inputRef = useRef<HTMLInputElement>(null);
-  const [query, setQuery] = useState(initialNumber?.toString() ?? "");
+  const [query, setQuery] = useState(
+    initialText ?? initialNumber?.toString() ?? "",
+  );
   const [selectedValue, setSelectedValue] = useState("");
   const choices = hymnChoices(hymns, query);
-  const musical = !query.trim() && allowMusicalNumber;
-  // Keep manual numbers available for catalog gaps and unsupported languages.
+  const musical = Boolean(query.trim()) && allowMusicalNumber;
+  // Hymn-only fields still allow numbers missing from the catalog.
   const number = /^\d+$/.test(query.trim()) ? Number(query.trim()) : 0;
   const manual =
+    !allowMusicalNumber &&
     number >= 1 &&
     number <= 9999 &&
     !choices.some((hymn) => hymn.number === number);
@@ -61,7 +66,7 @@ export function SundayHymnPickerDialog({
         ? {
             type: "musical_number",
             metadata: null,
-            content: "Musical number",
+            content: query.trim(),
             person: null,
           }
         : {
@@ -86,7 +91,7 @@ export function SundayHymnPickerDialog({
         <DialogDescription>
           Enter a hymn number. Press Enter to select.
           {allowMusicalNumber &&
-            " Leave blank to add a musical number; add details and performer names in the meeting details."}
+            " Or type musical-number details and performer names. Choose the last suggestion to save your text as a musical number."}
         </DialogDescription>
       </DialogHeader>
       <form
@@ -111,8 +116,16 @@ export function SundayHymnPickerDialog({
         >
           <CommandInput
             ref={inputRef}
-            aria-label="Hymn number"
-            placeholder="Enter hymn number…"
+            aria-label={
+              allowMusicalNumber
+                ? "Hymn number or musical number"
+                : "Hymn number"
+            }
+            placeholder={
+              allowMusicalNumber
+                ? "Hymn number or musical-number details…"
+                : "Enter hymn number…"
+            }
             value={query}
             disabled={pending}
             onValueChange={(value) => {
@@ -149,8 +162,8 @@ export function SundayHymnPickerDialog({
                   disabled={pending}
                   onSelect={() => save("musical")}
                 >
-                  <span className="flex flex-col gap-1">
-                    <span>Musical number</span>
+                  <span className="flex min-w-0 flex-col gap-1 whitespace-normal break-words">
+                    <span>{query.trim()}</span>
                     <span className="text-muted-foreground">
                       Enter to add a musical number
                     </span>
@@ -160,7 +173,9 @@ export function SundayHymnPickerDialog({
             </CommandGroup>
             {!values.length && (
               <p className="px-3 py-4 text-sm text-muted-foreground">
-                Enter a whole hymn number from 1 to 9999.
+                {allowMusicalNumber
+                  ? "Enter a hymn number or musical-number details."
+                  : "Enter a whole hymn number from 1 to 9999."}
               </p>
             )}
           </CommandList>
