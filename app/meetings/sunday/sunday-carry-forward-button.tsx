@@ -4,6 +4,7 @@ import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
+import { IconPlayerSkipForward } from "@tabler/icons-react";
 import {
   Dialog,
   DialogContent,
@@ -14,7 +15,13 @@ import {
 import type { SundayMeetingItem } from "@/lib/sunday-meetings/types";
 import { carrySundayAgendaItemForward } from "./actions";
 
-export function CarryForwardButton({ item }: { item: SundayMeetingItem }) {
+export function CarryForwardButton({
+  item,
+  disabled = false,
+}: {
+  item: SundayMeetingItem;
+  disabled?: boolean;
+}) {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
   const [open, setOpen] = useState(false);
@@ -40,11 +47,14 @@ export function CarryForwardButton({ item }: { item: SundayMeetingItem }) {
     <>
       <Button
         type="button"
-        variant="outline"
-        size="sm"
+        variant="ghost"
+        size="icon-sm"
+        aria-label="Carry forward"
+        title="Carry forward"
+        disabled={disabled || pending}
         onClick={() => setOpen(true)}
       >
-        Carry forward
+        <IconPlayerSkipForward />
       </Button>
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent>

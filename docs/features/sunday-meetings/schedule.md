@@ -58,7 +58,8 @@ for the shared model and [agenda](agenda.md) for ordering and meeting-type trans
 The same `SundayPeoplePicker` serves the schedule and details. Its `layout` prop
 selects horizontal chips (schedule) or vertical rows (details). Every name has an
 × removal button. A + sits beside the last name; empty fields show “+ Add <role>”.
-Single-person fields hide + when filled. The parent supplies add/remove callbacks
+Single-person fields hide + when filled; clicking the name opens the same picker
+to replace the assignment. The parent supplies add/remove callbacks
 so standard-slot clearing and extra-item deletion retain their existing rules.
 
 Clicking + opens a compact modal with a dimmed background and an autofocus search

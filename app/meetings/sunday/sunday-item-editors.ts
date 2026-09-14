@@ -29,7 +29,18 @@ export function personTitle(type: SundayMeetingItemType): string {
 /** Dialog label of the item text; null when the type has no text editor. */
 export function contentLabel(type: SundayMeetingItemType): string | null {
   if (type === "talk") return "Talk topic";
-  if (type === "prayer" || type === "hymn" || type === "transition")
+  if (
+    [
+      "prayer",
+      "hymn",
+      "transition",
+      "convert_confirmation",
+      "member_welcome",
+      "child_naming_blessing",
+    ].includes(type)
+  )
     return null;
+  if (type === "ward_business" || type === "conductor_text")
+    return ITEM_LABELS[type];
   return "Item details";
 }

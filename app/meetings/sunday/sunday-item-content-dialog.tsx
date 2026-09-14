@@ -56,7 +56,7 @@ export function ItemContentDialog({
         type="button"
         variant={inline ? "ghost" : "outline"}
         size="sm"
-        className="h-auto min-h-8 max-w-full whitespace-normal break-words text-left"
+        className="h-auto min-h-8 max-w-full justify-start whitespace-pre-wrap break-words text-left"
         aria-label={`Edit ${label.toLowerCase()}: ${triggerLabel}`}
         onClick={() => {
           setValue(initialValue);

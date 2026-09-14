@@ -9,13 +9,11 @@ import {
 } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import {
-  isCarryForwardEligible,
   type SundayMeetingItem,
   type SundayMeetingMemberHistory,
   type SundayMeetingSupportText,
 } from "@/lib/sunday-meetings/types";
 import type { SundayAgendaMove } from "@/lib/sunday-meetings/agenda";
-import { CarryForwardButton } from "./sunday-carry-forward-button";
 import { ITEM_LABELS, SLOT_LABELS } from "./sunday-leading-labels";
 import { PERSON_EDITORS, personTitle } from "./sunday-item-editors";
 import { SundayItemPersonEditor } from "./sunday-item-person-editor";
@@ -70,7 +68,12 @@ export function SundayLeadingItemRow({
     "talk",
     "sacrament_blessing",
     "sacrament_passing",
+    "convert_confirmation",
+    "member_welcome",
+    "child_naming_blessing",
   ].includes(item.type);
+  const textBelow =
+    item.type === "ward_business" || item.type === "conductor_text";
   const emojis: Partial<Record<SundayMeetingItem["type"], string>> = {
     hymn: "🎵",
     musical_number: "🎶",
@@ -120,15 +123,19 @@ export function SundayLeadingItemRow({
               )}
               <SundayItemContentEditor item={item} inline />
             </div>
+          ) : textBelow ? (
+            <>
+              {title}
+              <div className="col-span-full min-w-0">
+                <SundayItemContentEditor item={item} inline />
+              </div>
+            </>
           ) : (
             <>
               {title}
               {detail && <CardDescription>{detail}</CardDescription>}
               <div className="flex min-w-0 flex-wrap items-center gap-2">
                 <SundayItemContentEditor item={item} />
-                {isCarryForwardEligible(item.type) && (
-                  <CarryForwardButton item={item} />
-                )}
               </div>
             </>
           )}

@@ -88,6 +88,9 @@ export function AddAgendaItemDialog({
     "sacrament_blessing",
     "sacrament_passing",
     "transition",
+    "convert_confirmation",
+    "member_welcome",
+    "child_naming_blessing",
   ].includes(type);
 
   return (

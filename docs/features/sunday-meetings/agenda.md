@@ -21,6 +21,14 @@ Read the [overview](README.md) first; schedule-specific editing is in [schedule]
   blessing/passing use a single inline row; long content wraps on narrow screens.
   Person assignments use an accessible + control when empty. Talk topics and
   sacrament details are clickable text; empty text shows an add prompt.
+- Convert confirmations, member welcomes, and child blessings also use compact
+  title-and-name rows, with the same member/free-text picker as talks and prayers.
+  They no longer offer details fields when adding or editing; previously saved
+  details remain stored. Clicking an assigned single-person name opens the picker
+  to replace it; × retains the existing removal behavior.
+- Ward business and conductor text display clickable multiline text below the
+  title, opening a free-text modal (or an add prompt when empty) in any section.
+  Eligible rows have a skip-forward icon immediately before the reorder arrows.
 - Musical numbers use free text for details and performer names, with no member
   selector. Interludes and extra hymns/musical numbers use the same hymn modal as
   the schedule; conversion to musical number is enabled for interludes and extra
@@ -118,7 +126,9 @@ controls, task suggestions, and standard-slot movement rules are unchanged.
   Sunday, creating it if necessary and skipping conferences (104-attempt limit).
   It appends in the same section and rejects a duplicate destination task link.
   Eligible types are task presentations, child blessings, welcomes, confirmations,
-  announcements, ward business, and custom program items; talks/hymns/prayers are excluded.
+  announcements, ward business, conductor text, and custom program items;
+  talks/hymns/prayers are excluded. Carry-forward rejects moves that would leave
+  adjacent conductor-text entries in either meeting.
 
 ## Implementation map
 

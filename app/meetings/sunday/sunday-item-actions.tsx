@@ -15,7 +15,11 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import type { SundayMeetingItem } from "@/lib/sunday-meetings/types";
+import {
+  isCarryForwardEligible,
+  type SundayMeetingItem,
+} from "@/lib/sunday-meetings/types";
+import { CarryForwardButton } from "./sunday-carry-forward-button";
 import {
   AGENDA_SECTIONS,
   type SundayAgendaMove,
@@ -47,6 +51,9 @@ export function SundayItemActions({
   }
   return (
     <div className="flex shrink-0 items-center gap-0.5">
+      {isCarryForwardEligible(item.type) && (
+        <CarryForwardButton item={item} disabled={pending} />
+      )}
       <Button
         type="button"
         variant="ghost"

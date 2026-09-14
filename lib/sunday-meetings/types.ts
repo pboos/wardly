@@ -212,6 +212,7 @@ export function isCarryForwardEligible(type: SundayMeetingItemType): boolean {
     "announcement",
     "ward_business",
     "custom_program",
+    "conductor_text",
   ].includes(type);
 }
 

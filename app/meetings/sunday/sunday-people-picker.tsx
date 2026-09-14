@@ -119,6 +119,7 @@ export function SundayPeoplePicker({
                   item={item}
                   label={label}
                   pending={pending}
+                  onEdit={maxPeople === 1 ? () => changeOpen(true) : undefined}
                   onRemove={() => mutate(() => onRemove(item))}
                 />
                 {index === people.length - 1 && addButton}

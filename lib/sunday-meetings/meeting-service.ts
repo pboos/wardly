@@ -342,6 +342,7 @@ export async function carryForwardItem(
     });
 
     await normalizeMeetingOrder(tx, item.sunday_meeting_id);
+    await normalizeMeetingOrder(tx, destination.id);
     return { destinationDate };
   });
 }
