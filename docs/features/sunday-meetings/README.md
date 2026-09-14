@@ -10,6 +10,9 @@ while conducting. Read this overview first; load the relevant topic below for de
 
 ## Shared model and lifecycle
 
+Local [hymn catalogs and ward language](../hymns/README.md) provide number/title
+lookup for English and German. Picker/display integration is still pending.
+
 - A `sunday_meeting` belongs to a ward and is unique by `(ward_id, date)`.
   Dates are Sunday-only `YYYY-MM-DD` calendar dates. The ward's IANA time zone
   determines today and the current/upcoming Sunday.

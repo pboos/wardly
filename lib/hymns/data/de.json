@@ -1,0 +1,1368 @@
+{
+  "locale": "de",
+  "retrievedAt": "2026-09-14T16:00:09.681Z",
+  "sources": [
+    {
+      "collection": "hymns",
+      "url": "https://www.churchofjesuschrist.org/media/music/collections/hymns?lang=deu",
+      "count": 210
+    },
+    {
+      "collection": "hymns-for-home-and-church",
+      "url": "https://www.churchofjesuschrist.org/media/music/collections/hymns-for-home-and-church?lang=deu",
+      "count": 60
+    }
+  ],
+  "hymns": [
+    {
+      "number": 1,
+      "title": "Der Morgen naht",
+      "collection": "hymns"
+    },
+    {
+      "number": 2,
+      "title": "Der Geist aus den Höhen",
+      "collection": "hymns"
+    },
+    {
+      "number": 3,
+      "title": "O Fülle des Heiles",
+      "collection": "hymns"
+    },
+    {
+      "number": 4,
+      "title": "Hoch auf des Berges Höhn",
+      "collection": "hymns"
+    },
+    {
+      "number": 5,
+      "title": "Herr, unser Erlöser",
+      "collection": "hymns"
+    },
+    {
+      "number": 6,
+      "title": "Israel, der Herr ruft alle",
+      "collection": "hymns"
+    },
+    {
+      "number": 7,
+      "title": "Führe mich zum ewgen Leben",
+      "collection": "hymns"
+    },
+    {
+      "number": 8,
+      "title": "Ein Engel aus der Höhe",
+      "collection": "hymns"
+    },
+    {
+      "number": 9,
+      "title": "Was klingt in diesen Tagen",
+      "collection": "hymns"
+    },
+    {
+      "number": 10,
+      "title": "Wacht auf, ihr Heilgen!",
+      "collection": "hymns"
+    },
+    {
+      "number": 11,
+      "title": "Wir danken, o Gott, für den Propheten",
+      "collection": "hymns"
+    },
+    {
+      "number": 12,
+      "title": "Gott des Rechtes, Gott der Kraft",
+      "collection": "hymns"
+    },
+    {
+      "number": 13,
+      "title": "Kommt, höret, was der Heiland spricht",
+      "collection": "hymns"
+    },
+    {
+      "number": 14,
+      "title": "Wir beten stets für dich, unser Prophet",
+      "collection": "hymns"
+    },
+    {
+      "number": 15,
+      "title": "Segne unsern Propheten",
+      "collection": "hymns"
+    },
+    {
+      "number": 16,
+      "title": "O wie lieblich war der Morgen",
+      "collection": "hymns"
+    },
+    {
+      "number": 17,
+      "title": "Preiset den Mann",
+      "collection": "hymns"
+    },
+    {
+      "number": 18,
+      "title": "Ein armer Wandrer",
+      "collection": "hymns"
+    },
+    {
+      "number": 19,
+      "title": "Kommt, Heilge, kommt!",
+      "collection": "hymns"
+    },
+    {
+      "number": 20,
+      "title": "O ihr Bergeshöhn",
+      "collection": "hymns"
+    },
+    {
+      "number": 21,
+      "title": "Für der Berge Kraft",
+      "collection": "hymns"
+    },
+    {
+      "number": 22,
+      "title": "Kommt und singt von Zion",
+      "collection": "hymns"
+    },
+    {
+      "number": 23,
+      "title": "Heil sei dir, Zion!",
+      "collection": "hymns"
+    },
+    {
+      "number": 24,
+      "title": "Zions Berge, stolz und prächtig",
+      "collection": "hymns"
+    },
+    {
+      "number": 25,
+      "title": "Herrliches Zion, hehr erbaut",
+      "collection": "hymns"
+    },
+    {
+      "number": 26,
+      "title": "Komm, o komm, du Tag der Glorie",
+      "collection": "hymns"
+    },
+    {
+      "number": 27,
+      "title": "Der Zeiten Fülle nun begann",
+      "collection": "hymns"
+    },
+    {
+      "number": 28,
+      "title": "Der Morgen erwachet",
+      "collection": "hymns"
+    },
+    {
+      "number": 29,
+      "title": "Komm, o du Heiland hehr",
+      "collection": "hymns"
+    },
+    {
+      "number": 30,
+      "title": "Morgensterne, jauchzt vor Freud!",
+      "collection": "hymns"
+    },
+    {
+      "number": 31,
+      "title": "Kommt, ihr Kinder Gottes",
+      "collection": "hymns"
+    },
+    {
+      "number": 32,
+      "title": "Für die Wunder dieser Welt",
+      "collection": "hymns"
+    },
+    {
+      "number": 33,
+      "title": "Hört, ihr Geschöpfe all, frohlockt!",
+      "collection": "hymns"
+    },
+    {
+      "number": 34,
+      "title": "Heut, am heilgen Tag der Freude",
+      "collection": "hymns"
+    },
+    {
+      "number": 35,
+      "title": "Ehre sei unserm Herrn",
+      "collection": "hymns"
+    },
+    {
+      "number": 36,
+      "title": "Kommt, all ihr Heilgen",
+      "collection": "hymns"
+    },
+    {
+      "number": 37,
+      "title": "Frohlockt, der Herr regiert!",
+      "collection": "hymns"
+    },
+    {
+      "number": 38,
+      "title": "Wie soll ich dich empfangen?",
+      "collection": "hymns"
+    },
+    {
+      "number": 39,
+      "title": "Lobe den Herren, den mächtigen König",
+      "collection": "hymns"
+    },
+    {
+      "number": 40,
+      "title": "Ein feste Burg ist unser Gott",
+      "collection": "hymns"
+    },
+    {
+      "number": 41,
+      "title": "Gott unsrer Väter, wir stehen vor dir",
+      "collection": "hymns"
+    },
+    {
+      "number": 42,
+      "title": "Preist den Herrn",
+      "collection": "hymns"
+    },
+    {
+      "number": 43,
+      "title": "Gott unsrer Väter, deine Hand regiert",
+      "collection": "hymns"
+    },
+    {
+      "number": 44,
+      "title": "Großer Gott, wir loben dich",
+      "collection": "hymns"
+    },
+    {
+      "number": 45,
+      "title": "Blickt auf den Herrn!",
+      "collection": "hymns"
+    },
+    {
+      "number": 46,
+      "title": "Heilig ist der Herr",
+      "collection": "hymns"
+    },
+    {
+      "number": 47,
+      "title": "Herr und Gott der Himmelsheere",
+      "collection": "hymns"
+    },
+    {
+      "number": 48,
+      "title": "Kommt, o ihr Menschen",
+      "collection": "hymns"
+    },
+    {
+      "number": 49,
+      "title": "Wenn so meine Tage rastlos entfliehn",
+      "collection": "hymns"
+    },
+    {
+      "number": 50,
+      "title": "Wie groß bist du!",
+      "collection": "hymns"
+    },
+    {
+      "number": 51,
+      "title": "Der Herr ist mein Licht",
+      "collection": "hymns"
+    },
+    {
+      "number": 52,
+      "title": "Wir treten zum Beten",
+      "collection": "hymns"
+    },
+    {
+      "number": 53,
+      "title": "Kinder Gottes, saget Dank",
+      "collection": "hymns"
+    },
+    {
+      "number": 54,
+      "title": "Lieber Vater, hoch im Himmel",
+      "collection": "hymns"
+    },
+    {
+      "number": 55,
+      "title": "Gott ist Liebe",
+      "collection": "hymns"
+    },
+    {
+      "number": 56,
+      "title": "O fest wie ein Felsen",
+      "collection": "hymns"
+    },
+    {
+      "number": 57,
+      "title": "Die ihr den Herren liebt",
+      "collection": "hymns"
+    },
+    {
+      "number": 58,
+      "title": "Führ, gütges Licht",
+      "collection": "hymns"
+    },
+    {
+      "number": 59,
+      "title": "Wie gütig sein Gebot",
+      "collection": "hymns"
+    },
+    {
+      "number": 60,
+      "title": "Ich brauch dich allezeit",
+      "collection": "hymns"
+    },
+    {
+      "number": 61,
+      "title": "Näher, mein Gott, zu dir",
+      "collection": "hymns"
+    },
+    {
+      "number": 62,
+      "title": "Näher, mein Heiland, zu dir",
+      "collection": "hymns"
+    },
+    {
+      "number": 63,
+      "title": "Kommt, folget mir",
+      "collection": "hymns"
+    },
+    {
+      "number": 64,
+      "title": "Jesus, Heiland, führe mich",
+      "collection": "hymns"
+    },
+    {
+      "number": 65,
+      "title": "Jesus, dir gehört mein Herz",
+      "collection": "hymns"
+    },
+    {
+      "number": 66,
+      "title": "Meister, es toben die Winde",
+      "collection": "hymns"
+    },
+    {
+      "number": 67,
+      "title": "Der Herr ist mein getreuer Hirt",
+      "collection": "hymns"
+    },
+    {
+      "number": 68,
+      "title": "Der Herr ist mein Hirte",
+      "collection": "hymns"
+    },
+    {
+      "number": 69,
+      "title": "Christ, unser Heil",
+      "collection": "hymns"
+    },
+    {
+      "number": 70,
+      "title": "Herr, wir wollen preisen, loben",
+      "collection": "hymns"
+    },
+    {
+      "number": 71,
+      "title": "Herr, unser Gott",
+      "collection": "hymns"
+    },
+    {
+      "number": 72,
+      "title": "Fels seit alters",
+      "collection": "hymns"
+    },
+    {
+      "number": 73,
+      "title": "Herr, gib uns deinen Segen",
+      "collection": "hymns"
+    },
+    {
+      "number": 74,
+      "title": "Komm, du Quelle jedes Segens",
+      "collection": "hymns"
+    },
+    {
+      "number": 75,
+      "title": "Kommet zu Jesus",
+      "collection": "hymns"
+    },
+    {
+      "number": 76,
+      "title": "Ihr Heilgen, schauet auf zu Gott",
+      "collection": "hymns"
+    },
+    {
+      "number": 77,
+      "title": "Wo wird mir Trost zuteil?",
+      "collection": "hymns"
+    },
+    {
+      "number": 78,
+      "title": "In Demut",
+      "collection": "hymns"
+    },
+    {
+      "number": 79,
+      "title": "Mehr Heiligkeit gib mir",
+      "collection": "hymns"
+    },
+    {
+      "number": 80,
+      "title": "Die Sach ist dein, Herr Jesus Christ",
+      "collection": "hymns"
+    },
+    {
+      "number": 81,
+      "title": "Zu unsres Heilands Füßen einst",
+      "collection": "hymns"
+    },
+    {
+      "number": 82,
+      "title": "Christus ist mein Herr",
+      "collection": "hymns"
+    },
+    {
+      "number": 83,
+      "title": "Schönster Herr Jesus",
+      "collection": "hymns"
+    },
+    {
+      "number": 84,
+      "title": "Mein Erlöser lebt",
+      "collection": "hymns"
+    },
+    {
+      "number": 85,
+      "title": "Ich weiß, daß mein Erlöser lebt",
+      "collection": "hymns"
+    },
+    {
+      "number": 86,
+      "title": "Wir fasten",
+      "collection": "hymns"
+    },
+    {
+      "number": 87,
+      "title": "Das Zeugnis",
+      "collection": "hymns"
+    },
+    {
+      "number": 88,
+      "title": "Sprachst du dein Gebet?",
+      "collection": "hymns"
+    },
+    {
+      "number": 89,
+      "title": "Jesus, wenn ich nur denk an dich",
+      "collection": "hymns"
+    },
+    {
+      "number": 90,
+      "title": "Wie schön die Stund",
+      "collection": "hymns"
+    },
+    {
+      "number": 91,
+      "title": "Wenn der Heilge Geist dich führt",
+      "collection": "hymns"
+    },
+    {
+      "number": 92,
+      "title": "Wie süß die Stund",
+      "collection": "hymns"
+    },
+    {
+      "number": 93,
+      "title": "Vater im Himmel",
+      "collection": "hymns"
+    },
+    {
+      "number": 94,
+      "title": "Der Seele Wunsch ist das Gebet",
+      "collection": "hymns"
+    },
+    {
+      "number": 95,
+      "title": "Süß ist dein Werk",
+      "collection": "hymns"
+    },
+    {
+      "number": 96,
+      "title": "Seht, der Tag des Herrn bricht an",
+      "collection": "hymns"
+    },
+    {
+      "number": 97,
+      "title": "Wie der Tau, vom Himmel träufelnd",
+      "collection": "hymns"
+    },
+    {
+      "number": 98,
+      "title": "Gott sei mit euch",
+      "collection": "hymns"
+    },
+    {
+      "number": 99,
+      "title": "Heilig sei und bleibe dir",
+      "collection": "hymns"
+    },
+    {
+      "number": 100,
+      "title": "Vater, dir sei diese Stunde",
+      "collection": "hymns"
+    },
+    {
+      "number": 101,
+      "title": "Laßt uns nochmals singen",
+      "collection": "hymns"
+    },
+    {
+      "number": 102,
+      "title": "Dein Geist, o Herr, berührt mich heut",
+      "collection": "hymns"
+    },
+    {
+      "number": 103,
+      "title": "Leise weicht des Tages Licht",
+      "collection": "hymns"
+    },
+    {
+      "number": 104,
+      "title": "Herr, bleib bei mir",
+      "collection": "hymns"
+    },
+    {
+      "number": 105,
+      "title": "Nun der Tag vorüber",
+      "collection": "hymns"
+    },
+    {
+      "number": 106,
+      "title": "Herr, wir flehn um deinen Segen",
+      "collection": "hymns"
+    },
+    {
+      "number": 107,
+      "title": "Herr, wir treten vor dich hin",
+      "collection": "hymns"
+    },
+    {
+      "number": 108,
+      "title": "O bleibe, Herr",
+      "collection": "hymns"
+    },
+    {
+      "number": 109,
+      "title": "Jesus von Nazareth",
+      "collection": "hymns"
+    },
+    {
+      "number": 110,
+      "title": "Herr, in Demut flehn wir",
+      "collection": "hymns"
+    },
+    {
+      "number": 111,
+      "title": "Wenn Brot und Wasser nehmen wir",
+      "collection": "hymns"
+    },
+    {
+      "number": 112,
+      "title": "O Gott, du ewger Vater",
+      "collection": "hymns"
+    },
+    {
+      "number": 113,
+      "title": "Wir rufen, Herr, dich Schöpfer an",
+      "collection": "hymns"
+    },
+    {
+      "number": 114,
+      "title": "In Lieb und Gnad vom Himmelsthron",
+      "collection": "hymns"
+    },
+    {
+      "number": 115,
+      "title": "Den Namen Jesu ehren wir",
+      "collection": "hymns"
+    },
+    {
+      "number": 116,
+      "title": "O sieh des großen Meisters Tod",
+      "collection": "hymns"
+    },
+    {
+      "number": 117,
+      "title": "Es liegt ein Hügel in der Fern",
+      "collection": "hymns"
+    },
+    {
+      "number": 118,
+      "title": "Erstaunt und bewundernd",
+      "collection": "hymns"
+    },
+    {
+      "number": 119,
+      "title": "Am Kreuze einst auf Golgatha",
+      "collection": "hymns"
+    },
+    {
+      "number": 120,
+      "title": "Zum Tisch des Herren kommen wir",
+      "collection": "hymns"
+    },
+    {
+      "number": 121,
+      "title": "Zu dieser Stund gedenken wir",
+      "collection": "hymns"
+    },
+    {
+      "number": 122,
+      "title": "Wie groß die Weisheit und die Lieb",
+      "collection": "hymns"
+    },
+    {
+      "number": 123,
+      "title": "Jesus, einstens schlicht geborn",
+      "collection": "hymns"
+    },
+    {
+      "number": 124,
+      "title": "O Haupt voll Blut und Wunden",
+      "collection": "hymns"
+    },
+    {
+      "number": 125,
+      "title": "Gott und Vater, hör uns flehn",
+      "collection": "hymns"
+    },
+    {
+      "number": 126,
+      "title": "Seele, dein Heiland ist frei",
+      "collection": "hymns"
+    },
+    {
+      "number": 127,
+      "title": "Christ, der Herr, vom Tod erstand",
+      "collection": "hymns"
+    },
+    {
+      "number": 128,
+      "title": "Seht, der Herr ist auferstanden!",
+      "collection": "hymns"
+    },
+    {
+      "number": 129,
+      "title": "Es ist ein Ros entsprungen",
+      "collection": "hymns"
+    },
+    {
+      "number": 130,
+      "title": "Tochter Zion, freue dich",
+      "collection": "hymns"
+    },
+    {
+      "number": 131,
+      "title": "Freu dich, o Welt, der Herr erschien!",
+      "collection": "hymns"
+    },
+    {
+      "number": 132,
+      "title": "O du fröhliche",
+      "collection": "hymns"
+    },
+    {
+      "number": 133,
+      "title": "Engel auf den Feldern singen",
+      "collection": "hymns"
+    },
+    {
+      "number": 134,
+      "title": "Stille Nacht, heilige Nacht",
+      "collection": "hymns"
+    },
+    {
+      "number": 135,
+      "title": "Im Stroh in der Krippe",
+      "collection": "hymns"
+    },
+    {
+      "number": 136,
+      "title": "Hört, die Engelschöre singen",
+      "collection": "hymns"
+    },
+    {
+      "number": 137,
+      "title": "Du kleines Städtchen Bethlehem",
+      "collection": "hymns"
+    },
+    {
+      "number": 138,
+      "title": "Mit Staunen sahn die Weisen nahn",
+      "collection": "hymns"
+    },
+    {
+      "number": 139,
+      "title": "Herbei, o ihr Gläubigen!",
+      "collection": "hymns"
+    },
+    {
+      "number": 140,
+      "title": "Lobt Gott, ihr Christen, all zugleich",
+      "collection": "hymns"
+    },
+    {
+      "number": 141,
+      "title": "Weit, weit entfernt, dort im Morgenland",
+      "collection": "hymns"
+    },
+    {
+      "number": 142,
+      "title": "Der Glocke Klang hoch zum Himmel klingt",
+      "collection": "hymns"
+    },
+    {
+      "number": 143,
+      "title": "Die Zeit vergeht im Fluge",
+      "collection": "hymns"
+    },
+    {
+      "number": 144,
+      "title": "An des Herren Hand",
+      "collection": "hymns"
+    },
+    {
+      "number": 145,
+      "title": "Täglich säend",
+      "collection": "hymns"
+    },
+    {
+      "number": 146,
+      "title": "Hör unser Lied, o Herr",
+      "collection": "hymns"
+    },
+    {
+      "number": 147,
+      "title": "Weil mir so viel gegeben ist",
+      "collection": "hymns"
+    },
+    {
+      "number": 148,
+      "title": "Herr, ich will folgen dir",
+      "collection": "hymns"
+    },
+    {
+      "number": 149,
+      "title": "Tief in dem Herzen des Hirten",
+      "collection": "hymns"
+    },
+    {
+      "number": 150,
+      "title": "Hab ich Gutes am heutigen Tag getan?",
+      "collection": "hymns"
+    },
+    {
+      "number": 151,
+      "title": "Ich hab manche Pflicht zu tun",
+      "collection": "hymns"
+    },
+    {
+      "number": 152,
+      "title": "Auf, denn die Nacht wird kommen",
+      "collection": "hymns"
+    },
+    {
+      "number": 153,
+      "title": "Alle Wege machst du schön",
+      "collection": "hymns"
+    },
+    {
+      "number": 154,
+      "title": "Noch heut, wenn die Sonne strahlet",
+      "collection": "hymns"
+    },
+    {
+      "number": 155,
+      "title": "Eine Sonne mir im Herzen scheint",
+      "collection": "hymns"
+    },
+    {
+      "number": 156,
+      "title": "Preist Gott, von dem all Segen fließt",
+      "collection": "hymns"
+    },
+    {
+      "number": 157,
+      "title": "Tu, was ist recht!",
+      "collection": "hymns"
+    },
+    {
+      "number": 158,
+      "title": "Wähle recht!",
+      "collection": "hymns"
+    },
+    {
+      "number": 159,
+      "title": "O wisse, jede Seel ist frei",
+      "collection": "hymns"
+    },
+    {
+      "number": 160,
+      "title": "Sieh den Segen!",
+      "collection": "hymns"
+    },
+    {
+      "number": 161,
+      "title": "Gehet tapfer vorwärts",
+      "collection": "hymns"
+    },
+    {
+      "number": 162,
+      "title": "Vorwärts, Christi Jünger",
+      "collection": "hymns"
+    },
+    {
+      "number": 163,
+      "title": "Auserwählt zu dienen",
+      "collection": "hymns"
+    },
+    {
+      "number": 164,
+      "title": "Wir sind Kinder Gottes",
+      "collection": "hymns"
+    },
+    {
+      "number": 165,
+      "title": "Stemmt die Schulter an das Rad",
+      "collection": "hymns"
+    },
+    {
+      "number": 166,
+      "title": "Treu in dem Glauben",
+      "collection": "hymns"
+    },
+    {
+      "number": 167,
+      "title": "Geh voran!",
+      "collection": "hymns"
+    },
+    {
+      "number": 168,
+      "title": "O du Held des wahren Glaubens",
+      "collection": "hymns"
+    },
+    {
+      "number": 169,
+      "title": "Du halfst uns, Herr, in frührer Zeit",
+      "collection": "hymns"
+    },
+    {
+      "number": 170,
+      "title": "Hoffnung Israels",
+      "collection": "hymns"
+    },
+    {
+      "number": 171,
+      "title": "Gott wirket oft geheimnisvoll",
+      "collection": "hymns"
+    },
+    {
+      "number": 172,
+      "title": "Denke dir den Lauf der Welten",
+      "collection": "hymns"
+    },
+    {
+      "number": 173,
+      "title": "Geht hin in alle Welt",
+      "collection": "hymns"
+    },
+    {
+      "number": 174,
+      "title": "Sehet, ihr Völker!",
+      "collection": "hymns"
+    },
+    {
+      "number": 175,
+      "title": "Hilf mir, inspiriert zu lehren",
+      "collection": "hymns"
+    },
+    {
+      "number": 176,
+      "title": "Die Zeit ist nur kurz",
+      "collection": "hymns"
+    },
+    {
+      "number": 177,
+      "title": "Wir lieben, Herr, dein Haus",
+      "collection": "hymns"
+    },
+    {
+      "number": 178,
+      "title": "Jehova, unser Herr und Gott",
+      "collection": "hymns"
+    },
+    {
+      "number": 179,
+      "title": "Wie groß ist dein Werk",
+      "collection": "hymns"
+    },
+    {
+      "number": 180,
+      "title": "Ich gehe, wohin du mich heißt",
+      "collection": "hymns"
+    },
+    {
+      "number": 181,
+      "title": "Die eiserne Stange",
+      "collection": "hymns"
+    },
+    {
+      "number": 182,
+      "title": "Wenn ich lese in den Schriften",
+      "collection": "hymns"
+    },
+    {
+      "number": 183,
+      "title": "O heilige Wahrheit",
+      "collection": "hymns"
+    },
+    {
+      "number": 184,
+      "title": "Wahrheit strahlt im Herzen wider",
+      "collection": "hymns"
+    },
+    {
+      "number": 185,
+      "title": "O ringe um Wahrheit",
+      "collection": "hymns"
+    },
+    {
+      "number": 186,
+      "title": "Das Licht des Evangeliums",
+      "collection": "hymns"
+    },
+    {
+      "number": 187,
+      "title": "Sei willkommen, Sonntagmorgen",
+      "collection": "hymns"
+    },
+    {
+      "number": 188,
+      "title": "O Tag des Herrn, wir singen dir",
+      "collection": "hymns"
+    },
+    {
+      "number": 189,
+      "title": "O strahlender Morgen",
+      "collection": "hymns"
+    },
+    {
+      "number": 190,
+      "title": "O mein Vater",
+      "collection": "hymns"
+    },
+    {
+      "number": 191,
+      "title": "Heilge, kommt zum Tempel",
+      "collection": "hymns"
+    },
+    {
+      "number": 192,
+      "title": "Irgendwo scheint die Sonne",
+      "collection": "hymns"
+    },
+    {
+      "number": 193,
+      "title": "Wenn uns ein Mensch zum Guten lenkt",
+      "collection": "hymns"
+    },
+    {
+      "number": 194,
+      "title": "So jemand spricht, ich liebe Gott",
+      "collection": "hymns"
+    },
+    {
+      "number": 195,
+      "title": "O Liebe, die den Sohn uns schenkt",
+      "collection": "hymns"
+    },
+    {
+      "number": 196,
+      "title": "Laßt uns dem Nächsten unsre Liebe erweisen",
+      "collection": "hymns"
+    },
+    {
+      "number": 197,
+      "title": "Wir spüren deine Liebe heut",
+      "collection": "hymns"
+    },
+    {
+      "number": 198,
+      "title": "Wo die Liebe wohnt",
+      "collection": "hymns"
+    },
+    {
+      "number": 199,
+      "title": "Wenn zu Hause Liebe herrscht",
+      "collection": "hymns"
+    },
+    {
+      "number": 200,
+      "title": "Liebet einander",
+      "collection": "hymns"
+    },
+    {
+      "number": 201,
+      "title": "Immer und ewig vereint",
+      "collection": "hymns"
+    },
+    {
+      "number": 202,
+      "title": "Ich bin ein Kind von Gott",
+      "collection": "hymns"
+    },
+    {
+      "number": 203,
+      "title": "Ich weiß, mein Vater lebt",
+      "collection": "hymns"
+    },
+    {
+      "number": 204,
+      "title": "Gottes Gebote will ich befolgen",
+      "collection": "hymns"
+    },
+    {
+      "number": 205,
+      "title": "Lehr mich, zu wandeln im göttlichen Licht",
+      "collection": "hymns"
+    },
+    {
+      "number": 206,
+      "title": "Das Licht des Herrn",
+      "collection": "hymns"
+    },
+    {
+      "number": 207,
+      "title": "Als Schwestern in Zion",
+      "collection": "hymns"
+    },
+    {
+      "number": 208,
+      "title": "Das Volk des Herrn",
+      "collection": "hymns"
+    },
+    {
+      "number": 209,
+      "title": "Ihr Ältesten Israels",
+      "collection": "hymns"
+    },
+    {
+      "number": 210,
+      "title": "Das heilge Priestertum",
+      "collection": "hymns"
+    },
+    {
+      "number": 1001,
+      "title": "Komm, du Quelle jedes Segens",
+      "collection": "hymns-for-home-and-church"
+    },
+    {
+      "number": 1002,
+      "title": "Wenn der Heiland wiederkehrt",
+      "collection": "hymns-for-home-and-church"
+    },
+    {
+      "number": 1003,
+      "title": "Meine Seel findet Ruhe im Herrn",
+      "collection": "hymns-for-home-and-church"
+    },
+    {
+      "number": 1004,
+      "title": "Auf dem Weg mit Jesus",
+      "collection": "hymns-for-home-and-church"
+    },
+    {
+      "number": 1005,
+      "title": "Er wacht auch über mich",
+      "collection": "hymns-for-home-and-church"
+    },
+    {
+      "number": 1006,
+      "title": "Denke an ein Lied",
+      "collection": "hymns-for-home-and-church"
+    },
+    {
+      "number": 1007,
+      "title": "Wenn still das Brot nun gebrochen wird",
+      "collection": "hymns-for-home-and-church"
+    },
+    {
+      "number": 1008,
+      "title": "Lebensbrot, Quell des Lebens",
+      "collection": "hymns-for-home-and-church"
+    },
+    {
+      "number": 1009,
+      "title": "Getsemani",
+      "collection": "hymns-for-home-and-church"
+    },
+    {
+      "number": 1010,
+      "title": "Die Gnade sein",
+      "collection": "hymns-for-home-and-church"
+    },
+    {
+      "number": 1011,
+      "title": "Weltweit Hand in Hand",
+      "collection": "hymns-for-home-and-church"
+    },
+    {
+      "number": 1012,
+      "title": "Jederzeit, überall",
+      "collection": "hymns-for-home-and-church"
+    },
+    {
+      "number": 1013,
+      "title": "Tag für Tag",
+      "collection": "hymns-for-home-and-church"
+    },
+    {
+      "number": 1014,
+      "title": "Du, Herr, bist mein geliebter Hirt",
+      "collection": "hymns-for-home-and-church"
+    },
+    {
+      "number": 1015,
+      "title": "O wie tief die Liebe Jesu",
+      "collection": "hymns-for-home-and-church"
+    },
+    {
+      "number": 1016,
+      "title": "Die Nägelmale Jesu seht",
+      "collection": "hymns-for-home-and-church"
+    },
+    {
+      "number": 1017,
+      "title": "Es ist der Herr",
+      "collection": "hymns-for-home-and-church"
+    },
+    {
+      "number": 1018,
+      "title": "Komm, Herr Jesus",
+      "collection": "hymns-for-home-and-church"
+    },
+    {
+      "number": 1019,
+      "title": "Hilf mir, zu lieben, Herr, wie du",
+      "collection": "hymns-for-home-and-church"
+    },
+    {
+      "number": 1020,
+      "title": "Gütig und liebevoll ruft uns der Heiland",
+      "collection": "hymns-for-home-and-church"
+    },
+    {
+      "number": 1021,
+      "title": "Ich weiß, dass mein Heiland mich liebt",
+      "collection": "hymns-for-home-and-church"
+    },
+    {
+      "number": 1022,
+      "title": "Mit jedem Schritt im Glauben",
+      "collection": "hymns-for-home-and-church"
+    },
+    {
+      "number": 1023,
+      "title": "Standhaft baue ich auf Gottes Wort",
+      "collection": "hymns-for-home-and-church"
+    },
+    {
+      "number": 1024,
+      "title": "Jesus lebt",
+      "collection": "hymns-for-home-and-church"
+    },
+    {
+      "number": 1025,
+      "title": "Nimm mein Herz, ich weih es dir",
+      "collection": "hymns-for-home-and-church"
+    },
+    {
+      "number": 1026,
+      "title": "Heilige Stätten",
+      "collection": "hymns-for-home-and-church"
+    },
+    {
+      "number": 1027,
+      "title": "Willkommen zuhaus",
+      "collection": "hymns-for-home-and-church"
+    },
+    {
+      "number": 1028,
+      "title": "Mein kleines Licht scheint hell",
+      "collection": "hymns-for-home-and-church"
+    },
+    {
+      "number": 1029,
+      "title": "Unzählige Gaben",
+      "collection": "hymns-for-home-and-church"
+    },
+    {
+      "number": 1030,
+      "title": "Nur ein Gebet entfernt",
+      "collection": "hymns-for-home-and-church"
+    },
+    {
+      "number": 1031,
+      "title": "O kommt und hört das Wort des Heilands",
+      "collection": "hymns-for-home-and-church"
+    },
+    {
+      "number": 1032,
+      "title": "Blick auf zum Herrn",
+      "collection": "hymns-for-home-and-church"
+    },
+    {
+      "number": 1033,
+      "title": "Freudig gehn wir hinaus in die Welt",
+      "collection": "hymns-for-home-and-church"
+    },
+    {
+      "number": 1034,
+      "title": "Ein Pionier kann jeder sein",
+      "collection": "hymns-for-home-and-church"
+    },
+    {
+      "number": 1035,
+      "title": "Ich halt heilig seinen Tag",
+      "collection": "hymns-for-home-and-church"
+    },
+    {
+      "number": 1036,
+      "title": "Im Buch Mormon lesen macht mich stark",
+      "collection": "hymns-for-home-and-church"
+    },
+    {
+      "number": 1037,
+      "title": "Ich lebe so, dass ich Gott diene",
+      "collection": "hymns-for-home-and-church"
+    },
+    {
+      "number": 1038,
+      "title": "Der Herr ist mein Hirt",
+      "collection": "hymns-for-home-and-church"
+    },
+    {
+      "number": 1039,
+      "title": "Dank ihm",
+      "collection": "hymns-for-home-and-church"
+    },
+    {
+      "number": 1040,
+      "title": "Wie liebevoll klingt doch die Stimme des Herrn",
+      "collection": "hymns-for-home-and-church"
+    },
+    {
+      "number": 1041,
+      "title": "Du gabst dein Leben, Herr, für mich",
+      "collection": "hymns-for-home-and-church"
+    },
+    {
+      "number": 1042,
+      "title": "Herr, deine Güte groß und rein",
+      "collection": "hymns-for-home-and-church"
+    },
+    {
+      "number": 1043,
+      "title": "Wenn wir beim Abendmahl dich heut verehrn",
+      "collection": "hymns-for-home-and-church"
+    },
+    {
+      "number": 1044,
+      "title": "Jesus war immer hilfsbereit",
+      "collection": "hymns-for-home-and-church"
+    },
+    {
+      "number": 1045,
+      "title": "Jesus ist der Weg",
+      "collection": "hymns-for-home-and-church"
+    },
+    {
+      "number": 1046,
+      "title": "Weißt du, wie viel Sternlein stehen?",
+      "collection": "hymns-for-home-and-church"
+    },
+    {
+      "number": 1047,
+      "title": "Gottvater liebt mich",
+      "collection": "hymns-for-home-and-church"
+    },
+    {
+      "number": 1048,
+      "title": "Wir beten zu dir, unser Vater",
+      "collection": "hymns-for-home-and-church"
+    },
+    {
+      "number": 1049,
+      "title": "Joseph fragte Gott",
+      "collection": "hymns-for-home-and-church"
+    },
+    {
+      "number": 1050,
+      "title": "Steh mir bei",
+      "collection": "hymns-for-home-and-church"
+    },
+    {
+      "number": 1051,
+      "title": "O Herr, dieser Tag ist gut",
+      "collection": "hymns-for-home-and-church"
+    },
+    {
+      "number": 1201,
+      "title": "Preist den Herrn, der auferstand",
+      "collection": "hymns-for-home-and-church"
+    },
+    {
+      "number": 1202,
+      "title": "Christus ist geboren heut",
+      "collection": "hymns-for-home-and-church"
+    },
+    {
+      "number": 1203,
+      "title": "Wen wiegt Maria sanft im Arm?",
+      "collection": "hymns-for-home-and-church"
+    },
+    {
+      "number": 1204,
+      "title": "Erstrahle, du Stern",
+      "collection": "hymns-for-home-and-church"
+    },
+    {
+      "number": 1205,
+      "title": "Das Osterlied erschall!",
+      "collection": "hymns-for-home-and-church"
+    },
+    {
+      "number": 1206,
+      "title": "Warst du da, als sie kreuzigten den Herrn?",
+      "collection": "hymns-for-home-and-church"
+    },
+    {
+      "number": 1207,
+      "title": "Still, still, still",
+      "collection": "hymns-for-home-and-church"
+    },
+    {
+      "number": 1208,
+      "title": "Geht, ruft es von den Bergen",
+      "collection": "hymns-for-home-and-church"
+    },
+    {
+      "number": 1209,
+      "title": "Kleines Kind, im Stall geboren",
+      "collection": "hymns-for-home-and-church"
+    }
+  ]
+}

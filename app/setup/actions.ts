@@ -2,6 +2,7 @@
 
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
+import { isHymnLocale } from "@/lib/hymns/locales";
 
 export async function setupInitialWard(formData: FormData) {
   // Guard: if a ward already exists, refuse to create another
@@ -11,12 +12,19 @@ export async function setupInitialWard(formData: FormData) {
   }
 
   const wardName = String(formData.get("wardName") ?? "").trim();
+  const contentLocale = formData.get("contentLocale");
   const userName = String(formData.get("userName") ?? "").trim();
-  const userEmail = String(formData.get("userEmail") ?? "").trim().toLowerCase();
+  const userEmail = String(formData.get("userEmail") ?? "")
+    .trim()
+    .toLowerCase();
 
   // Basic validation
   if (!wardName || !userName || !userEmail) {
     throw new Error("All fields are required.");
+  }
+
+  if (!isHymnLocale(contentLocale)) {
+    throw new Error("Please select a supported ward language.");
   }
 
   // Email format check (simple)
@@ -28,7 +36,7 @@ export async function setupInitialWard(formData: FormData) {
   // Create the ward + first user in a transaction
   await prisma.$transaction(async (tx) => {
     const ward = await tx.ward.create({
-      data: { name: wardName },
+      data: { name: wardName, content_locale: contentLocale },
     });
 
     await tx.user.create({

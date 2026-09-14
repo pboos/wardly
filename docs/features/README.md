@@ -7,6 +7,7 @@ links identify where to verify details or make changes.
 | Feature | Overview | Read when working on… |
 | --- | --- | --- |
 | Sunday meetings | [Overview](sunday-meetings/README.md) | [Schedule, dates, assignments](sunday-meetings/schedule.md) · [Agenda, ordering, tasks](sunday-meetings/agenda.md) |
+| Hymns and ward language | [Overview](hymns/README.md) | Catalog loading, setup language, refreshing hymns, adding languages |
 
 ## Structure and maintenance
 

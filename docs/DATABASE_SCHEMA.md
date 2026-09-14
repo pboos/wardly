@@ -26,6 +26,7 @@ CREATE TABLE ward (
 ```
 
 - `content_locale` is the ward-language BCP 47 locale used for hymn catalogs and leading text.
+  Setup currently accepts `en` or `de`; see [catalog loading and language maintenance](features/hymns/README.md).
 - `time_zone` is the IANA zone used to determine the current local date and Sunday.
 
 ---

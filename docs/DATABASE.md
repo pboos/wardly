@@ -78,7 +78,10 @@ cp .env.example .env
    bunx prisma migrate status
    ```
 
-> Only `ward`, `user`, `login`, and `member` are in the initial migration. The remaining tables (`meeting`, `agenda_item`, `meeting_agenda_item`, `task`, `task_state_transition`, `task_state`) will be added in later migrations — see [`docs/DATABASE_SCHEMA.md`](./DATABASE_SCHEMA.md) for their definitions.
+The initial migration contains the current ward, user, login, member, task,
+task configuration, and Sunday meeting tables. `ward.content_locale` defaults
+to `en`; setup persists the selected supported language. See
+[hymn catalogs and ward language](features/hymns/README.md) for locale behavior.
 
 ---
 

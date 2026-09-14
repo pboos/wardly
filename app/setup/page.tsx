@@ -9,12 +9,17 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import {
-  Field,
-  FieldGroup,
-  FieldLabel,
-} from "@/components/ui/field";
+import { Field, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
+import { hymnLanguages } from "@/lib/hymns/locales";
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 export default async function SetupPage() {
   const wardCount = await prisma.ward.count();
@@ -27,9 +32,7 @@ export default async function SetupPage() {
     <main className="flex min-h-svh items-center justify-center px-4">
       <Card className="w-full max-w-sm">
         <CardHeader>
-          <CardTitle className="text-2xl">
-            Set up your ward
-          </CardTitle>
+          <CardTitle className="text-2xl">Set up your ward</CardTitle>
           <CardDescription>
             Create your first ward and an admin user to get started.
           </CardDescription>
@@ -46,6 +49,23 @@ export default async function SetupPage() {
                   required
                   placeholder="St. Mary's Ward"
                 />
+              </Field>
+              <Field>
+                <FieldLabel htmlFor="contentLocale">Ward language</FieldLabel>
+                <Select name="contentLocale" defaultValue="en" required>
+                  <SelectTrigger id="contentLocale" className="w-full">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectGroup>
+                      {hymnLanguages.map(({ locale, label }) => (
+                        <SelectItem key={locale} value={locale}>
+                          {label}
+                        </SelectItem>
+                      ))}
+                    </SelectGroup>
+                  </SelectContent>
+                </Select>
               </Field>
               <Field>
                 <FieldLabel htmlFor="userName">Your name</FieldLabel>
