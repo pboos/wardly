@@ -131,26 +131,21 @@ export async function upsertSundaySlotItem(
   revalidateSundayMeetingRoutes();
 }
 
-/** Places an agenda item after another item and/or into another section. */
+/** Move one visible entry, or explicitly move an extra entry to another section. */
 export async function moveSundayAgendaItem(
   itemId: string,
   input: MoveSundayItemInput,
 ) {
   assertPlainObject(input, "Agenda move input must be an object.");
-  assertOptionalText(input.afterItemId, "Agenda position must be an item id.");
-  if (
-    input.position !== undefined &&
-    input.position !== "start" &&
-    input.position !== "end"
-  ) {
-    throw new Error("Agenda position must be 'start' or 'end'.");
-  }
   const user = await getCurrentUser();
   await moveSundayItem(user.ward_id, itemId, input);
   revalidateSundayMeetingRoutes();
 }
 
-export async function addSuggestedSundayTask(meetingId: string, taskId: string) {
+export async function addSuggestedSundayTask(
+  meetingId: string,
+  taskId: string,
+) {
   const user = await getCurrentUser();
   const id = await addSuggestedTaskToMeeting(user.ward_id, meetingId, taskId);
   revalidateSundayMeetingRoutes();

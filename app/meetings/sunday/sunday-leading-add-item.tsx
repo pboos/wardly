@@ -30,12 +30,16 @@ import type {
 } from "@/lib/sunday-meetings/types";
 import { AGENDA_SECTIONS } from "@/lib/sunday-meetings/agenda";
 import { addSundayAgendaItem } from "./actions";
-import { ADDABLE_ITEM_TYPES, ITEM_LABELS, SECTION_LABELS } from "./sunday-leading-labels";
+import {
+  ADDABLE_ITEM_TYPES,
+  ITEM_LABELS,
+  SECTION_LABELS,
+} from "./sunday-leading-labels";
 
 /** Adds one explicit agenda item with type, section, and optional data. */
 export function AddAgendaItemDialog({ meeting }: { meeting: SundayMeeting }) {
   const router = useRouter();
-  const [, startTransition] = useTransition();
+  const [pending, startTransition] = useTransition();
   const [open, setOpen] = useState(false);
   const [type, setType] = useState<SundayMeetingItemType>("custom_program");
   const [section, setSection] = useState<SundayMeetingSection>("program");
@@ -52,16 +56,19 @@ export function AddAgendaItemDialog({ meeting }: { meeting: SundayMeeting }) {
           content: content.trim() || null,
           // Only hymns carry a hymn number — never leak one entered while
           // an earlier type selection had the hymn field open.
-          metadata: type === "hymn" && trimmedHymn
-            ? { hymnNumber: Number(trimmedHymn) }
-            : undefined,
+          metadata:
+            type === "hymn" && trimmedHymn
+              ? { hymnNumber: Number(trimmedHymn) }
+              : undefined,
         });
         setOpen(false);
         setContent("");
         setHymnNumber("");
         router.refresh();
       } catch (error) {
-        toast.error(error instanceof Error ? error.message : "Could not add agenda item.");
+        toast.error(
+          error instanceof Error ? error.message : "Could not add agenda item.",
+        );
       }
     });
   }
@@ -88,12 +95,21 @@ export function AddAgendaItemDialog({ meeting }: { meeting: SundayMeeting }) {
           <FieldGroup>
             <Field>
               <FieldLabel htmlFor="new-agenda-item-type">Item type</FieldLabel>
-              <Select value={type} onValueChange={(value) => setType(value as SundayMeetingItemType)}>
-                <SelectTrigger id="new-agenda-item-type" className="w-full"><SelectValue /></SelectTrigger>
+              <Select
+                value={type}
+                onValueChange={(value) =>
+                  setType(value as SundayMeetingItemType)
+                }
+              >
+                <SelectTrigger id="new-agenda-item-type" className="w-full">
+                  <SelectValue />
+                </SelectTrigger>
                 <SelectContent>
                   <SelectGroup>
                     {ADDABLE_ITEM_TYPES.map((value) => (
-                      <SelectItem key={value} value={value}>{ITEM_LABELS[value]}</SelectItem>
+                      <SelectItem key={value} value={value}>
+                        {ITEM_LABELS[value]}
+                      </SelectItem>
                     ))}
                   </SelectGroup>
                 </SelectContent>
@@ -101,12 +117,21 @@ export function AddAgendaItemDialog({ meeting }: { meeting: SundayMeeting }) {
             </Field>
             <Field>
               <FieldLabel htmlFor="new-agenda-item-section">Section</FieldLabel>
-              <Select value={section} onValueChange={(value) => setSection(value as SundayMeetingSection)}>
-                <SelectTrigger id="new-agenda-item-section" className="w-full"><SelectValue /></SelectTrigger>
+              <Select
+                value={section}
+                onValueChange={(value) =>
+                  setSection(value as SundayMeetingSection)
+                }
+              >
+                <SelectTrigger id="new-agenda-item-section" className="w-full">
+                  <SelectValue />
+                </SelectTrigger>
                 <SelectContent>
                   <SelectGroup>
                     {AGENDA_SECTIONS.map((value) => (
-                      <SelectItem key={value} value={value}>{SECTION_LABELS[value]}</SelectItem>
+                      <SelectItem key={value} value={value}>
+                        {SECTION_LABELS[value]}
+                      </SelectItem>
                     ))}
                   </SelectGroup>
                 </SelectContent>
@@ -114,7 +139,9 @@ export function AddAgendaItemDialog({ meeting }: { meeting: SundayMeeting }) {
             </Field>
             {type === "hymn" && (
               <Field>
-                <FieldLabel htmlFor="new-agenda-item-hymn">Hymn number</FieldLabel>
+                <FieldLabel htmlFor="new-agenda-item-hymn">
+                  Hymn number
+                </FieldLabel>
                 <Input
                   id="new-agenda-item-hymn"
                   type="number"
@@ -127,7 +154,9 @@ export function AddAgendaItemDialog({ meeting }: { meeting: SundayMeeting }) {
             )}
             {supportsContent && (
               <Field>
-                <FieldLabel htmlFor="new-agenda-item-content">Details</FieldLabel>
+                <FieldLabel htmlFor="new-agenda-item-content">
+                  Details
+                </FieldLabel>
                 <Textarea
                   id="new-agenda-item-content"
                   rows={4}
@@ -139,8 +168,16 @@ export function AddAgendaItemDialog({ meeting }: { meeting: SundayMeeting }) {
             )}
           </FieldGroup>
           <DialogFooter>
-            <Button type="button" variant="outline" onClick={() => setOpen(false)}>Cancel</Button>
-            <Button type="button" onClick={save}>Add item</Button>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setOpen(false)}
+            >
+              Cancel
+            </Button>
+            <Button type="button" disabled={pending} onClick={save}>
+              Add item
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

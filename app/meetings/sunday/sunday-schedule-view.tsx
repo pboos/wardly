@@ -1,9 +1,8 @@
 "use client";
 
+import { useSundayMutation } from "./use-sunday-mutation";
+
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { useTransition } from "react";
-import { toast } from "sonner";
 import {
   IconArrowLeft,
   IconArrowRight,
@@ -34,7 +33,8 @@ import {
   addSundayMeetingBeforeEarliest,
   bootstrapSundaySchedule,
 } from "./actions";
-import { formatDate, speakerCount } from "./sunday-schedule-cells";
+import { formatDate } from "./sunday-schedule-format";
+import { speakerCount } from "./sunday-schedule-format";
 import { ScheduleMobileCard } from "./sunday-schedule-mobile-card";
 import { ScheduleTableRow } from "./sunday-schedule-table-row";
 import { SundayScheduleBoundaryAction } from "./sunday-schedule-boundary-action";
@@ -61,25 +61,8 @@ export function SundayScheduleView({
   schedule: ScheduleData;
   members: SundayMeetingMemberHistory[];
 }) {
-  const router = useRouter();
-  const [, startTransition] = useTransition();
-  const speakerColumns = Math.max(
-    3,
-    ...schedule.rows.map(speakerCount),
-  );
-
-  function run(action: () => Promise<unknown>, errorMessage: string) {
-    startTransition(async () => {
-      try {
-        await action();
-        router.refresh();
-      } catch (error) {
-        toast.error(error instanceof Error ? error.message : errorMessage, {
-          action: { label: "Reload", onClick: () => router.refresh() },
-        });
-      }
-    });
-  }
+  const { run } = useSundayMutation();
+  const speakerColumns = Math.max(3, ...schedule.rows.map(speakerCount));
 
   return (
     <div className="flex flex-col gap-6">
@@ -89,7 +72,8 @@ export function SundayScheduleView({
             Sunday sacrament meeting
           </h1>
           <p className="text-sm text-muted-foreground">
-            {formatDate(schedule.range.start)} to {formatDate(schedule.range.end)}
+            {formatDate(schedule.range.start)} to{" "}
+            {formatDate(schedule.range.end)}
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
@@ -127,11 +111,20 @@ export function SundayScheduleView({
           <CardHeader>
             <CardTitle>No Sunday meetings yet</CardTitle>
             <CardDescription>
-              Start the persisted schedule with the ward-local current or upcoming Sunday.
+              Start the persisted schedule with the ward-local current or
+              upcoming Sunday.
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <Button type="button" onClick={() => run(bootstrapSundaySchedule, "Could not start the Sunday schedule.")}>
+            <Button
+              type="button"
+              onClick={() =>
+                run(
+                  bootstrapSundaySchedule,
+                  "Could not start the Sunday schedule.",
+                )
+              }
+            >
               <IconPlus data-icon="inline-start" />
               Add current Sunday
             </Button>

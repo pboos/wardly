@@ -5,7 +5,7 @@ import {
   type SundayMeetingSection,
   type SundayPersonInput,
 } from "@/lib/sunday-meetings/types";
-import type { SundayVirtualSlot } from "@/lib/sunday-meetings/templates";
+import type { SundayStandardSlot } from "@/lib/sunday-meetings/templates";
 
 /** Shared display labels of the leading view. */
 
@@ -45,11 +45,13 @@ export const SECTION_LABELS: Record<SundayMeetingSection, string> = {
   closing: "Closing",
 };
 
-/** Titles of the virtual standard slots, matching the old slot labels. */
-export const SLOT_LABELS: Record<SundayVirtualSlot, string> = {
+/** Titles of the stable standard agenda entries. */
+export const SLOT_LABELS: Record<SundayStandardSlot, string> = {
   opening_hymn: "Opening Hymn",
   opening_prayer: "Opening Prayer",
   sacrament_hymn: "Sacrament Hymn",
+  sacrament_blessing: "Blessing the sacrament",
+  sacrament_passing: "Passing the sacrament",
   interlude: "Interlude",
   primary_presentation: "Primary Presentation",
   closing_hymn: "Closing Hymn",

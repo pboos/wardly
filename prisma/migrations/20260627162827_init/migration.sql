@@ -183,7 +183,8 @@ CREATE TABLE "sunday_meeting_item" (
     "sunday_meeting_id" TEXT NOT NULL,
     "type" TEXT NOT NULL,
     "section" TEXT NOT NULL,
-    "order_index" REAL,
+    "order_index" INTEGER NOT NULL,
+    "slot" TEXT,
     "content" TEXT,
     "metadata" TEXT,
     "person_member_id" TEXT,
@@ -223,3 +224,5 @@ WHERE "type" = 'leader';
 CREATE UNIQUE INDEX "idx_sunday_meeting_item_one_presiding"
 ON "sunday_meeting_item"("sunday_meeting_id")
 WHERE "type" = 'presiding';
+
+CREATE UNIQUE INDEX "sunday_meeting_item_sunday_meeting_id_slot_key" ON "sunday_meeting_item"("sunday_meeting_id", "slot");

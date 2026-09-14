@@ -5,35 +5,46 @@ import type {
 } from "./types.ts";
 
 /**
- * The virtual (never persisted) standard slots the planner offers per
- * meeting type. Persisted items are created lazily once real data is entered.
+ * Standard slots created with each local meeting, including empty entries.
  */
-export type SundayVirtualSlot =
+export type SundayStandardSlot =
   | "opening_hymn"
   | "opening_prayer"
   | "sacrament_hymn"
+  | "sacrament_blessing"
+  | "sacrament_passing"
   | "interlude"
   | "primary_presentation"
   | "closing_hymn"
   | "closing_prayer";
 
-export type SundayVirtualAgendaEntry = {
-  slot: SundayVirtualSlot;
+export type SundayStandardAgendaEntry = {
+  slot: SundayStandardSlot;
   type: SundayMeetingItemType;
   section: SundayMeetingSection;
 };
 
-export function virtualAgendaForMeeting(
+export function standardAgendaForMeeting(
   type: SundayMeetingType,
-): SundayVirtualAgendaEntry[] {
+): SundayStandardAgendaEntry[] {
   if (type === "stake_conference" || type === "general_conference") {
     return [];
   }
 
-  const entries: SundayVirtualAgendaEntry[] = [
+  const entries: SundayStandardAgendaEntry[] = [
     { slot: "opening_hymn", type: "hymn", section: "opening" },
     { slot: "opening_prayer", type: "prayer", section: "opening" },
     { slot: "sacrament_hymn", type: "hymn", section: "sacrament" },
+    {
+      slot: "sacrament_blessing",
+      type: "sacrament_blessing",
+      section: "sacrament",
+    },
+    {
+      slot: "sacrament_passing",
+      type: "sacrament_passing",
+      section: "sacrament",
+    },
   ];
 
   if (type === "childrens_sacrament_presentation") {
@@ -63,56 +74,13 @@ export const SECTION_ORDER: Record<SundayMeetingSection, number> = {
   closing: 5,
 };
 
-/** The default type rank per section (earlier = first). */
-export const SECTION_TYPE_ORDER: Record<
-  SundayMeetingSection,
-  readonly SundayMeetingItemType[]
-> = {
-  participants: ["leader", "presiding", "visitor", "organist", "music_conductor"],
-  opening: ["announcement", "hymn", "prayer"],
-  business: [
-    "calling_sustain",
-    "calling_release",
-    "priesthood_aaronic_inform",
-    "member_welcome",
-    "child_naming_blessing",
-    "convert_confirmation",
-    "ward_business",
-  ],
-  sacrament: ["hymn", "sacrament_blessing", "sacrament_passing"],
-  program: ["hymn", "musical_number", "talk", "primary_presentation", "custom_program"],
-  closing: ["hymn", "prayer"],
-};
-
-/** 0-based index in the section's rank list; absent types rank after all listed ones. */
-export function defaultRank(
-  section: SundayMeetingSection,
-  type: SundayMeetingItemType,
-): number {
-  const order = SECTION_TYPE_ORDER[section];
-  const index = order.indexOf(type);
-  return index >= 0 ? index : order.length + 1;
-}
-
-/** The item type that backs a virtual slot when no persisted row exists. */
-export function virtualSlotType(
-  slot: SundayVirtualSlot,
-): SundayMeetingItemType {
-  switch (slot) {
-    case "opening_prayer":
-    case "closing_prayer":
-      return "prayer";
-    case "primary_presentation":
-      return "primary_presentation";
-    default:
-      return "hymn";
-  }
-}
-
 export function slotAllowsItemType(
-  slot: SundayVirtualSlot,
+  slot: SundayStandardSlot,
   itemType: SundayMeetingItemType,
 ): boolean {
+  if (slot === "sacrament_blessing" || slot === "sacrament_passing") {
+    return itemType === slot;
+  }
   if (slot === "interlude") {
     return itemType === "hymn" || itemType === "musical_number";
   }
@@ -123,4 +91,14 @@ export function slotAllowsItemType(
     return itemType === "prayer";
   }
   return itemType === "hymn";
+}
+
+export function isStandardSlot(value: unknown): value is SundayStandardSlot {
+  return (
+    typeof value === "string" &&
+    [
+      ...standardAgendaForMeeting("sacrament"),
+      ...standardAgendaForMeeting("childrens_sacrament_presentation"),
+    ].some((entry) => entry.slot === value)
+  );
 }

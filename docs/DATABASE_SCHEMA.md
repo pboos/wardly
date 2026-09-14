@@ -139,12 +139,14 @@ data (a person, `content`, or `metadata`) is entered — see
 
 ## 6. `sunday_meeting_item`
 
-The persisted sacrament-meeting agenda. People live directly on the item
-(`person_member_id` or `person_name`), at most one person per row. Meetings are
-created without items; expected items are derived from the meeting `type` in
-code and persisted lazily only when data is entered. A row is deleted again
-once it has no person, no non-empty `content`, and no non-empty `metadata`
-(explicit exceptions such as `transition` aside).
+The persisted sacrament-meeting agenda. People live directly on each item.
+Local meetings are created with stable standard slots, including empty hymn,
+prayer, and sacrament assignments. Clearing a standard slot preserves its ID
+and position. Extra empty items may be deleted automatically.
+
+Each section has explicit integer positions. Reordering renumbers the affected
+sections in a transaction. New extra items append to their section. Standard
+slot identity is independent of order and unique within a meeting.
 
 ```sql
 CREATE TABLE sunday_meeting_item (
@@ -152,7 +154,8 @@ CREATE TABLE sunday_meeting_item (
   sunday_meeting_id TEXT NOT NULL REFERENCES sunday_meeting (id) ON DELETE CASCADE,
   type              TEXT NOT NULL,
   section           TEXT NOT NULL,
-  order_index       REAL,
+  order_index       INTEGER NOT NULL,
+  slot              TEXT,
   content           TEXT,
   metadata          TEXT,
   person_member_id  TEXT REFERENCES member (id) ON DELETE RESTRICT,
@@ -162,6 +165,9 @@ CREATE TABLE sunday_meeting_item (
   updated_at        TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
   CHECK (NOT (person_member_id IS NOT NULL AND person_name IS NOT NULL))
 );
+
+CREATE UNIQUE INDEX sunday_meeting_item_sunday_meeting_id_slot_key
+  ON sunday_meeting_item (sunday_meeting_id, slot);
 
 CREATE INDEX idx_sunday_meeting_item_meeting ON sunday_meeting_item (sunday_meeting_id);
 CREATE INDEX idx_sunday_meeting_item_member  ON sunday_meeting_item (person_member_id);
@@ -180,7 +186,8 @@ CREATE UNIQUE INDEX idx_sunday_meeting_item_one_presiding
 | --- | --- |
 | `type` | Item classification; includes the person/context types listed below. |
 | `section` | `participants`, `opening`, `business`, `sacrament`, `program`, or `closing`. |
-| `order_index` | Nullable manual override of the default order; `NULL` = default order (defined per section/item type in code). |
+| `order_index` | Explicit integer position within the section. |
+| `slot` | Stable standard slot key, or NULL for extra items. Clearing a standard slot retains its position. |
 | `content` | Free text: talk topic, visitor role text, announcement text, … |
 | `metadata` | JSON object. First key: `hymnNumber` (number, > 0). |
 | `person_member_id` | Ward member reference. At most one person per row. |
@@ -189,7 +196,7 @@ CREATE UNIQUE INDEX idx_sunday_meeting_item_one_presiding
 
 One item row holds at most one person. Groups with several people (multiple
 sacrament passers, organists, visitors) are simply several item rows of the
-same type; they sort together by default.
+same type; new items append to their section.
 
 Supported item types:
 

@@ -1,3 +1,10 @@
+import { syncStandardItems } from "./standard-items-service.ts";
+import { isItemDataEmpty, nextPosition } from "./order.ts";
+import { parseItemMetadata } from "./types.ts";
+import {
+  meetingSortableItems,
+  normalizeMeetingOrder,
+} from "./order-service.ts";
 import { prisma } from "@/lib/prisma";
 import {
   assertSunday,
@@ -57,15 +64,20 @@ async function createOrLoadSundayMeetingRow(
     fail("Invalid Sunday meeting type.");
   }
 
+  const existing = await tx.sunday_meeting.findUnique({
+    where: { ward_id_date: { ward_id: wardId, date } },
+  });
+  if (existing) return existing;
+
   const type = requestedType ?? (await defaultTypeForDate(tx, wardId, date));
 
-  // Meetings are created without any item rows; items appear lazily once
-  // the user enters real data for a virtual slot.
-  return tx.sunday_meeting.upsert({
+  const meeting = await tx.sunday_meeting.upsert({
     where: { ward_id_date: { ward_id: wardId, date } },
     update: {},
     create: { ward_id: wardId, date, type },
   });
+  await syncStandardItems(tx, meeting.id, asMeetingType(meeting.type));
+  return meeting;
 }
 
 export async function createOrLoadSundayMeeting(
@@ -87,7 +99,11 @@ export async function createSundayMeetingBeforeEarliest(wardId: string) {
       select: { date: true },
     });
     if (!earliest) fail("There is no persisted Sunday meeting to extend.");
-    return createOrLoadSundayMeetingRow(tx, wardId, previousSunday(earliest.date));
+    return createOrLoadSundayMeetingRow(
+      tx,
+      wardId,
+      previousSunday(earliest.date),
+    );
   });
 }
 
@@ -137,17 +153,30 @@ export async function changeMeetingType(
       return;
     }
     if (!isLocalMeetingType(targetType)) {
-      const itemCount = await tx.sunday_meeting_item.count({
+      const items = await tx.sunday_meeting_item.findMany({
         where: { sunday_meeting_id: meetingId },
       });
-      if (itemCount > 0) {
-        fail("Conference meetings have no local agenda.");
-      }
+      if (
+        items.some(
+          (item) =>
+            !item.slot ||
+            item.task_id ||
+            !isItemDataEmpty({
+              type: asItemType(item.type),
+              content: item.content,
+              metadata: parseItemMetadata(item.metadata),
+              personMemberId: item.person_member_id,
+              personName: item.person_name,
+            }),
+        )
+      )
+        fail("Clear the local agenda before changing to a conference meeting.");
     }
     await tx.sunday_meeting.update({
       where: { id: meetingId },
       data: { type: targetType, updated_at: new Date() },
     });
+    await syncStandardItems(tx, meetingId, targetType);
   });
 }
 
@@ -234,7 +263,10 @@ async function addTaskItemInTransaction(
       sunday_meeting_id: meetingId,
       type: itemType,
       section: "business",
-      order_index: null,
+      order_index: nextPosition(
+        await meetingSortableItems(tx, meetingId),
+        "business",
+      ),
       task_id: taskId,
     },
   });
@@ -296,17 +328,20 @@ export async function carryForwardItem(
       }
     }
 
-    // The row moves as a whole; a null order_index lands it at the
-    // destination's default position for its type and section.
+    // Carry-forward appends to the destination section.
     await tx.sunday_meeting_item.update({
       where: { id: item.id },
       data: {
         sunday_meeting_id: destination.id,
-        order_index: null,
+        order_index: nextPosition(
+          await meetingSortableItems(tx, destination.id),
+          item.section as import("./types.ts").SundayMeetingSection,
+        ),
         updated_at: new Date(),
       },
     });
 
+    await normalizeMeetingOrder(tx, item.sunday_meeting_id);
     return { destinationDate };
   });
 }

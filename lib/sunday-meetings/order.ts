@@ -3,155 +3,151 @@ import type {
   SundayMeetingItemType,
   SundayMeetingSection,
 } from "./types.ts";
-import { SECTION_ORDER, defaultRank } from "./templates.ts";
+import { SECTION_ORDER } from "./templates.ts";
 
-/** Multiplier applied to the default rank to compute the default sort key. */
-export const RANK_STEP = 100;
-
-type SortableItem = {
+export type OrderedItem = {
   id: string;
   type: SundayMeetingItemType;
   section: SundayMeetingSection;
-  orderIndex: number | null;
-  createdAt: string;
+  orderIndex: number;
+  slot?: string | null;
 };
 
-/** Effective sort key: the manual override or the default rank position. */
-export function sortKey(item: {
-  type: SundayMeetingItemType;
-  section: SundayMeetingSection;
-  orderIndex: number | null;
-}): number {
-  return item.orderIndex ?? defaultRank(item.section, item.type) * RANK_STEP;
-}
-
-/** Final item order: section, sort key, creation time, then id (deterministic). */
-export function sortSundayItems<T extends SortableItem>(
+export function sortSundayItems<T extends OrderedItem>(
   items: readonly T[],
 ): T[] {
   return [...items].sort(
-    (left, right) =>
-      SECTION_ORDER[left.section] - SECTION_ORDER[right.section] ||
-      sortKey(left) - sortKey(right) ||
-      left.createdAt.localeCompare(right.createdAt) ||
-      left.id.localeCompare(right.id),
+    (a, b) =>
+      SECTION_ORDER[a.section] - SECTION_ORDER[b.section] ||
+      a.orderIndex - b.orderIndex ||
+      a.id.localeCompare(b.id),
   );
 }
 
-/**
- * The placement for a move (or insertion): the new `order_index` for the
- * moved item plus the local re-keys needed to keep a tied neighbour block
- * after it, in their current relative order.
- */
-export type MovePlan = {
-  orderIndex: number;
-  rekeys: { id: string; orderIndex: number }[];
-};
+export function hasAdjacentConductorText(
+  items: readonly OrderedItem[],
+): boolean {
+  const ordered = sortSundayItems(items);
+  return ordered.some(
+    (item, index) =>
+      item.type === "conductor_text" &&
+      ordered[index - 1]?.type === "conductor_text",
+  );
+}
 
-/**
- * The `order_index` that places `movedItemId` right after the item with id
- * `afterItemId` within `targetSection` (`null` = the section's start).
- * `movedItemId` may be null when a brand-new item is being inserted.
- *
- * When the anchor's next same-section neighbour shares the anchor's sort
- * key (a tie group, e.g. several talks at the default position), the tied
- * items that must stay after the moved item are re-keyed locally — spread
- * evenly between the anchor's key and the next distinct key (or +1 steps at
- * the section's end) — so "right after the anchor" is always representable
- * without renumbering anything else. Returns null when the position cannot
- * be represented (unknown anchor or float degeneracy).
- */
-export function computeMovePlan<T extends SortableItem>(
+function validMove<T extends OrderedItem>(items: T[]): T[] | null {
+  return hasAdjacentConductorText(items) ? null : items;
+}
+
+export function renumberItems<T extends OrderedItem>(items: readonly T[]): T[] {
+  const positions = new Map<SundayMeetingSection, number>();
+  return items.map((item) => {
+    const orderIndex = positions.get(item.section) ?? 0;
+    positions.set(item.section, orderIndex + 1);
+    return { ...item, orderIndex };
+  });
+}
+
+export function nextPosition(
+  items: readonly OrderedItem[],
+  section: SundayMeetingSection,
+): number {
+  return (
+    Math.max(
+      -1,
+      ...items
+        .filter((item) => item.section === section)
+        .map((item) => item.orderIndex),
+    ) + 1
+  );
+}
+
+export type SundayAgendaMove =
+  | { direction: "up" | "down"; showSupportText: boolean; section?: never }
+  | {
+      section: SundayMeetingSection;
+      showSupportText: boolean;
+      direction?: never;
+    };
+
+/** Hidden conductor text travels with the following visible entry.
+ * Trailing wording travels with the last entry of the section. */
+function movementGroups<T extends OrderedItem>(
+  items: T[],
+  showSupportText: boolean,
+): T[][] {
+  if (showSupportText) return items.map((item) => [item]);
+  const groups: T[][] = [];
+  let pending: T[] = [];
+  for (const item of items) {
+    pending.push(item);
+    if (item.type !== "conductor_text") {
+      groups.push(pending);
+      pending = [];
+    }
+  }
+  if (pending.length) {
+    if (groups.length) groups[groups.length - 1].push(...pending);
+    else groups.push(pending);
+  }
+  return groups;
+}
+
+/** One shared operation for UI availability and transactional server writes. */
+export function moveAgendaItems<T extends OrderedItem>(
   items: readonly T[],
-  movedItemId: string | null,
-  afterItemId: string | null,
-  targetSection: SundayMeetingSection,
-): MovePlan | null {
-  const sectionItems = sortSundayItems(
-    items.filter(
-      (item) => item.section === targetSection && item.id !== movedItemId,
+  itemId: string,
+  move: SundayAgendaMove,
+): T[] | null {
+  const ordered = sortSundayItems(items);
+  const item = ordered.find((entry) => entry.id === itemId);
+  if (
+    !item ||
+    item.section === "participants" ||
+    (!move.showSupportText && item.type === "conductor_text")
+  )
+    return null;
+  const groups = movementGroups(
+    ordered.filter((entry) => entry.section === item.section),
+    move.showSupportText,
+  );
+  const index = groups.findIndex((group) =>
+    group.some((entry) => entry.id === itemId),
+  );
+  if (move.direction) {
+    const neighbor = index + (move.direction === "up" ? -1 : 1);
+    if (neighbor < 0 || neighbor >= groups.length) return null;
+    [groups[index], groups[neighbor]] = [groups[neighbor], groups[index]];
+    const replacement = renumberItems(groups.flat());
+    return validMove(
+      sortSundayItems([
+        ...ordered.filter((entry) => entry.section !== item.section),
+        ...replacement,
+      ]),
+    );
+  }
+  if (
+    move.section === "participants" ||
+    move.section === item.section ||
+    groups[index].some((entry) => entry.slot)
+  )
+    return null;
+  const moving = groups[index];
+  const ids = new Set(moving.map((entry) => entry.id));
+  const remaining = ordered.filter((entry) => !ids.has(entry.id));
+  const start = nextPosition(remaining, move.section);
+  return validMove(
+    renumberItems(
+      sortSundayItems([
+        ...remaining,
+        ...moving.map((entry, offset) => ({
+          ...entry,
+          section: move.section,
+          orderIndex: start + offset,
+        })),
+      ]),
     ),
   );
-
-  if (afterItemId === null) {
-    const first = sectionItems[0];
-    return { orderIndex: first ? sortKey(first) - 1 : -1, rekeys: [] };
-  }
-
-  const anchorIndex = sectionItems.findIndex((item) => item.id === afterItemId);
-  if (anchorIndex < 0) {
-    return null;
-  }
-
-  const anchor = sectionItems[anchorIndex];
-  const a = sortKey(anchor);
-  if (anchorIndex === sectionItems.length - 1) {
-    return { orderIndex: a + 1, rekeys: [] };
-  }
-
-  const next = sectionItems[anchorIndex + 1];
-  const b = sortKey(next);
-  if (b > a) {
-    const midpoint = (a + b) / 2;
-    if (midpoint <= a || midpoint >= b) {
-      return null;
-    }
-    return { orderIndex: midpoint, rekeys: [] };
-  }
-
-  // Tie: the chain after the anchor shares the anchor's key and must stay
-  // after the moved item, in its current relative order.
-  const chain: T[] = [];
-  for (let index = anchorIndex + 1; index < sectionItems.length; index += 1) {
-    if (sortKey(sectionItems[index]) !== a) {
-      break;
-    }
-    chain.push(sectionItems[index]);
-  }
-  const afterChain = sectionItems[anchorIndex + 1 + chain.length];
-  const nextDistinctKey = afterChain ? sortKey(afterChain) : null;
-  const step =
-    nextDistinctKey !== null
-      ? (nextDistinctKey - a) / (chain.length + 2)
-      : 1;
-  if (step <= 0 || a + step <= a) {
-    return null;
-  }
-  return {
-    orderIndex: a + step,
-    rekeys: chain.map((item, index) => ({
-      id: item.id,
-      orderIndex: a + step * (index + 2),
-    })),
-  };
-}
-
-/**
- * The `order_index` that lands an item at the END of a section: one past
- * the highest effective key present, including the default keys of the
- * section's virtual (empty-editor) slots passed as `phantomKeys`.
- */
-export function sectionEndKey<T extends SortableItem>(
-  items: readonly T[],
-  section: SundayMeetingSection,
-  phantomKeys: readonly number[] = [],
-): number {
-  let max = -1;
-  for (const item of items) {
-    if (item.section !== section) {
-      continue;
-    }
-    const key = sortKey(item);
-    if (key > max) {
-      max = key;
-    }
-  }
-  for (const key of phantomKeys) {
-    if (key > max) {
-      max = key;
-    }
-  }
-  return max + 1;
 }
 
 type ItemDataShape = {
@@ -186,9 +182,9 @@ export function isItemDataEmpty(item: ItemDataShape): boolean {
  * silently unlink the task from the agenda.
  */
 export function isAutoDeletableItem(
-  item: ItemDataShape & { taskId: string | null },
+  item: ItemDataShape & { taskId: string | null; slot?: string | null },
 ): boolean {
-  if (item.type === "transition" || item.taskId) {
+  if (item.slot || item.type === "transition" || item.taskId) {
     return false;
   }
   return isItemDataEmpty(item);

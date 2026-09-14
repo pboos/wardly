@@ -1,3 +1,5 @@
+import type { SundayStandardSlot } from "./templates.ts";
+
 export const SUNDAY_MEETING_TYPES = [
   "sacrament",
   "fast_testimony",
@@ -96,8 +98,9 @@ export type SundayMeetingItem = {
   sundayMeetingId: string;
   type: SundayMeetingItemType;
   section: SundayMeetingSection;
-  /** Manual override of the default order; null = default order. */
-  orderIndex: number | null;
+  /** Explicit position within the section. */
+  orderIndex: number;
+  slot: SundayStandardSlot | null;
   content: string | null;
   metadata: SundayItemMetadata | null;
   personMemberId: string | null;
@@ -115,7 +118,7 @@ export type SundayMeeting = {
   date: string;
   type: SundayMeetingType;
   information: string | null;
-  /** All persisted items in final order (section, sort key, creation). */
+  /** All persisted items in final order (section, explicit position). */
   items: SundayMeetingItem[];
   /** The `presiding` item, if the meeting has one. */
   presider: SundayMeetingItem | null;
@@ -156,7 +159,9 @@ export type SundayMeetingSupportText = {
   text: string;
 };
 
-export function isSundayMeetingType(value: unknown): value is SundayMeetingType {
+export function isSundayMeetingType(
+  value: unknown,
+): value is SundayMeetingType {
   return (
     typeof value === "string" &&
     (SUNDAY_MEETING_TYPES as readonly string[]).includes(value)
@@ -214,13 +219,19 @@ export function isCarryForwardEligible(type: SundayMeetingItemType): boolean {
  * Safely parse an item's JSON metadata. Invalid JSON and non-objects yield
  * null, and only known keys with valid value types are kept.
  */
-export function parseItemMetadata(raw: string | null): SundayItemMetadata | null {
+export function parseItemMetadata(
+  raw: string | null,
+): SundayItemMetadata | null {
   if (!raw) {
     return null;
   }
   try {
     const parsed: unknown = JSON.parse(raw);
-    if (typeof parsed !== "object" || parsed === null || Array.isArray(parsed)) {
+    if (
+      typeof parsed !== "object" ||
+      parsed === null ||
+      Array.isArray(parsed)
+    ) {
       return null;
     }
     const hymnNumber = (parsed as Record<string, unknown>).hymnNumber;

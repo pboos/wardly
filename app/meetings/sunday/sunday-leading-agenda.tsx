@@ -1,64 +1,81 @@
 "use client";
-
 import type {
   SundayMeeting,
   SundayMeetingMemberHistory,
   SundayMeetingSupportText,
 } from "@/lib/sunday-meetings/types";
 import {
+  AGENDA_SECTIONS,
   agendaMoveTarget,
-  agendaRowItem,
   buildAgendaRows,
 } from "@/lib/sunday-meetings/agenda";
 import { SundayLeadingItemRow } from "./sunday-leading-item-row";
+import { SundayAddSpeaker } from "./sunday-add-speaker";
+import { SECTION_LABELS } from "./sunday-leading-labels";
+import type { SundayMutationRunner } from "./use-sunday-mutation";
 
-/**
- * The agenda flow: virtual standard slots merged with the persisted
- * items (see lib/sunday-meetings/agenda), one row component per entry.
- */
 export function SundayLeadingAgenda({
   meeting,
   members,
   showSupportText,
   supportText,
+  pending,
   run,
 }: {
   meeting: SundayMeeting;
   members: SundayMeetingMemberHistory[];
   showSupportText: boolean;
   supportText: SundayMeetingSupportText[];
-  run: (action: () => Promise<unknown>, fallback: string) => void;
+  pending: boolean;
+  run: SundayMutationRunner;
 }) {
-  const rows = buildAgendaRows(meeting);
-
+  const rows = buildAgendaRows(meeting, showSupportText);
   return (
-    <ol className="flex flex-col gap-3">
-      {rows.map((row) => {
-        const item = agendaRowItem(row);
-        return (
-          <SundayLeadingItemRow
-            key={
-              row.kind === "slot"
-                ? `slot-${row.slot}`
-                : row.kind === "item"
-                  ? row.item.id
-                  : `empty-${row.type}`
-            }
-            row={row}
-            meeting={meeting}
-            members={members}
-            showSupportText={showSupportText}
-            supportText={
-              item
-                ? supportText.filter((block) => block.itemId === item.id)
-                : []
-            }
-            moveUp={item ? agendaMoveTarget(rows, item.id, "up") : null}
-            moveDown={item ? agendaMoveTarget(rows, item.id, "down") : null}
-            run={run}
-          />
-        );
-      })}
-    </ol>
+    <div className="flex flex-col gap-6" aria-busy={pending}>
+      {AGENDA_SECTIONS.map((section) => (
+        <section
+          key={section}
+          className="flex flex-col gap-3"
+          aria-label={SECTION_LABELS[section]}
+        >
+          <h3 className="text-lg font-medium">{SECTION_LABELS[section]}</h3>
+          <ol className="flex flex-col gap-3">
+            {rows
+              .filter((row) => row.item.section === section)
+              .map(({ item }) => (
+                <SundayLeadingItemRow
+                  key={item.id}
+                  item={item}
+                  members={members}
+                  showSupportText={showSupportText}
+                  supportText={supportText.filter(
+                    (block) => block.itemId === item.id,
+                  )}
+                  moveUp={agendaMoveTarget(
+                    meeting.items,
+                    item.id,
+                    "up",
+                    showSupportText,
+                  )}
+                  moveDown={agendaMoveTarget(
+                    meeting.items,
+                    item.id,
+                    "down",
+                    showSupportText,
+                  )}
+                  pending={pending}
+                  run={run}
+                />
+              ))}
+          </ol>
+          {section === "program" &&
+            meeting.type !== "childrens_sacrament_presentation" && (
+              <div>
+                <SundayAddSpeaker meetingId={meeting.id} members={members} />
+              </div>
+            )}
+        </section>
+      ))}
+    </div>
   );
 }

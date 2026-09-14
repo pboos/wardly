@@ -184,7 +184,8 @@ model sunday_meeting_item {
   sunday_meeting_id String
   type              String
   section           String
-  order_index       Float?
+  order_index       Int
+  slot              String?
   content           String?
   metadata          String?
   person_member_id  String?
@@ -201,6 +202,7 @@ model sunday_meeting_item {
   // unique indexes (at most one 'leader' and one 'presiding' per meeting) are
   // declared in the initial migration because Prisma 7.8 cannot express CHECK
   // constraints or unique partial indexes in the schema DSL.
+  @@unique([sunday_meeting_id, slot])
   @@index([sunday_meeting_id])
   @@index([person_member_id])
   @@index([task_id])

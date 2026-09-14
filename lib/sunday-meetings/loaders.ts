@@ -1,3 +1,4 @@
+import { isStandardSlot } from "./templates.ts";
 import type { Prisma } from "@/generated/prisma/client";
 import { prisma } from "@/lib/prisma";
 import {
@@ -89,6 +90,7 @@ function mapItem(item: ItemRecord): SundayMeetingItem {
     type: item.type,
     section: item.section,
     orderIndex: item.order_index,
+    slot: isStandardSlot(item.slot) ? item.slot : null,
     content: item.content,
     metadata: parseItemMetadata(item.metadata),
     personMemberId: item.person_member_id,
@@ -293,9 +295,10 @@ async function defaultLeadingMeeting(
   timeZone: string,
 ): Promise<SundayMeeting> {
   const today = localToday(timeZone);
-  let date = new Date(`${today}T00:00:00Z`).getUTCDay() === 0
-    ? today
-    : nextSundayFromDate(today);
+  let date =
+    new Date(`${today}T00:00:00Z`).getUTCDay() === 0
+      ? today
+      : nextSundayFromDate(today);
 
   for (let attempts = 0; attempts < 104; attempts += 1) {
     const meeting = await loadOrCreateByDate(wardId, date);
@@ -318,7 +321,8 @@ export async function loadSundayMeetingMemberHistory(
   wardId: string,
   timeZone?: string,
 ): Promise<SundayMeetingMemberHistory[]> {
-  const resolvedTimeZone = timeZone ?? (await getSundayMeetingSettings(wardId)).time_zone;
+  const resolvedTimeZone =
+    timeZone ?? (await getSundayMeetingSettings(wardId)).time_zone;
   const today = localToday(resolvedTimeZone);
   const [members, itemRecords] = await Promise.all([
     prisma.member.findMany({

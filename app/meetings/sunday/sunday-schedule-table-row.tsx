@@ -10,17 +10,15 @@ import { isLocalMeetingType } from "@/lib/sunday-meetings/types";
 import { getSundayScheduleDisplayState } from "@/lib/sunday-meetings/schedule";
 import { cn } from "@/lib/utils";
 import { updateSundayMeetingType } from "./actions";
-import {
-  EmptyCell,
-  HymnCell,
-  InformationCell,
-  LeaderPicker,
-  MeetingPeopleCell,
-  MeetingTypePicker,
-  PrayerCell,
-  SpeakerCell,
-  formatDate,
-} from "./sunday-schedule-cells";
+import { EmptyCell } from "./sunday-empty-cell";
+import { HymnCell } from "./sunday-hymn-cell";
+import { InformationCell } from "./sunday-information-cell";
+import { LeaderPicker } from "./sunday-leader-picker";
+import { MeetingPeopleCell } from "./sunday-meeting-people-cell";
+import { MeetingTypePicker } from "./sunday-meeting-type-picker";
+import { PrayerCell } from "./sunday-prayer-cell";
+import { SpeakerCell } from "./sunday-speaker-cell";
+import { formatDate } from "./sunday-schedule-format";
 
 /** One Sunday in the desktop schedule table. */
 export function ScheduleTableRow({
@@ -37,7 +35,11 @@ export function ScheduleTableRow({
   currentSunday: string;
 }) {
   const local = isLocalMeetingType(meeting.type);
-  const displayState = getSundayScheduleDisplayState(meeting.type, meeting.date, currentSunday);
+  const displayState = getSundayScheduleDisplayState(
+    meeting.type,
+    meeting.date,
+    currentSunday,
+  );
   const rowClassName = cn(
     "group",
     displayState.hasSubtleFill &&
@@ -50,8 +52,7 @@ export function ScheduleTableRow({
     displayState.hasSubtleFill
       ? "group-hover:bg-yellow-100/60 dark:group-hover:bg-yellow-900/20"
       : "group-hover:bg-muted/50",
-    displayState.hasSubtleFill &&
-      "bg-yellow-100/60 dark:bg-yellow-900/20",
+    displayState.hasSubtleFill && "bg-yellow-100/60 dark:bg-yellow-900/20",
   );
 
   return (
@@ -67,7 +68,12 @@ export function ScheduleTableRow({
       <TableCell>
         <MeetingTypePicker
           meeting={meeting}
-          onChange={(type) => run(() => updateSundayMeetingType(meeting.id, type), "Could not update meeting type.")}
+          onChange={(type) =>
+            run(
+              () => updateSundayMeetingType(meeting.id, type),
+              "Could not update meeting type.",
+            )
+          }
         />
       </TableCell>
       <TableCell>
@@ -79,14 +85,22 @@ export function ScheduleTableRow({
       </TableCell>
       <TableCell>
         {local ? (
-          <MeetingPeopleCell meeting={meeting} role="organist" members={members} />
+          <MeetingPeopleCell
+            meeting={meeting}
+            role="organist"
+            members={members}
+          />
         ) : (
           <EmptyCell />
         )}
       </TableCell>
       <TableCell>
         {local ? (
-          <MeetingPeopleCell meeting={meeting} role="music_conductor" members={members} />
+          <MeetingPeopleCell
+            meeting={meeting}
+            role="music_conductor"
+            members={members}
+          />
         ) : (
           <EmptyCell />
         )}

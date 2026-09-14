@@ -10,7 +10,7 @@ import {
   type SundayPersonInput,
 } from "./types.ts";
 import { assertTimeZone } from "./calendar.ts";
-import { sortSundayItems } from "./order.ts";
+import { hasAdjacentConductorText } from "./order.ts";
 
 /**
  * Internal validation and access helpers shared by the meeting and item
@@ -24,8 +24,9 @@ export type SortableItem = {
   id: string;
   type: SundayMeetingItemType;
   section: SundayMeetingSection;
-  orderIndex: number | null;
+  orderIndex: number;
   createdAt: string;
+  slot: string | null;
 };
 
 export function fail(message: string): never {
@@ -81,8 +82,9 @@ type RawSortableRow = {
   id: string;
   type: string;
   section: string;
-  order_index: number | null;
+  order_index: number;
   created_at: Date;
+  slot: string | null;
 };
 
 export function sortableItem(item: RawSortableRow): SortableItem {
@@ -91,6 +93,7 @@ export function sortableItem(item: RawSortableRow): SortableItem {
     type: asItemType(item.type),
     section: asSection(item.section),
     orderIndex: item.order_index,
+    slot: item.slot,
     createdAt: item.created_at.toISOString(),
   };
 }
@@ -136,7 +139,9 @@ export function assertHymnNumber(metadata: SundayItemMetadata | null): void {
     hymnNumber <= 0 ||
     hymnNumber > MAX_HYMN_NUMBER
   ) {
-    fail(`Hymn number must be a whole number between 1 and ${MAX_HYMN_NUMBER}.`);
+    fail(
+      `Hymn number must be a whole number between 1 and ${MAX_HYMN_NUMBER}.`,
+    );
   }
 }
 
@@ -171,14 +176,8 @@ export function assertTransitionEmpty(
 export function assertNoAdjacentConductorText(
   items: readonly SortableItem[],
 ): void {
-  const ordered = sortSundayItems(items);
-  for (let index = 1; index < ordered.length; index += 1) {
-    if (
-      ordered[index - 1].type === "conductor_text" &&
-      ordered[index].type === "conductor_text"
-    ) {
-      fail("Two conductor-text items cannot be adjacent.");
-    }
+  if (hasAdjacentConductorText(items)) {
+    fail("Two conductor-text items cannot be adjacent.");
   }
 }
 
