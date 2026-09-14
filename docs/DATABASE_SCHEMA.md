@@ -148,6 +148,8 @@ and position. Extra empty items may be deleted automatically.
 Each section has explicit integer positions. Reordering renumbers the affected
 sections in a transaction. New extra items append to their section. Standard
 slot identity is independent of order and unique within a meeting.
+Each non-null `task_id` is unique across all Sundays. Selecting an already scheduled
+task moves its existing item to the chosen meeting; unselected candidates have no row.
 
 ```sql
 CREATE TABLE sunday_meeting_item (
@@ -172,7 +174,7 @@ CREATE UNIQUE INDEX sunday_meeting_item_sunday_meeting_id_slot_key
 
 CREATE INDEX idx_sunday_meeting_item_meeting ON sunday_meeting_item (sunday_meeting_id);
 CREATE INDEX idx_sunday_meeting_item_member  ON sunday_meeting_item (person_member_id);
-CREATE INDEX idx_sunday_meeting_item_task    ON sunday_meeting_item (task_id);
+CREATE UNIQUE INDEX sunday_meeting_item_task_id_key ON sunday_meeting_item (task_id);
 
 -- At most one conducting leader and one presiding item per meeting
 -- (declared in the initial SQL migration; Prisma cannot express unique

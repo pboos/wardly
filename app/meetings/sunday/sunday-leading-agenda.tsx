@@ -1,6 +1,7 @@
 "use client";
 import type {
   SundayMeeting,
+  SundayMeetingTaskCandidateGroup,
   SundayMeetingMemberHistory,
   SundayMeetingSupportText,
 } from "@/lib/sunday-meetings/types";
@@ -9,6 +10,7 @@ import {
   agendaMoveTarget,
   buildAgendaRows,
 } from "@/lib/sunday-meetings/agenda";
+import { SundayBusinessTasks } from "./sunday-business-tasks";
 import { SundayLeadingItemRow } from "./sunday-leading-item-row";
 import { SundayAddSpeaker } from "./sunday-add-speaker";
 import { AddAgendaItemDialog } from "./sunday-leading-add-item";
@@ -17,6 +19,7 @@ import type { SundayMutationRunner } from "./use-sunday-mutation";
 
 export function SundayLeadingAgenda({
   meeting,
+  taskCandidates,
   members,
   showSupportText,
   supportText,
@@ -24,6 +27,7 @@ export function SundayLeadingAgenda({
   run,
 }: {
   meeting: SundayMeeting;
+  taskCandidates: SundayMeetingTaskCandidateGroup[];
   members: SundayMeetingMemberHistory[];
   showSupportText: boolean;
   supportText: SundayMeetingSupportText[];
@@ -76,6 +80,15 @@ export function SundayLeadingAgenda({
                 />
               ))}
           </ol>
+          {section === "business" && (
+            <SundayBusinessTasks
+              key={meeting.id}
+              groups={taskCandidates}
+              meetingId={meeting.id}
+              pending={pending}
+              run={run}
+            />
+          )}
           {section === "program" &&
             meeting.type !== "childrens_sacrament_presentation" && (
               <div>

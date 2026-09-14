@@ -19,9 +19,7 @@ import {
 import {
   isCarryForwardEligible,
   isLocalMeetingType,
-  isSundayMeetingTaskItemType,
   isSundayMeetingType,
-  type SundayMeetingTaskItemType,
   type SundayMeetingType,
 } from "./types.ts";
 import {
@@ -227,61 +225,6 @@ export async function updateSundayMeetingSettings(
       updated_at: new Date(),
     },
   });
-}
-
-async function addTaskItemInTransaction(
-  tx: Transaction,
-  wardId: string,
-  meetingId: string,
-  taskId: string,
-  itemType: SundayMeetingTaskItemType,
-): Promise<string> {
-  const meeting = await requireMeeting(tx, wardId, meetingId);
-  if (!isLocalMeetingType(asMeetingType(meeting.type))) {
-    fail("Conference meetings do not have a local agenda.");
-  }
-  if (!isSundayMeetingTaskItemType(itemType)) {
-    fail("Task state has an invalid Sunday meeting item type.");
-  }
-  const task = await tx.task.findFirst({
-    where: { id: taskId, ward_id: wardId },
-    select: { id: true },
-  });
-  if (!task) {
-    fail("Task not found in this ward.");
-  }
-  const duplicate = await tx.sunday_meeting_item.findFirst({
-    where: { sunday_meeting_id: meetingId, task_id: taskId },
-    select: { id: true },
-  });
-  if (duplicate) {
-    fail("This task is already on the meeting agenda.");
-  }
-
-  const created = await tx.sunday_meeting_item.create({
-    data: {
-      sunday_meeting_id: meetingId,
-      type: itemType,
-      section: "business",
-      order_index: nextPosition(
-        await meetingSortableItems(tx, meetingId),
-        "business",
-      ),
-      task_id: taskId,
-    },
-  });
-  return created.id;
-}
-
-export async function addTaskItem(
-  wardId: string,
-  meetingId: string,
-  taskId: string,
-  itemType: SundayMeetingTaskItemType,
-): Promise<string> {
-  return prisma.$transaction((tx) =>
-    addTaskItemInTransaction(tx, wardId, meetingId, taskId, itemType),
-  );
 }
 
 export async function carryForwardItem(

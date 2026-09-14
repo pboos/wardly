@@ -115,13 +115,22 @@ controls, task suggestions, and standard-slot movement rules are unchanged.
   They are derived text, distinct from editable `conductor_text` agenda rows.
   Generated wording is currently English placeholder text; `content_locale` is stored
   but not yet used to localize it.
-- Task type/state configuration maps eligible tasks to `calling_sustain`,
-  `calling_release`, or `priesthood_aaronic_inform`. Adding a suggestion rechecks
-  eligibility, appends a linked business item, and rejects duplicate task links
-  within that meeting. These types cannot be added as ordinary extra entries.
-- The item keeps its task link if task state later changes; adding it does not
-  advance task state. Candidate loading may still list an already-added task;
-  the service rejects another insertion. Task-linked item types cannot be changed.
+- Ward business contains an expanded-by-default “Available tasks” list with a
+  collapsible heading, checkboxes, and “Add selected”. Candidates are derived
+  from resolved task state configuration (`sunday_meeting_item_type`), including
+  code defaults when the ward has no database lifecycle override. Only
+  `calling_sustain`, `calling_release`, and `priesthood_aaronic_inform` are supported.
+- Unselected candidates have no agenda row. Tasks already in this meeting are
+  excluded; tasks on other Sundays show “Moves from [date]”. Selected tasks save
+  atomically as separate business entries with the mapped type, task member/title,
+  and task link. Eligibility and ward ownership are rechecked during the transaction.
+- A task can belong to only one Sunday, enforced by a unique `task_id` index.
+  Selecting it elsewhere moves the existing item, retaining its ID, details, and
+  person data, and appends it to Ward business. Source/destination order is normalized;
+  moves that leave adjacent conductor text fail without partial changes.
+- Adding does not advance task state. Existing links survive subsequent state
+  changes; deleting an agenda entry makes its task available again if eligible.
+  Task presentation types cannot be added as ordinary extras or manually changed.
 - Carry-forward moves the same item and its task/person data to the next local
   Sunday, creating it if necessary and skipping conferences (104-attempt limit).
   It appends in the same section and rejects a duplicate destination task link.
@@ -138,7 +147,7 @@ controls, task suggestions, and standard-slot movement rules are unchanged.
 | Shared ordering and rendered rows | [order.ts](../../../lib/sunday-meetings/order.ts), [agenda.ts](../../../lib/sunday-meetings/agenda.ts), [order-service.ts](../../../lib/sunday-meetings/order-service.ts) |
 | Templates, reconciliation, stable lookup | [templates.ts](../../../lib/sunday-meetings/templates.ts), [standard-items-service.ts](../../../lib/sunday-meetings/standard-items-service.ts), [slots.ts](../../../lib/sunday-meetings/slots.ts) |
 | Create/update/delete and type changes | [item-service.ts](../../../lib/sunday-meetings/item-service.ts), [item-update-service.ts](../../../lib/sunday-meetings/item-update-service.ts), [meeting-service.ts](../../../lib/sunday-meetings/meeting-service.ts) |
-| Suggestions and generated wording | [tasks.ts](../../../lib/sunday-meetings/tasks.ts), [support.ts](../../../lib/sunday-meetings/support.ts) |
+| Suggestions, task selection, and generated wording | [tasks.ts](../../../lib/sunday-meetings/tasks.ts), [task item service](../../../lib/sunday-meetings/task-item-service.ts), [Ward business picker](../../../app/meetings/sunday/sunday-business-tasks.tsx), [support.ts](../../../lib/sunday-meetings/support.ts) |
 
 ## Verification
 
@@ -149,3 +158,7 @@ type changes, task links, carry-forward, and ward isolation. For UI changes also
 check pending controls, dialogs, and narrow-screen layout. Persistence tests also
 cover every creation type/section combination and unrestricted extra-item moves,
 edits, and reloads.
+
+Task-selection persistence checks cover batch rollback, cross-Sunday moves, task
+identity/details, state mapping overrides, database uniqueness, ward isolation,
+removal/reselection, and carry-forward.

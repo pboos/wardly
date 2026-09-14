@@ -1,3 +1,4 @@
+import type { Prisma } from "@/generated/prisma/client";
 import { prisma } from "@/lib/prisma";
 import { DEFAULT_TASK_TYPES, parseConfiguration } from "./defaults";
 import type { TaskType, TaskState, StateGroup } from "./types";
@@ -23,17 +24,17 @@ import { withProgress } from "./utils";
  * Returns a single array — the source of truth for what task types exist
  * for this ward.
  */
-export async function loadTaskTypes(wardId: string): Promise<TaskType[]> {
+export async function loadTaskTypes(wardId: string, db: Prisma.TransactionClient = prisma): Promise<TaskType[]> {
   const [taskTypeRows, stateRows, assignmentRows] = await Promise.all([
-    prisma.task_type.findMany({
+    db.task_type.findMany({
       where: { ward_id: wardId },
       orderBy: { type: "asc" },
     }),
-    prisma.task_type_state.findMany({
+    db.task_type_state.findMany({
       where: { ward_id: wardId },
       orderBy: [{ task_type: "asc" }, { order_index: "asc" }],
     }),
-    prisma.task_type_state_assignment.findMany({
+    db.task_type_state_assignment.findMany({
       where: { ward_id: wardId },
       select: { task_type: true, state: true, assign_to_user_id: true },
     }),

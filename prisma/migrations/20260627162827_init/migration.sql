@@ -211,7 +211,7 @@ CREATE INDEX "sunday_meeting_item_sunday_meeting_id_idx" ON "sunday_meeting_item
 CREATE INDEX "sunday_meeting_item_person_member_id_idx" ON "sunday_meeting_item"("person_member_id");
 
 -- CreateIndex
-CREATE INDEX "sunday_meeting_item_task_id_idx" ON "sunday_meeting_item"("task_id");
+CREATE UNIQUE INDEX "sunday_meeting_item_task_id_key" ON "sunday_meeting_item"("task_id");
 
 -- CreateIndex
 -- Partial unique indexes (Prisma cannot express these; declared only here):

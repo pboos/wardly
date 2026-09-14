@@ -21,6 +21,7 @@ lookup for English and German in the shared schedule/details hymn picker.
   `general_conference` have no local agenda items.
 - Each `sunday_meeting_item` holds its type, section, explicit integer position,
   optional standard `slot`, text, hymn metadata, person, and optional task link.
+  A task link is unique across all Sundays; choosing it elsewhere moves that item.
   Standard slots are persisted even when empty; identity is independent of order.
 - A person is either a member of the same ward or a free-text name, never both.
   Multiple people use multiple rows. Leader and presiding roles are each unique

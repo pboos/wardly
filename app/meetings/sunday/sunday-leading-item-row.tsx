@@ -133,6 +133,9 @@ export function SundayLeadingItemRow({
           ) : (
             <>
               {title}
+              {item.task?.memberName && (
+                <CardDescription>{item.task.memberName}</CardDescription>
+              )}
               {detail && <CardDescription>{detail}</CardDescription>}
               <div className="flex min-w-0 flex-wrap items-center gap-2">
                 <SundayItemContentEditor item={item} />
@@ -140,7 +143,7 @@ export function SundayLeadingItemRow({
             </>
           )}
         </CardHeader>
-        {!compact && PERSON_EDITORS[item.type] && (
+        {!compact && !item.task && PERSON_EDITORS[item.type] && (
           <CardContent>
             <div className="flex flex-col gap-2">
               <span className="text-sm font-medium">

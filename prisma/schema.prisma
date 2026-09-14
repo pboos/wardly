@@ -205,5 +205,5 @@ model sunday_meeting_item {
   @@unique([sunday_meeting_id, slot])
   @@index([sunday_meeting_id])
   @@index([person_member_id])
-  @@index([task_id])
+  @@unique([task_id])
 }

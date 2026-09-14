@@ -22,7 +22,10 @@ import type {
   UpdateSundayItemInput,
   UpsertSundayItemInput,
 } from "@/lib/sunday-meetings/service";
-import { addSuggestedTaskToMeeting } from "@/lib/sunday-meetings/tasks";
+import {
+  addSuggestedTaskToMeeting,
+  addSuggestedTasksToMeeting,
+} from "@/lib/sunday-meetings/tasks";
 import type { SundayMeetingType } from "@/lib/sunday-meetings/types";
 
 function revalidateSundayMeetingRoutes(): void {
@@ -151,6 +154,20 @@ export async function addSuggestedSundayTask(
   const id = await addSuggestedTaskToMeeting(user.ward_id, meetingId, taskId);
   revalidateSundayMeetingRoutes();
   return id;
+}
+
+export async function addSuggestedSundayTasks(
+  meetingId: string,
+  taskIds: string[],
+) {
+  const user = await getCurrentUser();
+  const ids = await addSuggestedTasksToMeeting(
+    user.ward_id,
+    meetingId,
+    taskIds,
+  );
+  revalidateSundayMeetingRoutes();
+  return ids;
 }
 
 export async function carrySundayAgendaItemForward(itemId: string) {

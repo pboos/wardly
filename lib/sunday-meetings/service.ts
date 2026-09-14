@@ -6,3 +6,4 @@
  */
 export * from "./meeting-service.ts";
 export * from "./item-service.ts";
+export { addTaskItem } from "./task-item-service.ts";

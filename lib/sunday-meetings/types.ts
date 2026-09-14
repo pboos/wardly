@@ -125,6 +125,7 @@ export type SundayMeeting = {
 };
 
 export type SundayMeetingTaskCandidate = {
+  scheduledMeeting: { id: string; date: string } | null;
   id: string;
   itemType: SundayMeetingTaskItemType;
   title: string | null;

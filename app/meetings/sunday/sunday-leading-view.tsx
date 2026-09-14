@@ -15,10 +15,7 @@ import { Button } from "@/components/ui/button";
 import { SUNDAY_MEETING_TYPE_LABELS } from "@/lib/sunday-meetings/types";
 import { nextSunday, previousSunday } from "@/lib/sunday-meetings/calendar";
 import type { loadLeadingSundayMeeting } from "@/lib/sunday-meetings/loaders";
-import {
-  AssignmentHistoryCard,
-  SuggestedTasksCard,
-} from "./sunday-leading-cards";
+import { AssignmentHistoryCard } from "./sunday-leading-cards";
 import { SundayLeadingAgenda } from "./sunday-leading-agenda";
 import { SundayLeadingParticipants } from "./sunday-leading-participants";
 
@@ -129,6 +126,7 @@ export function SundayLeadingView({ data }: { data: LeadingData }) {
           <section className="flex flex-col gap-3">
             <h2 className="text-lg font-medium">Agenda</h2>
             <SundayLeadingAgenda
+              taskCandidates={data.taskCandidates}
               pending={pending}
               meeting={meeting}
               members={data.memberHistory}
@@ -139,12 +137,6 @@ export function SundayLeadingView({ data }: { data: LeadingData }) {
               run={run}
             />
           </section>
-
-          <SuggestedTasksCard
-            groups={data.taskCandidates}
-            meetingId={meeting.id}
-            run={run}
-          />
         </>
       )}
     </div>
