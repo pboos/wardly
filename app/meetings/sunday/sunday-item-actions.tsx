@@ -1,18 +1,21 @@
 "use client";
-import { IconChevronDown, IconChevronUp, IconTrash } from "@tabler/icons-react";
+import {
+  IconChevronDown,
+  IconChevronUp,
+  IconDots,
+  IconTrash,
+} from "@tabler/icons-react";
 import { Button } from "@/components/ui/button";
 import {
-  Select,
-  SelectContent,
-  SelectGroup,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import type {
-  SundayMeetingItem,
-  SundayMeetingSection,
-} from "@/lib/sunday-meetings/types";
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuGroup,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import type { SundayMeetingItem } from "@/lib/sunday-meetings/types";
 import {
   AGENDA_SECTIONS,
   type SundayAgendaMove,
@@ -43,7 +46,7 @@ export function SundayItemActions({
     );
   }
   return (
-    <div className="flex flex-wrap items-center gap-2">
+    <div className="flex shrink-0 items-center gap-0.5">
       <Button
         type="button"
         variant="ghost"
@@ -65,48 +68,50 @@ export function SundayItemActions({
         <IconChevronDown />
       </Button>
       {!item.slot && (
-        <>
-          <Select
-            value=""
-            disabled={pending}
-            onValueChange={(section) =>
-              move({
-                section: section as SundayMeetingSection,
-                showSupportText,
-              })
-            }
-          >
-            <SelectTrigger aria-label="Move to section" size="sm">
-              <SelectValue placeholder="Move to section" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectGroup>
-                {AGENDA_SECTIONS.filter(
-                  (section) => section !== item.section,
-                ).map((section) => (
-                  <SelectItem key={section} value={section}>
-                    {SECTION_LABELS[section]}
-                  </SelectItem>
-                ))}
-              </SelectGroup>
-            </SelectContent>
-          </Select>
-          <Button
-            type="button"
-            variant="ghost"
-            size="icon-sm"
-            aria-label="Delete agenda item"
-            disabled={pending}
-            onClick={() =>
-              run(
-                () => deleteSundayAgendaItem(item.id),
-                "Could not delete agenda item.",
-              )
-            }
-          >
-            <IconTrash />
-          </Button>
-        </>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon-sm"
+              disabled={pending}
+              aria-label="More agenda item actions"
+            >
+              <IconDots />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            <DropdownMenuLabel>Move to section</DropdownMenuLabel>
+            <DropdownMenuGroup>
+              {AGENDA_SECTIONS.filter(
+                (section) => section !== item.section,
+              ).map((section) => (
+                <DropdownMenuItem
+                  key={section}
+                  disabled={pending}
+                  onSelect={() => move({ section, showSupportText })}
+                >
+                  {SECTION_LABELS[section]}
+                </DropdownMenuItem>
+              ))}
+            </DropdownMenuGroup>
+            <DropdownMenuSeparator />
+            <DropdownMenuGroup>
+              <DropdownMenuItem
+                variant="destructive"
+                disabled={pending}
+                onSelect={() =>
+                  run(
+                    () => deleteSundayAgendaItem(item.id),
+                    "Could not delete agenda item.",
+                  )
+                }
+              >
+                <IconTrash /> Delete agenda item
+              </DropdownMenuItem>
+            </DropdownMenuGroup>
+          </DropdownMenuContent>
+        </DropdownMenu>
       )}
     </div>
   );

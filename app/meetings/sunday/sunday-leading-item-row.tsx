@@ -1,6 +1,7 @@
 "use client";
 import {
   Card,
+  CardAction,
   CardContent,
   CardDescription,
   CardHeader,
@@ -62,6 +63,31 @@ export function SundayLeadingItemRow({
       </li>
     );
   }
+  const compact = [
+    "hymn",
+    "musical_number",
+    "prayer",
+    "talk",
+    "sacrament_blessing",
+    "sacrament_passing",
+  ].includes(item.type);
+  const emojis: Partial<Record<SundayMeetingItem["type"], string>> = {
+    hymn: "🎵",
+    musical_number: "🎶",
+    prayer: "🙏",
+    talk: "🎤",
+  };
+  const emoji = emojis[item.type];
+  const title = (
+    <CardTitle className="min-w-0 break-words">
+      {emoji && (
+        <>
+          <span aria-hidden="true">{emoji}</span>{" "}
+        </>
+      )}
+      {item.slot ? SLOT_LABELS[item.slot] : ITEM_LABELS[item.type]}
+    </CardTitle>
+  );
   const detail =
     item.type === "hymn"
       ? item.metadata?.hymnNumber
@@ -83,21 +109,31 @@ export function SundayLeadingItemRow({
             {block.text}
           </p>
         ))}
-      <Card>
-        <CardHeader className="gap-3">
-          <CardTitle>
-            {item.slot ? SLOT_LABELS[item.slot] : ITEM_LABELS[item.type]}
-          </CardTitle>
-          {detail && <CardDescription>{detail}</CardDescription>}
-          <div className="flex flex-wrap items-center gap-2">
-            <SundayItemContentEditor item={item} />
-            {isCarryForwardEligible(item.type) && (
-              <CarryForwardButton item={item} />
-            )}
-            {actions}
-          </div>
+      <Card size="sm" className="gap-2 py-2">
+        <CardHeader className="gap-2">
+          <CardAction>{actions}</CardAction>
+          {compact ? (
+            <div className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1">
+              {title}
+              {PERSON_EDITORS[item.type] && (
+                <SundayItemPersonEditor item={item} members={members} compact />
+              )}
+              <SundayItemContentEditor item={item} inline />
+            </div>
+          ) : (
+            <>
+              {title}
+              {detail && <CardDescription>{detail}</CardDescription>}
+              <div className="flex min-w-0 flex-wrap items-center gap-2">
+                <SundayItemContentEditor item={item} />
+                {isCarryForwardEligible(item.type) && (
+                  <CarryForwardButton item={item} />
+                )}
+              </div>
+            </>
+          )}
         </CardHeader>
-        {PERSON_EDITORS[item.type] && (
+        {!compact && PERSON_EDITORS[item.type] && (
           <CardContent>
             <div className="flex flex-col gap-2">
               <span className="text-sm font-medium">

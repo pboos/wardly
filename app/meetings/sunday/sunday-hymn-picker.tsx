@@ -21,12 +21,14 @@ export function SundayHymnPicker({
   item,
   allowMusicalNumber,
   onSave,
+  inline = false,
 }: {
   item: Pick<
     SundayMeetingItem,
     "type" | "metadata" | "content" | "personNameResolved"
   > | null;
   allowMusicalNumber: boolean;
+  inline?: boolean;
   onSave: (input: SundayHymnSlotInput) => Promise<unknown>;
 }) {
   const router = useRouter();
@@ -37,9 +39,12 @@ export function SundayHymnPicker({
   const saving = useRef(false);
   const number = item?.metadata?.hymnNumber;
   const title = hymns.find((hymn) => hymn.number === number)?.title;
+  const musicalText = [item?.content, item?.personNameResolved]
+    .filter(Boolean)
+    .join(" — ");
   const label =
     item?.type === "musical_number"
-      ? item.content || "Musical number"
+      ? musicalText || "Musical number"
       : number
         ? `${number}${title ? ` · ${title}` : ""}`
         : "+ Add hymn";
@@ -74,11 +79,11 @@ export function SundayHymnPicker({
       <DialogTrigger asChild>
         <Button
           type="button"
-          variant="outline"
+          variant={inline ? "ghost" : "outline"}
           size="sm"
-          className="h-auto max-w-full whitespace-normal break-words text-left"
+          className="h-auto min-h-8 max-w-full whitespace-normal break-words text-left"
           disabled={pending}
-          aria-label={`Select hymn: ${label}`}
+          aria-label={`${item?.type === "musical_number" ? "Edit musical number" : "Select hymn"}: ${label}`}
         >
           {label}
         </Button>
@@ -87,7 +92,7 @@ export function SundayHymnPicker({
         <SundayHymnPickerDialog
           initialNumber={number}
           initialText={
-            item?.type === "musical_number" ? (item.content ?? "") : undefined
+            item?.type === "musical_number" ? musicalText : undefined
           }
           allowMusicalNumber={allowMusicalNumber}
           canClear={Boolean(

@@ -5,41 +5,37 @@ import { SundayHymnPicker } from "./sunday-hymn-picker";
 import { ItemContentDialog } from "./sunday-item-content-dialog";
 import { contentLabel } from "./sunday-item-editors";
 
-export function SundayItemContentEditor({ item }: { item: SundayMeetingItem }) {
+export function SundayItemContentEditor({
+  item,
+  inline = false,
+}: {
+  item: SundayMeetingItem;
+  inline?: boolean;
+}) {
   if (item.type === "hymn" || item.type === "musical_number") {
     return (
-      <>
-        <SundayHymnPicker
-          item={item}
-          allowMusicalNumber={
-            item.slot === "interlude" ||
-            (!item.slot && item.section === "program")
-          }
-          onSave={(input) => updateSundayAgendaItem(item.id, input)}
-        />
-        {item.type === "musical_number" && (
-          <ItemContentDialog
-            label="Musical number and performers"
-            triggerLabel="Edit details and performers"
-            initialValue={[item.content, item.personNameResolved]
-              .filter(Boolean)
-              .join(" — ")}
-            onSave={(content) =>
-              updateSundayAgendaItem(item.id, {
-                content: content || "Musical number",
-                person: null,
-              })
-            }
-          />
-        )}
-      </>
+      <SundayHymnPicker
+        item={item}
+        inline={inline}
+        allowMusicalNumber={
+          item.type === "musical_number" ||
+          item.slot === "interlude" ||
+          (!item.slot && item.section === "program")
+        }
+        onSave={(input) => updateSundayAgendaItem(item.id, input)}
+      />
     );
   }
   const label = contentLabel(item.type);
   return label ? (
     <ItemContentDialog
       label={label}
-      triggerLabel="Edit details"
+      inline={inline}
+      triggerLabel={
+        inline
+          ? item.content || (item.type === "talk" ? "Add topic" : "Add details")
+          : "Edit details"
+      }
       initialValue={item.content ?? ""}
       onSave={(content) => updateSundayAgendaItem(item.id, { content })}
     />

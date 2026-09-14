@@ -39,7 +39,7 @@ export function SundayLeadingAgenda({
           aria-label={SECTION_LABELS[section]}
         >
           <h3 className="text-lg font-medium">{SECTION_LABELS[section]}</h3>
-          <ol className="flex flex-col gap-3">
+          <ol className="flex flex-col gap-2">
             {rows
               .filter((row) => row.item.section === section)
               .map(({ item }) => (

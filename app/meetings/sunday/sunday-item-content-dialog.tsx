@@ -19,10 +19,12 @@ export function ItemContentDialog({
   triggerLabel,
   initialValue,
   onSave,
+  inline = false,
 }: {
   /** Field label of the text (saved as the item content). */
   label: string;
   triggerLabel: string;
+  inline?: boolean;
   initialValue: string;
   onSave: (value: string | null) => Promise<void>;
 }) {
@@ -52,8 +54,10 @@ export function ItemContentDialog({
     <>
       <Button
         type="button"
-        variant="outline"
+        variant={inline ? "ghost" : "outline"}
         size="sm"
+        className="h-auto min-h-8 max-w-full whitespace-normal break-words text-left"
+        aria-label={`Edit ${label.toLowerCase()}: ${triggerLabel}`}
         onClick={() => {
           setValue(initialValue);
           setOpen(true);

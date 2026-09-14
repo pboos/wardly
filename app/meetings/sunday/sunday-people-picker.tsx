@@ -19,6 +19,7 @@ export function SundayPeoplePicker({
   items,
   members,
   maxPeople,
+  compact = false,
   layout = "horizontal",
   roleWithHistory,
   renderDetails,
@@ -29,6 +30,7 @@ export function SundayPeoplePicker({
   items: SundayMeetingItem[];
   members: SundayMeetingMemberHistory[];
   maxPeople?: number;
+  compact?: boolean;
   layout?: "horizontal" | "vertical";
   roleWithHistory?: "speaker" | "prayer" | null;
   renderDetails?: (item: SundayMeetingItem) => ReactNode;
@@ -79,13 +81,15 @@ export function SundayPeoplePicker({
         ref={addRef}
         type="button"
         variant="ghost"
-        size={people.length ? "icon-sm" : "sm"}
+        size={people.length || compact ? "icon-sm" : "sm"}
         className="shrink-0"
         disabled={pending}
         aria-label={`Add ${label.toLowerCase()}`}
       >
-        <IconPlus data-icon={people.length ? undefined : "inline-start"} />
-        {!people.length && `Add ${label.toLowerCase()}`}
+        <IconPlus
+          data-icon={people.length || compact ? undefined : "inline-start"}
+        />
+        {!people.length && !compact && `Add ${label.toLowerCase()}`}
       </Button>
     </DialogTrigger>
   );

@@ -15,10 +15,18 @@ Read the [overview](README.md) first; schedule-specific editing is in [schedule]
   available. Presiding is a separate optional assignment, not inferred from leader.
 - Meeting context contains leader, presiding, organists, music conductors, visitors,
   and meeting information. Support text and assignment history are hidden by default.
+- Agenda cards use compact spacing and top-right reorder arrows. Extra entries
+  keep section movement and deletion in the adjacent “More agenda item actions” menu.
+  Hymns (🎵), musical numbers (🎶), prayers (🙏), talks (🎤), and sacrament
+  blessing/passing use a single inline row; long content wraps on narrow screens.
+  Person assignments use an accessible + control when empty. Talk topics and
+  sacrament details are clickable text; empty text shows an add prompt.
 - Musical numbers use free text for details and performer names, with no member
   selector. Interludes and extra hymns/musical numbers use the same hymn modal as
   the schedule; conversion to musical number is enabled for interludes and extra
-  program entries. Existing linked performers are included in the text editor
+  program entries. Clicking the displayed hymn/musical-number text opens this
+  autocomplete; there is no separate musical-number details/performers dialog.
+  Existing linked performers are included in the autocomplete text
   and become text when saved. Clearing/changing the hymn clears its person link.
 - All other person assignments use the [shared people picker](schedule.md#people-picker)
   with vertical names and × removal. Topics and visitor/presiding roles have separate

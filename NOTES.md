@@ -4,9 +4,15 @@ This file contains notes about the ideas for wardly. Transcript notes are just s
 
 ## Instructions
 
+COMMON
+Implement the following feature or change on a feature.
+Do not assume something but ask for clarying questions if something is unclear. Give recommendation.
+Propose plan on the feature and implementation (concise).
+Present plan before implementation.
+
 meetings
 - details screen cards smaller, position movement right top
-  - hymn (emoji in front for hymn), should also be opening a modal where one enters hymn number. completion shows the hymn text and when selected similar to person shows when the hymn was sung last. if not a hymn entered, then it will say that on enter it will add a musical number. musical number can not be for opening/closing hymn. So modal should have flag if it allows musical number or not.
+  - hymn (emoji in front for hymn)
   - prayer should be one line (maybe with emoji in front)
 - tasks adding in (and already have them listed when planning the sunday meeting)
 

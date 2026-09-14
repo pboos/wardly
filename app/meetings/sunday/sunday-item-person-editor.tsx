@@ -10,13 +10,16 @@ import { PERSON_EDITORS, personTitle } from "./sunday-item-editors";
 export function SundayItemPersonEditor({
   item,
   members,
+  compact = false,
 }: {
   item: SundayMeetingItem;
+  compact?: boolean;
   members: SundayMeetingMemberHistory[];
 }) {
   return (
     <SundayPeoplePicker
       items={[item]}
+      compact={compact}
       layout="vertical"
       maxPeople={1}
       members={members}
