@@ -13,7 +13,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Field, FieldGroup, FieldLabel } from "@/components/ui/field";
-import { Input } from "@/components/ui/input";
+import { SundayHymnPicker } from "./sunday-hymn-picker";
 import {
   Select,
   SelectContent,
@@ -53,7 +53,9 @@ export function AddAgendaItemDialog({ meeting }: { meeting: SundayMeeting }) {
         await addSundayAgendaItem(meeting.id, {
           type,
           section,
-          content: content.trim() || null,
+          content:
+            content.trim() ||
+            (type === "musical_number" ? "Musical number" : null),
           // Only hymns carry a hymn number — never leak one entered while
           // an earlier type selection had the hymn field open.
           metadata:
@@ -139,16 +141,22 @@ export function AddAgendaItemDialog({ meeting }: { meeting: SundayMeeting }) {
             </Field>
             {type === "hymn" && (
               <Field>
-                <FieldLabel htmlFor="new-agenda-item-hymn">
-                  Hymn number
-                </FieldLabel>
-                <Input
-                  id="new-agenda-item-hymn"
-                  type="number"
-                  min={1}
-                  inputMode="numeric"
-                  value={hymnNumber}
-                  onChange={(event) => setHymnNumber(event.target.value)}
+                <FieldLabel>Hymn number</FieldLabel>
+                <SundayHymnPicker
+                  item={
+                    hymnNumber
+                      ? {
+                          type: "hymn",
+                          metadata: { hymnNumber: Number(hymnNumber) },
+                          content: null,
+                          personNameResolved: null,
+                        }
+                      : null
+                  }
+                  allowMusicalNumber={false}
+                  onSave={async (input) => {
+                    setHymnNumber(input.metadata?.hymnNumber?.toString() ?? "");
+                  }}
                 />
               </Field>
             )}
@@ -162,7 +170,11 @@ export function AddAgendaItemDialog({ meeting }: { meeting: SundayMeeting }) {
                   rows={4}
                   value={content}
                   onChange={(event) => setContent(event.target.value)}
-                  placeholder="Optional details"
+                  placeholder={
+                    type === "musical_number"
+                      ? "Musical number details and performer names"
+                      : "Optional details"
+                  }
                 />
               </Field>
             )}

@@ -3,7 +3,7 @@
 import type { SundayMeeting } from "@/lib/sunday-meetings/types";
 import { standardAgendaForMeeting } from "@/lib/sunday-meetings/templates";
 import { findSlotItem } from "@/lib/sunday-meetings/slots";
-import { SundayInlineHymnEditor } from "./sunday-inline-hymn-editor";
+import { SundayHymnPicker } from "./sunday-hymn-picker";
 import { EmptyCell } from "./sunday-empty-cell";
 import { updateSundayAgendaItem, upsertSundaySlotItem } from "./actions";
 type HymnSlot =
@@ -23,7 +23,7 @@ export function HymnCell({
   const item = findSlotItem(meeting.items, slot);
 
   return (
-    <SundayInlineHymnEditor
+    <SundayHymnPicker
       item={item ?? null}
       allowMusicalNumber={slot === "interlude"}
       onSave={(input) =>

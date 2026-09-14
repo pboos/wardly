@@ -42,8 +42,13 @@ Missing or unsupported selections are rejected. The existing field and initial
 migration already support this; see the [schema](../../DATABASE_SCHEMA.md).
 This selects ward content language, not the app's interface language.
 
-Hymn picker suggestions and automatic title display are not connected yet.
-Existing Sunday loaders already expose `contentLocale` for future consumers.
+The shared [Sunday hymn picker](../../../app/meetings/sunday/sunday-hymn-picker.tsx)
+uses the ward catalog for number completion and title display in schedule and details.
+[Hymn loading](../../../lib/sunday-meetings/hymn-loader.ts) provides the catalog and
+ward-wide last-sung dates strictly before ward-local today. History comes from saved
+hymn entries, not attendance/completion tracking. Historical entries do not store
+a catalog language; changing ward language reinterprets their numbers. Unknown
+numbers (1–9999) remain selectable with “title unavailable”; no language fallback.
 
 ## Maintenance and verification
 

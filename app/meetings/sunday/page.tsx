@@ -1,3 +1,5 @@
+import { loadSundayHymns } from "@/lib/sunday-meetings/hymn-loader";
+import { SundayHymnProvider } from "./sunday-hymn-provider";
 import { getCurrentUser } from "@/lib/auth/dal";
 import {
   loadSundayMeetingMemberHistory,
@@ -26,5 +28,14 @@ export default async function SundaySchedulePage({
     schedule.timeZone,
   );
 
-  return <SundayScheduleView schedule={schedule} members={members} />;
+  const hymns = await loadSundayHymns(
+    user.ward_id,
+    schedule.contentLocale,
+    schedule.timeZone,
+  );
+  return (
+    <SundayHymnProvider data={hymns}>
+      <SundayScheduleView schedule={schedule} members={members} />
+    </SundayHymnProvider>
+  );
 }

@@ -1,3 +1,5 @@
+import { loadSundayHymns } from "@/lib/sunday-meetings/hymn-loader";
+import { SundayHymnProvider } from "../sunday-hymn-provider";
 import { notFound } from "next/navigation";
 import { getCurrentUser } from "@/lib/auth/dal";
 import { loadLeadingSundayMeeting } from "@/lib/sunday-meetings/loaders";
@@ -13,5 +15,14 @@ export default async function SundayMeetingPage({
   const { date } = await params;
   if (!safeSundayCursor(date)) notFound();
   const data = await loadLeadingSundayMeeting(user.ward_id, date);
-  return <SundayLeadingView data={data} />;
+  const hymns = await loadSundayHymns(
+    user.ward_id,
+    data.contentLocale,
+    data.timeZone,
+  );
+  return (
+    <SundayHymnProvider data={hymns}>
+      <SundayLeadingView data={data} />
+    </SundayHymnProvider>
+  );
 }

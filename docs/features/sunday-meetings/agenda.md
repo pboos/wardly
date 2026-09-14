@@ -15,7 +15,12 @@ Read the [overview](README.md) first; schedule-specific editing is in [schedule]
   available. Presiding is a separate optional assignment, not inferred from leader.
 - Meeting context contains leader, presiding, organists, music conductors, visitors,
   and meeting information. Support text and assignment history are hidden by default.
-- All person assignments use the [shared people picker](schedule.md#people-picker)
+- Musical numbers use free text for details and performer names, with no member
+  selector. Interludes and extra hymns/musical numbers use the same hymn modal as
+  the schedule; conversion to musical number is enabled for interludes and extra
+  program entries. Existing linked performers are included in the text editor
+  and become text when saved. Clearing/changing the hymn clears its person link.
+- All other person assignments use the [shared people picker](schedule.md#people-picker)
   with vertical names and × removal. Topics and visitor/presiding roles have separate
   text editors; selecting a person no longer requires a source selector or topic field.
 - Agenda sections are `opening → business → sacrament → program → closing`.

@@ -67,7 +67,11 @@ export function SundayLeadingItemRow({
       ? item.metadata?.hymnNumber
         ? `Hymn ${item.metadata.hymnNumber}`
         : "No hymn selected"
-      : item.content || item.task?.title || null;
+      : item.type === "musical_number"
+        ? [item.content || "Musical number", item.personNameResolved]
+            .filter(Boolean)
+            .join(" — ")
+        : item.content || item.task?.title || null;
   return (
     <li className="flex flex-col gap-2">
       {showSupportText &&

@@ -32,9 +32,15 @@ for the shared model and [agenda](agenda.md) for ordering and meeting-type trans
 - Hymn/prayer cells resolve a stored `slot` key. Speaker cells show only `talk`
   rows in `program`, in saved order. A talk moved to another section remains
   on the agenda but is absent from schedule speaker cells.
-- Hymn fields save on Enter; Escape restores the server value. A hymn number
-  must be an integer from 1 to 9999. Interlude also accepts nonnumeric musical
-  number text. Clearing a standard entry retains its ID and position.
+- Hymn buttons open the shared details/schedule modal. Number completion shows
+  localized titles; the highlighted choice shows the last recorded date strictly
+  before ward-local today across all ward meetings. Enter or tapping selects;
+  Escape/Cancel dismisses, errors retain the draft, and saving blocks duplicates.
+  Unknown numbers from 1 to 9999 show “title unavailable”.
+- With empty input, interlude offers “Enter to add a musical number”, saving
+  “Musical number” without a person. Details and performer names are edited as
+  text on the details screen. Opening, sacrament, and closing slots are hymn-only.
+  A separate Clear action retains a standard entry’s ID and position.
 - People use the shared picker described below. Schedule chips lay out horizontally
   and wrap when needed, with no permanent text input or enclosing input border.
 - Removing a speaker clears the person; a topic-only talk stays. Adding a person
@@ -78,13 +84,13 @@ with no history first; it does not compute a combined most-recent assignment.
 | Page limits, cursor validation, boundary/display flags | [schedule.ts](../../../lib/sunday-meetings/schedule.ts) |
 | Calendar arithmetic and creation defaults | [calendar.ts](../../../lib/sunday-meetings/calendar.ts), [meeting-service.ts](../../../lib/sunday-meetings/meeting-service.ts) |
 | Schedule composition and responsive layouts | [sunday-schedule-view.tsx](../../../app/meetings/sunday/sunday-schedule-view.tsx), [table row](../../../app/meetings/sunday/sunday-schedule-table-row.tsx), [mobile card](../../../app/meetings/sunday/sunday-schedule-mobile-card.tsx) |
-| Shared editors and slot lookup | [people picker](../../../app/meetings/sunday/sunday-people-picker.tsx), [picker modal](../../../app/meetings/sunday/sunday-person-picker-dialog.tsx), [hymn editor](../../../app/meetings/sunday/sunday-inline-hymn-editor.tsx), [slots.ts](../../../lib/sunday-meetings/slots.ts) |
+| Shared editors and slot lookup | [people picker](../../../app/meetings/sunday/sunday-people-picker.tsx), [picker modal](../../../app/meetings/sunday/sunday-person-picker-dialog.tsx), [hymn editor](../../../app/meetings/sunday/sunday-hymn-picker.tsx), [slots.ts](../../../lib/sunday-meetings/slots.ts) |
 | History calculation | [history.ts](../../../lib/sunday-meetings/history.ts) |
 
 ## Verification
 
 `npm test` includes `schedule.test.mjs`, `history.test.mjs`, and `slots.test.mjs`.
 For UI changes check empty schedules, both paging boundaries, ward-local dates,
-Enter/Escape hymn editing, modal autofocus/dismissal, member/free-text Enter selection,
+Enter/Escape hymn selection, title completion, last-sung dates, musical-number creation, modal autofocus/dismissal, member/free-text Enter selection,
 chip removal, pending/error states, and horizontal/vertical layouts.
 `sunday-person-choices.test.mjs` checks member matching and non-member choices.

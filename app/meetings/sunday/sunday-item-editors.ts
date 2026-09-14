@@ -12,7 +12,6 @@ export const PERSON_EDITORS: Partial<
   talk: { title: "Speaker", history: "speaker" },
   sacrament_blessing: {},
   sacrament_passing: {},
-  musical_number: {},
   primary_presentation: {},
   calling_sustain: {},
   calling_release: {},
