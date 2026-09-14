@@ -11,6 +11,7 @@ import {
 } from "@/lib/sunday-meetings/agenda";
 import { SundayLeadingItemRow } from "./sunday-leading-item-row";
 import { SundayAddSpeaker } from "./sunday-add-speaker";
+import { AddAgendaItemDialog } from "./sunday-leading-add-item";
 import { SECTION_LABELS } from "./sunday-leading-labels";
 import type { SundayMutationRunner } from "./use-sunday-mutation";
 
@@ -38,7 +39,14 @@ export function SundayLeadingAgenda({
           className="flex flex-col gap-3"
           aria-label={SECTION_LABELS[section]}
         >
-          <h3 className="text-lg font-medium">{SECTION_LABELS[section]}</h3>
+          <div className="flex items-center justify-between gap-3">
+            <h3 className="text-lg font-medium">{SECTION_LABELS[section]}</h3>
+            <AddAgendaItemDialog
+              meeting={meeting}
+              section={section}
+              disabled={pending}
+            />
+          </div>
           <ol className="flex flex-col gap-2">
             {rows
               .filter((row) => row.item.section === section)

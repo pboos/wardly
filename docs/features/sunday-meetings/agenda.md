@@ -33,9 +33,31 @@ Read the [overview](README.md) first; schedule-specific editing is in [schedule]
   text editors; selecting a person no longer requires a source selector or topic field.
 - Agenda sections are `opening → business → sacrament → program → closing`.
   `participants` is header context and never appears in this flow.
-- Extra entries can be added with a type, section, and details. They append to the
-  section; the service also supports insertion after an item in that section.
+- Each of the five section headings has a right-aligned, accessible + control,
+  replacing the global add button. Its dialog fixes the destination section and
+  offers only permitted item types plus optional details. New entries append;
+  the service also supports insertion after an item in that section.
   “Add speaker” is a control outside the ordered list and appends a program talk.
+
+## Adding items by section
+
+The dialog and server share creation rules in
+[add-item-rules.ts](../../../lib/sunday-meetings/add-item-rules.ts).
+
+| Item type | Allowed sections when adding |
+| --- | --- |
+| Member welcome, naming and blessing a child, convert confirmation, ward business | Ward business |
+| Prayer | Opening, Closing |
+| Musical number | Opening, Program, Closing |
+| Hymn | Opening, Sacrament, Program, Closing |
+| Blessing or passing the sacrament | Sacrament |
+| Talk, primary presentation, custom program item, transition | Program |
+| Announcement | Opening |
+| Conductor text | All five agenda sections |
+
+These rules apply only to new extras. Existing items are preserved and extra
+items can still move to any agenda section, regardless of type. Participant
+controls, task suggestions, and standard-slot movement rules are unchanged.
 
 ## Standard entries and lifecycle
 
@@ -114,4 +136,6 @@ Read the [overview](README.md) first; schedule-specific editing is in [schedule]
 Regressions should exercise move → save → reload → displayed order, including
 empty standards, hidden wording, section boundaries, clearing/refilling slots,
 type changes, task links, carry-forward, and ward isolation. For UI changes also
-check pending controls, dialogs, and narrow-screen layout.
+check pending controls, dialogs, and narrow-screen layout. Persistence tests also
+cover every creation type/section combination and unrestricted extra-item moves,
+edits, and reloads.

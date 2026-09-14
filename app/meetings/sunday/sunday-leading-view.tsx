@@ -15,7 +15,6 @@ import { Button } from "@/components/ui/button";
 import { SUNDAY_MEETING_TYPE_LABELS } from "@/lib/sunday-meetings/types";
 import { nextSunday, previousSunday } from "@/lib/sunday-meetings/calendar";
 import type { loadLeadingSundayMeeting } from "@/lib/sunday-meetings/loaders";
-import { AddAgendaItemDialog } from "./sunday-leading-add-item";
 import {
   AssignmentHistoryCard,
   SuggestedTasksCard,
@@ -128,10 +127,7 @@ export function SundayLeadingView({ data }: { data: LeadingData }) {
           )}
 
           <section className="flex flex-col gap-3">
-            <div className="flex flex-wrap items-center justify-between gap-3">
-              <h2 className="text-lg font-medium">Agenda</h2>
-              <AddAgendaItemDialog meeting={meeting} />
-            </div>
+            <h2 className="text-lg font-medium">Agenda</h2>
             <SundayLeadingAgenda
               pending={pending}
               meeting={meeting}

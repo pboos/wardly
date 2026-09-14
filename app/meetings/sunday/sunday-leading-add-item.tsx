@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useId, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { IconPlus } from "@tabler/icons-react";
@@ -11,6 +11,7 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
+  DialogTrigger,
 } from "@/components/ui/dialog";
 import { Field, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { SundayHymnPicker } from "./sunday-hymn-picker";
@@ -28,21 +29,26 @@ import type {
   SundayMeetingItemType,
   SundayMeetingSection,
 } from "@/lib/sunday-meetings/types";
-import { AGENDA_SECTIONS } from "@/lib/sunday-meetings/agenda";
+import { addableAgendaItemTypes } from "@/lib/sunday-meetings/add-item-rules";
 import { addSundayAgendaItem } from "./actions";
-import {
-  ADDABLE_ITEM_TYPES,
-  ITEM_LABELS,
-  SECTION_LABELS,
-} from "./sunday-leading-labels";
+import { ITEM_LABELS, SECTION_LABELS } from "./sunday-leading-labels";
 
-/** Adds one explicit agenda item with type, section, and optional data. */
-export function AddAgendaItemDialog({ meeting }: { meeting: SundayMeeting }) {
+/** Adds an extra item to the section that opened the dialog. */
+export function AddAgendaItemDialog({
+  meeting,
+  section,
+  disabled = false,
+}: {
+  meeting: SundayMeeting;
+  section: Exclude<SundayMeetingSection, "participants">;
+  disabled?: boolean;
+}) {
+  const id = useId();
+  const itemTypes = addableAgendaItemTypes(section);
   const router = useRouter();
   const [pending, startTransition] = useTransition();
   const [open, setOpen] = useState(false);
-  const [type, setType] = useState<SundayMeetingItemType>("custom_program");
-  const [section, setSection] = useState<SundayMeetingSection>("program");
+  const [type, setType] = useState<SundayMeetingItemType>(itemTypes[0]);
   const [content, setContent] = useState("");
   const [hymnNumber, setHymnNumber] = useState("");
 
@@ -53,9 +59,10 @@ export function AddAgendaItemDialog({ meeting }: { meeting: SundayMeeting }) {
         await addSundayAgendaItem(meeting.id, {
           type,
           section,
-          content:
-            content.trim() ||
-            (type === "musical_number" ? "Musical number" : null),
+          content: supportsContent
+            ? content.trim() ||
+              (type === "musical_number" ? "Musical number" : null)
+            : null,
           // Only hymns carry a hymn number — never leak one entered while
           // an earlier type selection had the hymn field open.
           metadata:
@@ -84,115 +91,95 @@ export function AddAgendaItemDialog({ meeting }: { meeting: SundayMeeting }) {
   ].includes(type);
 
   return (
-    <>
-      <Button type="button" size="sm" onClick={() => setOpen(true)}>
-        <IconPlus data-icon="inline-start" />
-        Add agenda item
-      </Button>
-      <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="max-h-[calc(100svh-2rem)] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>Add agenda item</DialogTitle>
-          </DialogHeader>
-          <FieldGroup>
-            <Field>
-              <FieldLabel htmlFor="new-agenda-item-type">Item type</FieldLabel>
-              <Select
-                value={type}
-                onValueChange={(value) =>
-                  setType(value as SundayMeetingItemType)
-                }
-              >
-                <SelectTrigger id="new-agenda-item-type" className="w-full">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectGroup>
-                    {ADDABLE_ITEM_TYPES.map((value) => (
-                      <SelectItem key={value} value={value}>
-                        {ITEM_LABELS[value]}
-                      </SelectItem>
-                    ))}
-                  </SelectGroup>
-                </SelectContent>
-              </Select>
-            </Field>
-            <Field>
-              <FieldLabel htmlFor="new-agenda-item-section">Section</FieldLabel>
-              <Select
-                value={section}
-                onValueChange={(value) =>
-                  setSection(value as SundayMeetingSection)
-                }
-              >
-                <SelectTrigger id="new-agenda-item-section" className="w-full">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectGroup>
-                    {AGENDA_SECTIONS.map((value) => (
-                      <SelectItem key={value} value={value}>
-                        {SECTION_LABELS[value]}
-                      </SelectItem>
-                    ))}
-                  </SelectGroup>
-                </SelectContent>
-              </Select>
-            </Field>
-            {type === "hymn" && (
-              <Field>
-                <FieldLabel>Hymn number</FieldLabel>
-                <SundayHymnPicker
-                  item={
-                    hymnNumber
-                      ? {
-                          type: "hymn",
-                          metadata: { hymnNumber: Number(hymnNumber) },
-                          content: null,
-                          personNameResolved: null,
-                        }
-                      : null
-                  }
-                  allowMusicalNumber={false}
-                  onSave={async (input) => {
-                    setHymnNumber(input.metadata?.hymnNumber?.toString() ?? "");
-                  }}
-                />
-              </Field>
-            )}
-            {supportsContent && (
-              <Field>
-                <FieldLabel htmlFor="new-agenda-item-content">
-                  Details
-                </FieldLabel>
-                <Textarea
-                  id="new-agenda-item-content"
-                  rows={4}
-                  value={content}
-                  onChange={(event) => setContent(event.target.value)}
-                  placeholder={
-                    type === "musical_number"
-                      ? "Musical number details and performer names"
-                      : "Optional details"
-                  }
-                />
-              </Field>
-            )}
-          </FieldGroup>
-          <DialogFooter>
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => setOpen(false)}
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon"
+          className="shrink-0"
+          disabled={disabled || pending}
+          aria-label={`Add item to ${SECTION_LABELS[section]}`}
+        >
+          <IconPlus />
+        </Button>
+      </DialogTrigger>
+      <DialogContent className="max-h-[calc(100svh-2rem)] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle>Add item to {SECTION_LABELS[section]}</DialogTitle>
+        </DialogHeader>
+        <FieldGroup>
+          <Field>
+            <FieldLabel htmlFor={`${id}-type`}>Item type</FieldLabel>
+            <Select
+              value={type}
+              onValueChange={(value) => setType(value as SundayMeetingItemType)}
             >
-              Cancel
-            </Button>
-            <Button type="button" disabled={pending} onClick={save}>
-              Add item
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-    </>
+              <SelectTrigger id={`${id}-type`} className="w-full">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectGroup>
+                  {itemTypes.map((value) => (
+                    <SelectItem key={value} value={value}>
+                      {ITEM_LABELS[value]}
+                    </SelectItem>
+                  ))}
+                </SelectGroup>
+              </SelectContent>
+            </Select>
+          </Field>
+          {type === "hymn" && (
+            <Field>
+              <FieldLabel>Hymn number</FieldLabel>
+              <SundayHymnPicker
+                item={
+                  hymnNumber
+                    ? {
+                        type: "hymn",
+                        metadata: { hymnNumber: Number(hymnNumber) },
+                        content: null,
+                        personNameResolved: null,
+                      }
+                    : null
+                }
+                allowMusicalNumber={false}
+                onSave={async (input) => {
+                  setHymnNumber(input.metadata?.hymnNumber?.toString() ?? "");
+                }}
+              />
+            </Field>
+          )}
+          {supportsContent && (
+            <Field>
+              <FieldLabel htmlFor={`${id}-content`}>Details</FieldLabel>
+              <Textarea
+                id={`${id}-content`}
+                rows={4}
+                value={content}
+                onChange={(event) => setContent(event.target.value)}
+                placeholder={
+                  type === "musical_number"
+                    ? "Musical number details and performer names"
+                    : "Optional details"
+                }
+              />
+            </Field>
+          )}
+        </FieldGroup>
+        <DialogFooter>
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => setOpen(false)}
+          >
+            Cancel
+          </Button>
+          <Button type="button" disabled={pending} onClick={save}>
+            Add item
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }

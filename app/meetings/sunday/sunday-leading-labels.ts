@@ -1,6 +1,4 @@
 import {
-  SUNDAY_MEETING_ITEM_TYPES,
-  SUNDAY_MEETING_TASK_ITEM_TYPES,
   type SundayMeetingItemType,
   type SundayMeetingSection,
   type SundayPersonInput,
@@ -57,23 +55,6 @@ export const SLOT_LABELS: Record<SundayStandardSlot, string> = {
   closing_hymn: "Closing Hymn",
   closing_prayer: "Closing Prayer",
 };
-
-/** Participant item types are meeting context, never agenda rows. */
-const PARTICIPANT_ITEM_TYPES = [
-  "leader",
-  "organist",
-  "music_conductor",
-  "visitor",
-  "presiding",
-] as const satisfies readonly SundayMeetingItemType[];
-
-/** Item types the add-item dialog offers (no task or participant rows). */
-export const ADDABLE_ITEM_TYPES: readonly SundayMeetingItemType[] =
-  SUNDAY_MEETING_ITEM_TYPES.filter(
-    (type) =>
-      !SUNDAY_MEETING_TASK_ITEM_TYPES.includes(type as never) &&
-      !PARTICIPANT_ITEM_TYPES.includes(type as never),
-  );
 
 /** True when the person input carries an actual member or free-text name. */
 export function hasSundayPerson(person: SundayPersonInput): boolean {

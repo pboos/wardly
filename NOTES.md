@@ -9,12 +9,25 @@ Implement the following feature or change on a feature.
 Do not assume something but ask for clarying questions if something is unclear. Give recommendation.
 Propose plan on the feature and implementation (concise).
 Present plan before implementation.
+For db changes no need to create a new migration. Update the one existing one and then delete db and recreate it.
 
 meetings
-- details screen cards smaller, position movement right top
-  - hymn (emoji in front for hymn)
-  - prayer should be one line (maybe with emoji in front)
-- tasks adding in (and already have them listed when planning the sunday meeting)
+- items to add only on specific block
+  - new member, naming and blessing a child -> ward business
+  - prayer -> opening or closing
+  - musical number -> opening, program, closing
+  - blessing / passing the sacrament -> sacrament only
+  - talk, primary presentation -> program only
+  - announcement -> opening only
+  - ward business -> ward business only
+  - Custom program item -> program only
+  - transition -> program only
+- Next to each block (Opening / Ward business / Sacrament) have on the right a + to add an item to that section (with only those possible to add in that section)
+
+
+- ward business - add tasks (and already have them listed when planning the sunday meeting)
+  - it should in ward business list all those that are in the state to have them in sacrament meeting (state is marked in db as such). these are possible ones, but not yet selected for this sacrament meeting (so they can be hidden, or are gray, ... -> suggest best way to have them here)
+  - one or multiple ones of them can be chose to be done in the ward business. Each should show as single item. It uses the right item to link it to the task. Confirm with me how this will look like in db as well as in the UI
 
 ---- MERGE IT HERE to main
 
@@ -27,6 +40,14 @@ tasks
 - remove header bar and add a + that will allow easy adding (also allow keyboard shortcut on that page to trigger same as button)
   - that opens modal focused on interview type, allow to type which one, enter. then jump to next field to enter it. enter to go to next. last field enter will add the task.
 - symbol for each task type so it is easy to recognize
+- on sunday send to each person that has tasks assigned an overview of tasks in the morning 1h before sacrament meeting starts
+  - on ward we need
+    - timezone (e.g. Europe/Berlin, Europe/Zurich, America/Denver)
+    - meetings start
+  - have that in setup screen chosen (prefill with the one the system is on of the user)
+    - dropdown with all possible ones?
+  - on email send all tasks assigned to them
+    - way to open the page that lists their tasks
 
 ## Transcripts
 

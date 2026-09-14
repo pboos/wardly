@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import { canAddAgendaItem } from "./add-item-rules.ts";
 import {
   isLocalMeetingType,
   isSundayMeetingItemType,
@@ -75,6 +76,8 @@ async function createItem(
   ].includes(input.type);
   if (participant !== (input.section === "participants"))
     fail("Participant roles belong in the participants section.");
+  if (!participant && !canAddAgendaItem(input.type, input.section))
+    fail("This item type cannot be added to the selected section.");
   const meeting = await requireMeeting(tx, wardId, meetingId);
   if (!isLocalMeetingType(asMeetingType(meeting.type)))
     fail("Conference meetings do not have a local agenda.");
