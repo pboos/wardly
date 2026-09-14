@@ -11,23 +11,8 @@ Propose plan on the feature and implementation (concise).
 Present plan before implementation.
 For db changes no need to create a new migration. Update the one existing one and then delete db and recreate it.
 
-meetings
-- items to add only on specific block
-  - new member, naming and blessing a child -> ward business
-  - prayer -> opening or closing
-  - musical number -> opening, program, closing
-  - blessing / passing the sacrament -> sacrament only
-  - talk, primary presentation -> program only
-  - announcement -> opening only
-  - ward business -> ward business only
-  - Custom program item -> program only
-  - transition -> program only
-- Next to each block (Opening / Ward business / Sacrament) have on the right a + to add an item to that section (with only those possible to add in that section)
-
-
-- ward business - add tasks (and already have them listed when planning the sunday meeting)
-  - it should in ward business list all those that are in the state to have them in sacrament meeting (state is marked in db as such). these are possible ones, but not yet selected for this sacrament meeting (so they can be hidden, or are gray, ... -> suggest best way to have them here)
-  - one or multiple ones of them can be chose to be done in the ward business. Each should show as single item. It uses the right item to link it to the task. Confirm with me how this will look like in db as well as in the UI
+meeting
+- blessing/passing the sacrament - add details not needed (remove)
 
 ---- MERGE IT HERE to main
 
@@ -48,6 +33,12 @@ tasks
     - dropdown with all possible ones?
   - on email send all tasks assigned to them
     - way to open the page that lists their tasks
+
+- better display in sunday meeting details
+
+member list
+- filters (age range, birth year range - for ap/jd, gender)
+  - quick filters like FHV, AeK, JM, JD, Youth, PV, ...
 
 ## Transcripts
 
