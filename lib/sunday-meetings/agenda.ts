@@ -1,3 +1,4 @@
+import { groupSacramentItems } from "./sacrament.ts";
 import {
   isLocalMeetingType,
   type SundayMeeting,
@@ -18,14 +19,15 @@ export const AGENDA_SECTIONS = [
   "closing",
 ] as const;
 export type { SundayAgendaMove } from "./order.ts";
-export type SundayAgendaRow =
+export type SundayAgendaRow = { people: SundayMeetingItem[] } & (
   | {
       kind: "slot";
       slot: SundayStandardSlot;
       section: SundayMeetingItem["section"];
       item: SundayMeetingItem;
     }
-  | { kind: "item"; item: SundayMeetingItem };
+  | { kind: "item"; item: SundayMeetingItem }
+);
 
 export function agendaRowItem(row: SundayAgendaRow): SundayMeetingItem {
   return row.item;
@@ -40,17 +42,23 @@ export function buildAgendaRows(
   showSupportText = true,
 ): SundayAgendaRow[] {
   if (!isLocalMeetingType(meeting.type)) return [];
-  return sortSundayItems(meeting.items)
-    .filter(
+  return groupSacramentItems(
+    sortSundayItems(meeting.items).filter(
       (item) =>
         item.section !== "participants" &&
         (showSupportText || item.type !== "conductor_text"),
-    )
-    .map((item) =>
-      item.slot
-        ? { kind: "slot", slot: item.slot, section: item.section, item }
-        : { kind: "item", item },
-    );
+    ),
+  ).map(([item, ...others]) =>
+    item.slot
+      ? {
+          kind: "slot",
+          slot: item.slot,
+          section: item.section,
+          item,
+          people: [item, ...others],
+        }
+      : { kind: "item", item, people: [item, ...others] },
+  );
 }
 
 export function agendaMoveTarget(

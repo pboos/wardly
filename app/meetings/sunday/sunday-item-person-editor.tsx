@@ -4,29 +4,44 @@ import type {
   SundayMeetingMemberHistory,
 } from "@/lib/sunday-meetings/types";
 import { SundayPeoplePicker } from "./sunday-people-picker";
-import { updateSundayAgendaItem } from "./actions";
+import { isSacramentRole } from "@/lib/sunday-meetings/sacrament";
+import { addSundaySacramentPerson, updateSundayAgendaItem } from "./actions";
 import { PERSON_EDITORS, personTitle } from "./sunday-item-editors";
 
 export function SundayItemPersonEditor({
   item,
   members,
   compact = false,
+  people = [item],
 }: {
   item: SundayMeetingItem;
+  people?: SundayMeetingItem[];
   compact?: boolean;
   members: SundayMeetingMemberHistory[];
 }) {
   return (
     <SundayPeoplePicker
-      items={[item]}
+      items={people}
       compact={compact}
       layout="vertical"
-      maxPeople={1}
+      maxPeople={
+        item.type === "sacrament_blessing"
+          ? 2
+          : item.type === "sacrament_passing"
+            ? undefined
+            : 1
+      }
       members={members}
       label={personTitle(item.type)}
       roleWithHistory={PERSON_EDITORS[item.type]?.history ?? null}
-      onAdd={(person) => updateSundayAgendaItem(item.id, { person })}
-      onRemove={() => updateSundayAgendaItem(item.id, { person: null })}
+      onAdd={(person) =>
+        isSacramentRole(item.type)
+          ? addSundaySacramentPerson(item.id, person)
+          : updateSundayAgendaItem(item.id, { person })
+      }
+      onRemove={(personItem) =>
+        updateSundayAgendaItem(personItem.id, { person: null })
+      }
     />
   );
 }

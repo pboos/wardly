@@ -1,3 +1,4 @@
+import { groupSacramentItems } from "./sacrament.ts";
 import type {
   SundayItemMetadata,
   SundayMeetingItemType,
@@ -76,12 +77,13 @@ function movementGroups<T extends OrderedItem>(
   items: T[],
   showSupportText: boolean,
 ): T[][] {
-  if (showSupportText) return items.map((item) => [item]);
+  const roleGroups = groupSacramentItems(items);
+  if (showSupportText) return roleGroups;
   const groups: T[][] = [];
   let pending: T[] = [];
-  for (const item of items) {
-    pending.push(item);
-    if (item.type !== "conductor_text") {
+  for (const group of roleGroups) {
+    pending.push(...group);
+    if (group[0].type !== "conductor_text") {
       groups.push(pending);
       pending = [];
     }

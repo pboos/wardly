@@ -23,6 +23,7 @@ import type { SundayMutationRunner } from "./use-sunday-mutation";
 
 export function SundayLeadingItemRow({
   item,
+  people,
   members,
   showSupportText,
   supportText,
@@ -32,6 +33,7 @@ export function SundayLeadingItemRow({
   run,
 }: {
   item: SundayMeetingItem;
+  people?: SundayMeetingItem[];
   members: SundayMeetingMemberHistory[];
   showSupportText: boolean;
   supportText: SundayMeetingSupportText[];
@@ -119,7 +121,12 @@ export function SundayLeadingItemRow({
             <div className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1">
               {title}
               {PERSON_EDITORS[item.type] && (
-                <SundayItemPersonEditor item={item} members={members} compact />
+                <SundayItemPersonEditor
+                  item={item}
+                  people={people}
+                  members={members}
+                  compact
+                />
               )}
               <SundayItemContentEditor item={item} inline />
             </div>

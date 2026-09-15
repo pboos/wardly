@@ -54,10 +54,11 @@ export function SundayLeadingAgenda({
           <ol className="flex flex-col gap-2">
             {rows
               .filter((row) => row.item.section === section)
-              .map(({ item }) => (
+              .map(({ item, people }) => (
                 <SundayLeadingItemRow
                   key={item.id}
                   item={item}
+                  people={people}
                   members={members}
                   showSupportText={showSupportText}
                   supportText={supportText.filter(

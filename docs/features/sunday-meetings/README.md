@@ -24,7 +24,8 @@ lookup for English and German in the shared schedule/details hymn picker.
   A task link is unique across all Sundays; choosing it elsewhere moves that item.
   Standard slots are persisted even when empty; identity is independent of order.
 - A person is either a member of the same ward or a free-text name, never both.
-  Multiple people use multiple rows. Leader and presiding roles are each unique
+  Multiple people use multiple database rows; sacrament assignments combine into
+  one displayed row per role and section. Leader and presiding roles are each unique
   per meeting; these and other participant roles live outside the agenda flow.
 - New local meetings receive standard entries from their type's template.
   Existing meetings retain their type and contents when loaded again.

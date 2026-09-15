@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { getCurrentUser } from "@/lib/auth/dal";
 import {
   addSundayItem,
+  addSacramentPerson,
   bootstrapSundayMeeting,
   carryForwardItem,
   changeMeetingType,
@@ -26,7 +27,10 @@ import {
   addSuggestedTaskToMeeting,
   addSuggestedTasksToMeeting,
 } from "@/lib/sunday-meetings/tasks";
-import type { SundayMeetingType } from "@/lib/sunday-meetings/types";
+import type {
+  SundayPersonInput,
+  SundayMeetingType,
+} from "@/lib/sunday-meetings/types";
 
 function revalidateSundayMeetingRoutes(): void {
   revalidatePath("/meetings/sunday");
@@ -201,5 +205,15 @@ export async function addSundayMeetingAfterLatest() {
 export async function bootstrapSundaySchedule() {
   const user = await getCurrentUser();
   await bootstrapSundayMeeting(user.ward_id);
+  revalidateSundayMeetingRoutes();
+}
+
+export async function addSundaySacramentPerson(
+  itemId: string,
+  person: SundayPersonInput,
+) {
+  assertOptionalPerson(person);
+  const user = await getCurrentUser();
+  await addSacramentPerson(user.ward_id, itemId, person);
   revalidateSundayMeetingRoutes();
 }

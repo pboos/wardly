@@ -1,3 +1,4 @@
+import { assertSacramentCapacity } from "./sacrament-rules.ts";
 import { prisma } from "@/lib/prisma";
 import {
   isLocalMeetingType,
@@ -102,6 +103,13 @@ export async function updateSundayItemInTransaction(
   if (person.memberId && person.memberId !== item.person_member_id) {
     await requirePersonMember(tx, wardId, person.memberId);
   }
+  await assertSacramentCapacity(
+    tx,
+    item.sunday_meeting_id,
+    targetType,
+    person,
+    itemId,
+  );
   assertHymnNumber(metadata);
   assertTransitionEmpty(targetType, content, metadataRaw, person);
 

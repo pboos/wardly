@@ -23,6 +23,14 @@ Read the [overview](README.md) first; schedule-specific editing is in [schedule]
   clickable text; empty topics show an add prompt. Sacrament blessing/passing
   offer person assignments only, with no details field when adding or editing;
   previously saved details remain stored but are not displayed.
+- Sacrament blessing and passing combine records of the same type within each
+  section into one row anchored at the standard slot (or first extra record).
+  Each person has a separate database record. The + picker reuses an empty record
+  before creating another. Blessing allows at most two assigned people per meeting,
+  enforced on both client and server; passing has no person limit. Names stack on
+  narrow screens and each has its own removal control. Removing a person clears
+  a standard record or deletes an empty extra; the + returns when capacity allows.
+  Reorder arrows move all records in the group together.
 - Convert confirmations, member welcomes, and child blessings also use compact
   title-and-name rows, with the same member/free-text picker as talks and prayers.
   They no longer offer details fields when adding or editing; previously saved
@@ -146,6 +154,7 @@ controls, task suggestions, and standard-slot movement rules are unchanged.
 | Responsibility | Entry point |
 | --- | --- |
 | Leading view, sections, row actions | [leading view](../../../app/meetings/sunday/sunday-leading-view.tsx), [agenda component](../../../app/meetings/sunday/sunday-leading-agenda.tsx), [item actions](../../../app/meetings/sunday/sunday-item-actions.tsx) |
+| Sacrament grouping and capacity | [grouping](../../../lib/sunday-meetings/sacrament.ts), [capacity](../../../lib/sunday-meetings/sacrament-rules.ts), [person picker](../../../app/meetings/sunday/sunday-item-person-editor.tsx) |
 | Shared ordering and rendered rows | [order.ts](../../../lib/sunday-meetings/order.ts), [agenda.ts](../../../lib/sunday-meetings/agenda.ts), [order-service.ts](../../../lib/sunday-meetings/order-service.ts) |
 | Templates, reconciliation, stable lookup | [templates.ts](../../../lib/sunday-meetings/templates.ts), [standard-items-service.ts](../../../lib/sunday-meetings/standard-items-service.ts), [slots.ts](../../../lib/sunday-meetings/slots.ts) |
 | Create/update/delete and type changes | [item-service.ts](../../../lib/sunday-meetings/item-service.ts), [item-update-service.ts](../../../lib/sunday-meetings/item-update-service.ts), [meeting-service.ts](../../../lib/sunday-meetings/meeting-service.ts) |
@@ -164,3 +173,6 @@ edits, and reloads.
 Task-selection persistence checks cover batch rollback, cross-Sunday moves, task
 identity/details, state mapping overrides, database uniqueness, ward isolation,
 removal/reselection, and carry-forward.
+
+Sacrament persistence checks cover grouped reloads, two-person blessing limits,
+13 passing assignments, ward isolation, group reordering, removal, and refilling.

@@ -1,3 +1,5 @@
+import { assertSacramentCapacity } from "./sacrament-rules.ts";
+import { isSacramentRole } from "./sacrament.ts";
 import { prisma } from "@/lib/prisma";
 import { canAddAgendaItem } from "./add-item-rules.ts";
 import {
@@ -23,6 +25,7 @@ import {
 } from "./templates.ts";
 import {
   asMeetingType,
+  asSection,
   assertHymnNumber,
   assertNoAdjacentConductorText,
   assertSinglePersonItemType,
@@ -30,6 +33,7 @@ import {
   fail,
   MAX_ITEM_TEXT_LENGTH,
   requireMeeting,
+  requireItem,
   requirePersonMember,
   resolvePersonInput,
   serializeMetadata,
@@ -59,6 +63,7 @@ async function createItem(
   wardId: string,
   meetingId: string,
   input: AddSundayItemInput,
+  existingRoleSection = false,
 ) {
   if (
     !isSundayMeetingItemType(input.type) ||
@@ -76,7 +81,11 @@ async function createItem(
   ].includes(input.type);
   if (participant !== (input.section === "participants"))
     fail("Participant roles belong in the participants section.");
-  if (!participant && !canAddAgendaItem(input.type, input.section))
+  if (
+    !participant &&
+    !existingRoleSection &&
+    !canAddAgendaItem(input.type, input.section)
+  )
     fail("This item type cannot be added to the selected section.");
   const meeting = await requireMeeting(tx, wardId, meetingId);
   if (!isLocalMeetingType(asMeetingType(meeting.type)))
@@ -93,6 +102,7 @@ async function createItem(
   if (person.memberId) await requirePersonMember(tx, wardId, person.memberId);
   if (input.type === "leader" || input.type === "presiding")
     await assertSinglePersonItemType(tx, meetingId, input.type);
+  await assertSacramentCapacity(tx, meetingId, input.type, person);
   const items = await meetingSortableItems(tx, meetingId);
   const section = sortSundayItems(
     items.filter((item) => item.section === input.section),
@@ -194,5 +204,47 @@ export async function upsertSundayItem(
     )
       return;
     await createItem(tx, wardId, meetingId, input);
+  });
+}
+
+/** Reuse an empty role record before creating another person record. */
+export async function addSacramentPerson(
+  wardId: string,
+  itemId: string,
+  person: SundayPersonInput,
+): Promise<void> {
+  await prisma.$transaction(async (tx) => {
+    const anchor = await requireItem(tx, wardId, itemId);
+    if (!isSundayMeetingItemType(anchor.type) || !isSacramentRole(anchor.type))
+      fail("Select a sacrament assignment.");
+    const resolved = resolvePersonInput(person);
+    if (!resolved.memberId && !resolved.personName) fail("Select a person.");
+    const peers = await tx.sunday_meeting_item.findMany({
+      where: {
+        sunday_meeting_id: anchor.sunday_meeting_id,
+        type: anchor.type,
+        section: anchor.section,
+      },
+      orderBy: { order_index: "asc" },
+    });
+    const empty = peers.find(
+      (item) => !item.person_member_id && !item.person_name,
+    );
+    if (empty) {
+      await updateSundayItemInTransaction(tx, wardId, empty.id, { person });
+    } else {
+      await createItem(
+        tx,
+        wardId,
+        anchor.sunday_meeting_id,
+        {
+          type: anchor.type,
+          section: asSection(anchor.section),
+          person,
+          afterItemId: peers.at(-1)?.id ?? anchor.id,
+        },
+        true,
+      );
+    }
   });
 }
