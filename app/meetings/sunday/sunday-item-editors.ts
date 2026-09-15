@@ -32,6 +32,8 @@ export function contentLabel(type: SundayMeetingItemType): string | null {
   if (
     [
       "prayer",
+      "sacrament_blessing",
+      "sacrament_passing",
       "hymn",
       "transition",
       "convert_confirmation",

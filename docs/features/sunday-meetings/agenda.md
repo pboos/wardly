@@ -19,8 +19,10 @@ Read the [overview](README.md) first; schedule-specific editing is in [schedule]
   keep section movement and deletion in the adjacent “More agenda item actions” menu.
   Hymns (🎵), musical numbers (🎶), prayers (🙏), talks (🎤), and sacrament
   blessing/passing use a single inline row; long content wraps on narrow screens.
-  Person assignments use an accessible + control when empty. Talk topics and
-  sacrament details are clickable text; empty text shows an add prompt.
+  Person assignments use an accessible + control when empty. Talk topics are
+  clickable text; empty topics show an add prompt. Sacrament blessing/passing
+  offer person assignments only, with no details field when adding or editing;
+  previously saved details remain stored but are not displayed.
 - Convert confirmations, member welcomes, and child blessings also use compact
   title-and-name rows, with the same member/free-text picker as talks and prayers.
   They no longer offer details fields when adding or editing; previously saved
