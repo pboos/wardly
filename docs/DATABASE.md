@@ -53,6 +53,13 @@ cp .env.example .env
 | `db:generate` | `prisma generate` | Regenerate the Prisma Client (e.g. after pulling). |
 | `db:studio` | `prisma studio` | Open Prisma Studio to inspect/edit data visually. |
 | `db:reset` | `prisma migrate reset` | Drop and re-apply all migrations (destroys data). |
+| `demo:seed` | `node --experimental-strip-types scripts/demo.mjs seed` | Prepare `.local-demo/demo.db` and seed fictional data only if empty. |
+| `demo:reset` | `node --experimental-strip-types scripts/demo.mjs reset` | Recreate only the isolated demo database and restore fixtures. |
+
+`dev:demo` prepares this isolated database before starting the development server.
+It overrides the configured database URL; normal startup does not seed data.
+See [local development](features/local-development/README.md) for accounts,
+commands, persistence, and the development-only login option.
 
 ---
 

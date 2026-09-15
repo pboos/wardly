@@ -2,6 +2,21 @@ This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-
 
 ## Getting Started
 
+### Local demo (no email setup)
+
+```bash
+npm run dev:demo
+```
+
+Open [http://127.0.0.1:3000](http://127.0.0.1:3000), log in with
+`demo@example.test`, then enter code **123456**. This prepares a separate local
+database with German demo content and the `Europe/Zurich` timezone. Your edits
+persist across restarts. Stop the server and run `npm run demo:reset` to start over.
+Normal server startup never adds demo data.
+
+For other demo users, automation, and email-free login with your own local data,
+see [local development](docs/features/local-development/README.md).
+
 ### Environment variables
 - Copy `.env.example` to `.env` and fill in the values. `.env.example` is committed to git; all other `.env*` files are gitignored and must **never** be committed.
 - `.env` holds secrets such as `DATABASE_URL`, JWT signing keys, email-sending credentials, and any other runtime configuration.

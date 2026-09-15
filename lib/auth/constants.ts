@@ -11,6 +11,7 @@ export const CLAIM_WARD_ID = `${CLAIM_NAMESPACE}/ward_id`;
 // --- Login row (magic link / code) lifetime ---
 export const LOGIN_TTL_MS = 5 * 60 * 1000; // 5 minutes
 export const MAX_LOGIN_ATTEMPTS = 3;
+export const LOCAL_LOGIN_CODE = "123456";
 
 // --- JWT session lifetime + refresh window ---
 export const JWT_LIFETIME = "4h"; // jose setExpirationTime string

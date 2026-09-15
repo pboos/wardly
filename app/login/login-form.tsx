@@ -18,7 +18,13 @@ import {
 import { Input } from "@/components/ui/input";
 import { requestLogin, verifyCode, type LoginState } from "./actions";
 
-export function LoginForm({ redirect }: { redirect: string }) {
+export function LoginForm({
+  redirect,
+  localCode,
+}: {
+  redirect: string;
+  localCode?: string;
+}) {
   const [state, dispatch, pending] = useActionState<LoginState, FormData>(
     async (prev, fd) => {
       // Route to the right action based on current state.
@@ -36,9 +42,11 @@ export function LoginForm({ redirect }: { redirect: string }) {
       <CardHeader>
         <CardTitle className="text-2xl">Log in</CardTitle>
         <CardDescription>
-          {showCode
-            ? "Enter the code we sent to your email."
-            : "Enter your email to receive a login code."}
+          {localCode
+            ? `Local development: use code ${localCode}. No email is sent.`
+            : showCode
+              ? "Enter the code we sent to your email."
+              : "Enter your email to receive a login code."}
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -64,8 +72,9 @@ export function LoginForm({ redirect }: { redirect: string }) {
             {showCode && (
               <>
                 <p className="text-sm text-muted-foreground">
-                  We sent a 6-character code to {state.email}. Enter it below
-                  or click the link in the email.
+                  {localCode
+                    ? `Enter ${localCode} to log in as ${state.email}.`
+                    : `We sent a 6-character code to ${state.email}. Enter it below or click the link in the email.`}
                 </p>
                 <input type="hidden" name="email" value={state.email} />
                 <Field data-invalid={!!errorMessage}>
@@ -78,7 +87,7 @@ export function LoginForm({ redirect }: { redirect: string }) {
                     maxLength={6}
                     inputMode="text"
                     autoComplete="one-time-code"
-                    placeholder="ABC123"
+                    placeholder={localCode ?? "ABC123"}
                     className="text-center tracking-[0.5em] uppercase"
                     aria-invalid={!!errorMessage}
                   />

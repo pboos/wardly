@@ -8,6 +8,7 @@ links identify where to verify details or make changes.
 | --- | --- | --- |
 | Sunday meetings | [Overview](sunday-meetings/README.md) | [Schedule, dates, assignments](sunday-meetings/schedule.md) · [Agenda, ordering, tasks](sunday-meetings/agenda.md) |
 | Hymns and ward language | [Overview](hymns/README.md) | Catalog loading, setup language, refreshing hymns, adding languages |
+| Local development | [Overview](local-development/README.md) | Demo database, fictional fixtures, email-free login, reset and automation |
 
 ## Structure and maintenance
 

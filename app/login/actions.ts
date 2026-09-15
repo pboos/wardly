@@ -3,11 +3,19 @@
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { sanitizeRedirect, verifyRouteTarget } from "@/lib/auth/redirect";
-import { generateToken, generateCode, isExpired, sha256, hashCode, verifyHashCode } from "@/lib/auth/tokens";
+import {
+  generateToken,
+  generateCode,
+  isExpired,
+  sha256,
+  hashCode,
+  verifyHashCode,
+} from "@/lib/auth/tokens";
 import { sendLoginEmail } from "@/lib/email";
 import { createSession } from "@/lib/auth/session";
 import { deleteExpiredLogins } from "@/lib/auth/cleanup";
-import { MAX_LOGIN_ATTEMPTS } from "@/lib/auth/constants";
+import { LOCAL_LOGIN_CODE, MAX_LOGIN_ATTEMPTS } from "@/lib/auth/constants";
+import { localAuthBypassEnabled } from "@/lib/auth/local-development";
 
 export type LoginState =
   | { status: "idle" }
@@ -19,7 +27,10 @@ export async function requestLogin(
   state: LoginState,
   formData: FormData,
 ): Promise<LoginState> {
-  const email = String(formData.get("email") ?? "").trim().toLowerCase();
+  const localLogin = localAuthBypassEnabled();
+  const email = String(formData.get("email") ?? "")
+    .trim()
+    .toLowerCase();
   const redirect = sanitizeRedirect(String(formData.get("redirect") ?? ""));
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
     return { status: "error", message: "Please enter a valid email address." };
@@ -31,16 +42,29 @@ export async function requestLogin(
 
   if (user) {
     const token = generateToken();
-    const code = generateCode();
+    const code = localLogin ? LOCAL_LOGIN_CODE : generateCode();
     const codeHash = await hashCode(code, user.id);
     // upsert because login PK is user_id (one active login per user)
     await prisma.login.upsert({
       where: { user_id: user.id },
-      create: { user_id: user.id, token_hash: sha256(token), code_hash: codeHash, redirect_path: redirect },
-      update: { token_hash: sha256(token), code_hash: codeHash, attempts: 0, created_at: new Date(), redirect_path: redirect },
+      create: {
+        user_id: user.id,
+        token_hash: sha256(token),
+        code_hash: codeHash,
+        redirect_path: redirect,
+      },
+      update: {
+        token_hash: sha256(token),
+        code_hash: codeHash,
+        attempts: 0,
+        created_at: new Date(),
+        redirect_path: redirect,
+      },
     });
     try {
-      await sendLoginEmail({ to: user.email, name: user.name, token, code });
+      if (!localLogin) {
+        await sendLoginEmail({ to: user.email, name: user.name, token, code });
+      }
     } catch {
       // Log server-side; still tell the user "email sent" to avoid leaking.
     }
@@ -55,8 +79,13 @@ export async function verifyCode(
   state: LoginState,
   formData: FormData,
 ): Promise<LoginState> {
-  const email = String(formData.get("email") ?? "").trim().toLowerCase();
-  const code = String(formData.get("code") ?? "").trim().toUpperCase();
+  const localLogin = localAuthBypassEnabled();
+  const email = String(formData.get("email") ?? "")
+    .trim()
+    .toLowerCase();
+  const code = String(formData.get("code") ?? "")
+    .trim()
+    .toUpperCase();
   if (!email || !code) {
     return { status: "error", message: "Please enter the code." };
   }
@@ -77,7 +106,10 @@ export async function verifyCode(
     };
   }
 
-  if (!await verifyHashCode(login.code_hash, code, user.id)) {
+  if (
+    (!localLogin && code === LOCAL_LOGIN_CODE) ||
+    !(await verifyHashCode(login.code_hash, code, user.id))
+  ) {
     await prisma.login.update({
       where: { user_id: user.id },
       data: { attempts: { increment: 1 } },
