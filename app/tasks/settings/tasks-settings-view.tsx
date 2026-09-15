@@ -1,14 +1,12 @@
 "use client";
-
-import { useMemo, useState, useTransition } from "react";
-import { useRouter } from "next/navigation";
-import { toast } from "sonner";
-import { Button } from "@/components/ui/button";
-import { Combobox } from "@/components/ui/combobox";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import type { TaskType, WardUser } from "@/lib/tasks/types";
+import { useRouter } from "next/navigation";
+import { useMemo, useTransition } from "react";
+import { toast } from "sonner";
+import { TaskTypeIcon } from "../task-type-icon";
 import { updateStateAssignee, updateTaskType } from "./actions";
+import { StatesCard } from "./states-card";
+import { TaskTypeEditorRow } from "./task-type-editor-row";
 
 export function TasksSettingsView({
   users,
@@ -20,10 +18,15 @@ export function TasksSettingsView({
   const router = useRouter();
   const [, start] = useTransition();
 
-  const userItems = useMemo(() => users.map((u) => ({ value: u.id, label: u.name })), [users]);
+  const userItems = useMemo(
+    () => users.map((u) => ({ value: u.id, label: u.name })),
+    [users],
+  );
 
   const dbTypes = taskTypes.filter((taskType) => taskType.source !== "default");
-  const defaultTypes = taskTypes.filter((taskType) => taskType.source === "default");
+  const defaultTypes = taskTypes.filter(
+    (taskType) => taskType.source === "default",
+  );
 
   function run(fn: () => Promise<void>, okMsg: string) {
     start(async () => {
@@ -75,7 +78,10 @@ export function TasksSettingsView({
                   key={t.type}
                   className="flex items-center justify-between gap-3 text-sm text-muted-foreground"
                 >
-                  <span>{t.name}</span>
+                  <span className="flex items-center gap-2">
+                    <TaskTypeIcon type={t.type} />
+                    {t.name}
+                  </span>
                   <span>Automatic</span>
                 </li>
               ))}
@@ -98,105 +104,16 @@ export function TasksSettingsView({
                 typeDef={t}
                 userItems={userItems}
                 onSave={(taskType, state, userId) =>
-                  run(() => updateStateAssignee(taskType, state, userId), "State updated.")
+                  run(
+                    () => updateStateAssignee(taskType, state, userId),
+                    "State updated.",
+                  )
                 }
               />
             ))}
           </div>
         )}
       </section>
-    </div>
-  );
-}
-
-function TaskTypeEditorRow({
-  type,
-  name,
-  durationMinutes,
-  onSave,
-}: {
-  type: string;
-  name: string;
-  durationMinutes?: number;
-  onSave: (name: string, durationMinutes: number) => void;
-}) {
-  const [localName, setLocalName] = useState(name);
-  const [localDuration, setLocalDuration] = useState(
-    durationMinutes !== undefined ? String(durationMinutes) : "",
-  );
-  const dirty =
-    localName.trim() !== name ||
-    (localDuration === "" ? undefined : Number(localDuration)) !== durationMinutes;
-
-  return (
-    <li className="flex flex-col gap-2 sm:flex-row sm:items-end">
-      <div className="flex flex-col gap-1.5 sm:flex-1">
-        <Label htmlFor={`name-${type}`}>Name</Label>
-        <Input
-          id={`name-${type}`}
-          value={localName}
-          onChange={(e) => setLocalName(e.target.value)}
-        />
-      </div>
-      <div className="flex flex-col gap-1.5 sm:w-32">
-        <Label htmlFor={`duration-${type}`}>Duration (min)</Label>
-        <Input
-          id={`duration-${type}`}
-          type="number"
-          inputMode="numeric"
-          min={0}
-          value={localDuration}
-          onChange={(e) => setLocalDuration(e.target.value)}
-        />
-      </div>
-      <Button
-        disabled={!dirty}
-        onClick={() =>
-          onSave(localName.trim() || name, localDuration === "" ? 0 : Number(localDuration))
-        }
-      >
-        Save
-      </Button>
-    </li>
-  );
-}
-
-function StatesCard({
-  typeDef,
-  userItems,
-  onSave,
-}: {
-  typeDef: TaskType;
-  userItems: { value: string; label: string }[];
-  onSave: (taskType: string, state: string, userId: string | null) => void;
-}) {
-  return (
-    <div className="flex flex-col gap-2 rounded-lg border border-border bg-card p-4">
-      <h3 className="font-medium">{typeDef.name}</h3>
-      <ul className="flex flex-col gap-2">
-        {typeDef.states.map((s) => (
-          <li key={s.state} className="flex flex-col gap-2 sm:flex-row sm:items-center">
-            <span className="text-sm sm:w-64">
-              {s.label}
-              {s.state_group === "closed" && (
-                <span className="ml-1.5 text-xs text-muted-foreground">(closed)</span>
-              )}
-            </span>
-            <div className="sm:w-56">
-              <Combobox
-                items={userItems}
-                value={s.assign_to_user_id}
-                onChange={(v) => onSave(typeDef.type, s.state, v)}
-                placeholder="Keep current assignee"
-                searchPlaceholder="Search users…"
-                emptyText="No users found."
-                clearable
-                clearLabel="Keep current"
-              />
-            </div>
-          </li>
-        ))}
-      </ul>
     </div>
   );
 }

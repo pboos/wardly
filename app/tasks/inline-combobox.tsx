@@ -1,8 +1,4 @@
 "use client";
-
-import * as React from "react";
-import { Check, ChevronsUpDown } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import {
   Command,
   CommandEmpty,
@@ -17,78 +13,38 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
+import { IconCheck } from "@tabler/icons-react";
+import { useState } from "react";
 
-export type ComboboxItem = {
-  value: string;
-  label: string;
-  icon?: React.ReactNode;
-};
-
-export function Combobox({
-  id,
+type Item = { value: string; label: string };
+export function InlineCombobox({
   items,
   value,
   onChange,
-  placeholder = "Select…",
-  searchPlaceholder = "Search…",
-  emptyText = "No items found.",
-  clearable = false,
-  clearLabel = "Clear",
-  className,
-  disabled,
-  popoverClassName,
-  onKeyDown,
+  clearable,
+  searchPlaceholder,
+  emptyText,
+  clearLabel,
+  align = "start",
+  children,
 }: {
-  id?: string;
-  items: ComboboxItem[];
+  items: Item[];
   value: string | null;
-  onChange: (value: string | null) => void;
-  placeholder?: string;
+  onChange: (v: string | null) => void;
+  clearable?: boolean;
   searchPlaceholder?: string;
   emptyText?: string;
-  clearable?: boolean;
   clearLabel?: string;
-  className?: string;
-  disabled?: boolean;
-  popoverClassName?: string;
-  onKeyDown?: React.KeyboardEventHandler<HTMLButtonElement>;
+  align?: "start" | "center" | "end";
+  children: React.ReactNode;
 }) {
-  const [open, setOpen] = React.useState(false);
+  const [open, setOpen] = useState(false);
   const selected = items.find((i) => i.value === value) ?? null;
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
-      <PopoverTrigger asChild>
-        <Button
-          id={id}
-          type="button"
-          variant="outline"
-          role="combobox"
-          aria-expanded={open}
-          disabled={disabled}
-          onKeyDown={onKeyDown}
-          className={cn(
-            "w-full justify-between font-normal data-[placeholder]:text-muted-foreground",
-            !selected && "text-muted-foreground",
-            className,
-          )}
-        >
-          <span className="flex min-w-0 items-center gap-2">
-            {selected?.icon}
-            <span className="truncate">
-              {selected ? selected.label : placeholder}
-            </span>
-          </span>
-          <ChevronsUpDown className="ml-2 size-4 shrink-0 opacity-50" />
-        </Button>
-      </PopoverTrigger>
-      <PopoverContent
-        className={cn(
-          "w-[var(--radix-popover-trigger-width)] p-0",
-          popoverClassName,
-        )}
-        align="start"
-      >
+      <PopoverTrigger asChild>{children}</PopoverTrigger>
+      <PopoverContent className="w-64 p-0" align={align}>
         <Command>
           <CommandInput placeholder={searchPlaceholder} />
           <CommandList>
@@ -102,7 +58,7 @@ export function Combobox({
                   }}
                   className="text-muted-foreground"
                 >
-                  {clearLabel}
+                  {clearLabel ?? "Clear"}
                 </CommandItem>
               )}
               {items.map((item) => (
@@ -115,9 +71,8 @@ export function Combobox({
                     setOpen(false);
                   }}
                 >
-                  {item.icon}
                   {item.label}
-                  <Check
+                  <IconCheck
                     className={cn(
                       "ml-auto",
                       selected?.value === item.value

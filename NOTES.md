@@ -11,15 +11,7 @@ Propose plan on the feature and implementation (concise).
 Present plan before implementation.
 For db changes no need to create a new migration. Update the one existing one and then delete db and recreate it.
 
-meeting
-- blessing/passing the sacrament - add details not needed (remove)
-
----- MERGE IT HERE to main
-
-for easy local testing (myself as well as automatic by ai agent) i would like a way to have this in some way (env variable, startup flag or other recommended way)
-- demo data to play around with. this can be stored in the database on startup. but suggest a good way to have this around locally while server doesn't add this data to the database.
-- authentication bypass, so we don't need email acces. Can be login with no email sent and 123456 (or similar) code for use. or bypass login completely. suggest a good way for this
-
+---
 
 tasks
 - remove header bar and add a + that will allow easy adding (also allow keyboard shortcut on that page to trigger same as button)
