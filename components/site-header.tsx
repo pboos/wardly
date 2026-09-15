@@ -37,6 +37,8 @@ const NAV_ITEMS: NavItem[] = [
     href: "/meetings",
     match: "/meetings",
     children: [
+      { label: "Sunday schedule", href: "/meetings/sunday" },
+      { label: "Upcoming Sunday", href: "/meetings/sunday/upcoming" },
       { label: "Bishopric", href: "/meetings/bishopric" },
       { label: "Ward council", href: "/meetings/ward-council" },
     ],
@@ -152,7 +154,7 @@ export function SiteHeader({ userName }: { userName: string }) {
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
             <DropdownMenuItem asChild>
-              <a href="/logout" >
+              <a href="/logout">
                 <IconLogout />
                 Log out
               </a>

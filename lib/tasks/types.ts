@@ -22,6 +22,7 @@ export type TaskState = {
   /** Calculated on load — progress percentage 0.00–1.00 for active states. */
   progress_percentage: number;
   assign_to_user_id: string | null;
+  sunday_meeting_item_type: SundayMeetingTaskItemType | null;
 };
 
 /** Origin of a resolved task type definition. */
@@ -73,3 +74,4 @@ export type WardMember = {
   first_name: string;
   last_name: string;
 };
+import type { SundayMeetingTaskItemType } from "@/lib/sunday-meetings/types";

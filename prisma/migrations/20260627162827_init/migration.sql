@@ -3,6 +3,8 @@ CREATE TABLE "ward" (
     "id" TEXT NOT NULL PRIMARY KEY,
     "name" TEXT NOT NULL,
     "type" TEXT NOT NULL DEFAULT 'ward',
+    "content_locale" TEXT NOT NULL DEFAULT 'en',
+    "time_zone" TEXT NOT NULL DEFAULT 'UTC',
     "created_at" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updated_at" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
@@ -110,6 +112,7 @@ CREATE TABLE "task_type_state" (
     "color" TEXT NOT NULL DEFAULT '#3b82f6',
     "order_index" INTEGER NOT NULL DEFAULT 0,
     "state_group" TEXT NOT NULL DEFAULT 'active',
+    "sunday_meeting_item_type" TEXT,
     "created_at" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updated_at" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT "task_type_state_ward_id_fkey" FOREIGN KEY ("ward_id") REFERENCES "ward" ("id") ON DELETE CASCADE ON UPDATE CASCADE
@@ -161,3 +164,65 @@ CREATE UNIQUE INDEX "task_type_state_ward_id_task_type_state_key" ON "task_type_
 
 -- CreateIndex
 CREATE INDEX "task_type_state_assignment_assign_to_user_id_idx" ON "task_type_state_assignment"("assign_to_user_id");
+
+-- CreateTable
+CREATE TABLE "sunday_meeting" (
+    "id" TEXT NOT NULL PRIMARY KEY,
+    "ward_id" TEXT NOT NULL,
+    "date" TEXT NOT NULL,
+    "type" TEXT NOT NULL,
+    "information" TEXT,
+    "created_at" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updated_at" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT "sunday_meeting_ward_id_fkey" FOREIGN KEY ("ward_id") REFERENCES "ward" ("id") ON DELETE CASCADE ON UPDATE CASCADE
+);
+
+-- CreateTable
+CREATE TABLE "sunday_meeting_item" (
+    "id" TEXT NOT NULL PRIMARY KEY,
+    "sunday_meeting_id" TEXT NOT NULL,
+    "type" TEXT NOT NULL,
+    "section" TEXT NOT NULL,
+    "order_index" INTEGER NOT NULL,
+    "slot" TEXT,
+    "content" TEXT,
+    "metadata" TEXT,
+    "person_member_id" TEXT,
+    "person_name" TEXT,
+    "task_id" TEXT,
+    "created_at" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updated_at" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT "sunday_meeting_item_sunday_meeting_id_fkey" FOREIGN KEY ("sunday_meeting_id") REFERENCES "sunday_meeting" ("id") ON DELETE CASCADE ON UPDATE CASCADE,
+    CONSTRAINT "sunday_meeting_item_task_id_fkey" FOREIGN KEY ("task_id") REFERENCES "task" ("id") ON DELETE RESTRICT ON UPDATE CASCADE,
+    CONSTRAINT "sunday_meeting_item_person_member_id_fkey" FOREIGN KEY ("person_member_id") REFERENCES "member" ("id") ON DELETE RESTRICT ON UPDATE CASCADE,
+    CONSTRAINT "sunday_meeting_item_person_xor_check" CHECK (NOT ("person_member_id" IS NOT NULL AND "person_name" IS NOT NULL))
+);
+
+-- CreateIndex
+CREATE UNIQUE INDEX "sunday_meeting_ward_id_date_key" ON "sunday_meeting"("ward_id", "date");
+
+-- CreateIndex
+CREATE INDEX "sunday_meeting_ward_id_type_date_idx" ON "sunday_meeting"("ward_id", "type", "date");
+
+-- CreateIndex
+CREATE INDEX "sunday_meeting_item_sunday_meeting_id_idx" ON "sunday_meeting_item"("sunday_meeting_id");
+
+-- CreateIndex
+CREATE INDEX "sunday_meeting_item_person_member_id_idx" ON "sunday_meeting_item"("person_member_id");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "sunday_meeting_item_task_id_key" ON "sunday_meeting_item"("task_id");
+
+-- CreateIndex
+-- Partial unique indexes (Prisma cannot express these; declared only here):
+-- at most one conducting leader and one presiding item per meeting.
+CREATE UNIQUE INDEX "idx_sunday_meeting_item_one_leader"
+ON "sunday_meeting_item"("sunday_meeting_id")
+WHERE "type" = 'leader';
+
+-- CreateIndex
+CREATE UNIQUE INDEX "idx_sunday_meeting_item_one_presiding"
+ON "sunday_meeting_item"("sunday_meeting_id")
+WHERE "type" = 'presiding';
+
+CREATE UNIQUE INDEX "sunday_meeting_item_sunday_meeting_id_slot_key" ON "sunday_meeting_item"("sunday_meeting_id", "slot");

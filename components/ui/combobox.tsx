@@ -24,6 +24,7 @@ export type ComboboxItem = {
 };
 
 export function Combobox({
+  id,
   items,
   value,
   onChange,
@@ -37,6 +38,7 @@ export function Combobox({
   popoverClassName,
   onKeyDown,
 }: {
+  id?: string;
   items: ComboboxItem[];
   value: string | null;
   onChange: (value: string | null) => void;
@@ -57,6 +59,7 @@ export function Combobox({
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
         <Button
+          id={id}
           type="button"
           variant="outline"
           role="combobox"

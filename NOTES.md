@@ -4,6 +4,45 @@ This file contains notes about the ideas for wardly. Transcript notes are just s
 
 ## Instructions
 
+COMMON
+Implement the following feature or change on a feature.
+Do not assume something but ask for clarying questions if something is unclear. Give recommendation.
+Propose plan on the feature and implementation (concise).
+Present plan before implementation.
+For db changes no need to create a new migration. Update the one existing one and then delete db and recreate it.
+
+meeting
+- blessing/passing the sacrament - add details not needed (remove)
+
+---- MERGE IT HERE to main
+
+for easy local testing (myself as well as automatic by ai agent) i would like a way to have this in some way (env variable, startup flag or other recommended way)
+- demo data to play around with. this can be stored in the database on startup. but suggest a good way to have this around locally while server doesn't add this data to the database.
+- authentication bypass, so we don't need email acces. Can be login with no email sent and 123456 (or similar) code for use. or bypass login completely. suggest a good way for this
+
+
+tasks
+- remove header bar and add a + that will allow easy adding (also allow keyboard shortcut on that page to trigger same as button)
+  - that opens modal focused on interview type, allow to type which one, enter. then jump to next field to enter it. enter to go to next. last field enter will add the task.
+- symbol for each task type so it is easy to recognize
+- on sunday send to each person that has tasks assigned an overview of tasks in the morning 1h before sacrament meeting starts
+  - on ward we need
+    - timezone (e.g. Europe/Berlin, Europe/Zurich, America/Denver)
+    - meetings start
+  - have that in setup screen chosen (prefill with the one the system is on of the user)
+    - dropdown with all possible ones?
+  - on email send all tasks assigned to them
+    - way to open the page that lists their tasks
+
+- better display in sunday meeting details
+
+member list
+- filters (age range, birth year range - for ap/jd, gender)
+  - quick filters like FHV, AeK, JM, JD, Youth, PV, ...
+
+login
+- nicer on paste of all automatically submit
+- have it look nicer. for each letter/number a box. but it should work still with backspace to delete a single one and to enter one by one instead of pasting.
 
 ## Transcripts
 

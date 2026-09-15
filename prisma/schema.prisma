@@ -8,11 +8,13 @@ datasource db {
 }
 
 model ward {
-  id         String   @id @default(uuid())
-  name       String
-  type       String   @default("ward") // 'ward' | 'branch'
-  created_at DateTime @default(now())
-  updated_at DateTime @default(now())
+  id             String   @id @default(uuid())
+  name           String
+  type           String   @default("ward") // 'ward' | 'branch'
+  content_locale String   @default("en")
+  time_zone      String   @default("UTC")
+  created_at     DateTime @default(now())
+  updated_at     DateTime @default(now())
 
   user                       user[]
   member                     member[]
@@ -20,6 +22,7 @@ model ward {
   task_type                  task_type[]
   task_type_state            task_type_state[]
   task_type_state_assignment task_type_state_assignment[]
+  sunday_meeting             sunday_meeting[]
 }
 
 model user {
@@ -72,6 +75,8 @@ model member {
 
   ward ward   @relation(fields: [ward_id], references: [id], onDelete: Cascade)
   task task[]
+  // Sunday agenda items that name this member (leader, presider, speaker, …)
+  sunday_meeting_item sunday_meeting_item[]
 
   @@index([ward_id])
   @@index([ward_id, status])
@@ -96,6 +101,7 @@ model task {
   ward          ward    @relation(fields: [ward_id], references: [id], onDelete: Cascade)
   assigned_user user?   @relation(fields: [assigned_user_id], references: [id], onDelete: SetNull)
   member        member? @relation(fields: [member_id], references: [id], onDelete: SetNull)
+  sunday_meeting_item sunday_meeting_item[]
 
   @@index([ward_id])
   @@index([ward_id, type, state])
@@ -123,16 +129,17 @@ model task_type {
 }
 
 model task_type_state {
-  id          String   @id @default(uuid())
-  ward_id     String
-  task_type   String
-  state       String
-  label       String
-  color       String   @default("#3b82f6")
-  order_index Int      @default(0)
-  state_group String   @default("active") // 'not_started' | 'active' | 'closed'
-  created_at  DateTime @default(now())
-  updated_at  DateTime @default(now())
+  id                       String   @id @default(uuid())
+  ward_id                  String
+  task_type                String
+  state                    String
+  label                    String
+  color                    String   @default("#3b82f6")
+  order_index              Int      @default(0)
+  state_group              String   @default("active") // 'not_started' | 'active' | 'closed'
+  sunday_meeting_item_type String?
+  created_at               DateTime @default(now())
+  updated_at               DateTime @default(now())
 
   ward ward @relation(fields: [ward_id], references: [id], onDelete: Cascade)
 
@@ -154,4 +161,49 @@ model task_type_state_assignment {
 
   @@id([ward_id, task_type, state])
   @@index([assign_to_user_id])
+}
+
+model sunday_meeting {
+  id          String   @id @default(uuid())
+  ward_id     String
+  date        String
+  type        String
+  information String?
+  created_at  DateTime @default(now())
+  updated_at  DateTime @default(now())
+
+  ward                ward                @relation(fields: [ward_id], references: [id], onDelete: Cascade)
+  sunday_meeting_item sunday_meeting_item[]
+
+  @@unique([ward_id, date])
+  @@index([ward_id, type, date])
+}
+
+model sunday_meeting_item {
+  id                String   @id @default(uuid())
+  sunday_meeting_id String
+  type              String
+  section           String
+  order_index       Int
+  slot              String?
+  content           String?
+  metadata          String?
+  person_member_id  String?
+  person_name       String?
+  task_id           String?
+  created_at        DateTime @default(now())
+  updated_at        DateTime @default(now())
+
+  sunday_meeting sunday_meeting @relation(fields: [sunday_meeting_id], references: [id], onDelete: Cascade)
+  task          task?          @relation(fields: [task_id], references: [id], onDelete: Restrict)
+  member        member?        @relation(fields: [person_member_id], references: [id], onDelete: Restrict)
+
+  // The person XOR CHECK (person_member_id / person_name) and the partial
+  // unique indexes (at most one 'leader' and one 'presiding' per meeting) are
+  // declared in the initial migration because Prisma 7.8 cannot express CHECK
+  // constraints or unique partial indexes in the schema DSL.
+  @@unique([sunday_meeting_id, slot])
+  @@index([sunday_meeting_id])
+  @@index([person_member_id])
+  @@unique([task_id])
 }
