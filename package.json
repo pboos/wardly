@@ -6,7 +6,7 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "test": "node --experimental-strip-types --import ./lib/sunday-meetings/test-support/register.mjs --test lib/sunday-meetings/*.test.mjs app/meetings/sunday/*.test.mjs lib/hymns/*.test.mjs app/setup/*.test.mjs scripts/demo/*.test.mjs app/login/*.test.mjs",
+    "test": "node --experimental-strip-types --import ./lib/sunday-meetings/test-support/register.mjs --test lib/sunday-meetings/*.test.mjs app/meetings/sunday/*.test.mjs lib/hymns/*.test.mjs app/setup/*.test.mjs scripts/demo/*.test.mjs app/login/*.test.mjs lib/tasks/*.test.mjs",
     "lint": "eslint",
     "db:migrate": "prisma migrate dev",
     "db:generate": "prisma generate",

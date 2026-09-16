@@ -40,6 +40,7 @@ test("demo fixture is atomic, relationally valid, and preserves edits on restart
     const ward = await prisma.ward.findFirstOrThrow();
     assert.equal(ward.content_locale, "de");
     assert.equal(ward.time_zone, "Europe/Zurich");
+    assert.equal(ward.sacrament_start_time, "09:00");
     assert.equal(await prisma.user.count(), 3);
     assert.equal(await prisma.member.count(), 12);
     assert.equal(await prisma.task.count(), 10);

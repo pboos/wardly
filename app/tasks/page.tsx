@@ -8,40 +8,47 @@ import { loadTaskTypes } from "@/lib/tasks/loader";
 import type { Task, WardMember, WardUser } from "@/lib/tasks/types";
 import { TasksView } from "./tasks-view";
 
-export default async function TasksPage() {
+export default async function TasksPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ filter?: string | string[] }>;
+}) {
+  const initialFilter = (await searchParams).filter === "mine" ? "mine" : "all";
   const user = await getCurrentUser();
   const wardId = user.ward_id;
 
-  const [activeTasks, pastTasks, users, members, taskTypes] = await Promise.all([
-    prisma.task.findMany({
-      where: { ward_id: wardId, completed_at: null },
-      orderBy: [{ created_at: "desc" }, { type: "asc" }],
-      include: {
-        assigned_user: { select: { name: true } },
-        member: { select: { first_name: true, last_name: true } },
-      },
-    }),
-    prisma.task.findMany({
-      where: { ward_id: wardId, NOT: { completed_at: null } },
-      orderBy: [{ completed_at: "desc" }],
-      take: PAST_LIMIT,
-      include: {
-        assigned_user: { select: { name: true } },
-        member: { select: { first_name: true, last_name: true } },
-      },
-    }),
-    prisma.user.findMany({
-      where: { ward_id: wardId },
-      select: { id: true, name: true, email: true },
-      orderBy: { name: "asc" },
-    }),
-    prisma.member.findMany({
-      where: { ward_id: wardId },
-      select: { id: true, first_name: true, last_name: true },
-      orderBy: [{ last_name: "asc" }, { first_name: "asc" }],
-    }),
-    loadTaskTypes(wardId),
-  ]);
+  const [activeTasks, pastTasks, users, members, taskTypes] = await Promise.all(
+    [
+      prisma.task.findMany({
+        where: { ward_id: wardId, completed_at: null },
+        orderBy: [{ created_at: "desc" }, { type: "asc" }],
+        include: {
+          assigned_user: { select: { name: true } },
+          member: { select: { first_name: true, last_name: true } },
+        },
+      }),
+      prisma.task.findMany({
+        where: { ward_id: wardId, NOT: { completed_at: null } },
+        orderBy: [{ completed_at: "desc" }],
+        take: PAST_LIMIT,
+        include: {
+          assigned_user: { select: { name: true } },
+          member: { select: { first_name: true, last_name: true } },
+        },
+      }),
+      prisma.user.findMany({
+        where: { ward_id: wardId },
+        select: { id: true, name: true, email: true },
+        orderBy: { name: "asc" },
+      }),
+      prisma.member.findMany({
+        where: { ward_id: wardId },
+        select: { id: true, first_name: true, last_name: true },
+        orderBy: [{ last_name: "asc" }, { first_name: "asc" }],
+      }),
+      loadTaskTypes(wardId),
+    ],
+  );
 
   const mappedActive: Task[] = activeTasks.map(mapTask);
   const mappedPast: Task[] = pastTasks.map(mapTask);
@@ -60,6 +67,8 @@ export default async function TasksPage() {
         </Button>
       </header>
       <TasksView
+        key={initialFilter}
+        initialFilter={initialFilter}
         activeTasks={mappedActive}
         pastTasks={mappedPast}
         users={mappedUsers}
@@ -71,25 +80,23 @@ export default async function TasksPage() {
   );
 }
 
-function mapTask(
-  t: {
-    id: string;
-    ward_id: string;
-    type: string;
-    state: string;
-    title: string | null;
-    description: string | null;
-    assigned_user_id: string | null;
-    member_id: string | null;
-    due_date: string | null;
-    priority: string;
-    duration_minutes: number | null;
-    completed_at: string | null;
-    created_at: Date;
-    assigned_user?: { name: string } | null;
-    member?: { first_name: string; last_name: string } | null;
-  },
-): Task {
+function mapTask(t: {
+  id: string;
+  ward_id: string;
+  type: string;
+  state: string;
+  title: string | null;
+  description: string | null;
+  assigned_user_id: string | null;
+  member_id: string | null;
+  due_date: string | null;
+  priority: string;
+  duration_minutes: number | null;
+  completed_at: string | null;
+  created_at: Date;
+  assigned_user?: { name: string } | null;
+  member?: { first_name: string; last_name: string } | null;
+}): Task {
   return {
     id: t.id,
     ward_id: t.ward_id,

@@ -89,6 +89,11 @@ The initial migration contains the current ward, user, login, member, task,
 task configuration, and Sunday meeting tables. `ward.content_locale` defaults
 to `en`; setup persists the selected supported language. See
 [hymn catalogs and ward language](features/hymns/README.md) for locale behavior.
+The same initial migration includes nullable `ward.sacrament_start_time` and
+`task_digest_delivery` for [Sunday task reminders](features/tasks/reminders.md).
+Setup requires a start time; a null time disables scheduling for other ward
+creation paths. This feature updated the initial migration and requires a local
+database reset when upgrading an existing development database.
 
 ---
 

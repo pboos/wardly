@@ -34,6 +34,10 @@ database can also use the fixed code; unknown email addresses cannot log in.
   It includes completed/overdue/unassigned tasks, a linked calling, hymn history,
   participants, speakers, and partially empty future agendas. Names, emails,
   and personal details are fictional. Existing automatic task types are reused.
+- The demo ward uses `Europe/Zurich` and an example sacrament start time of
+  `09:00`. Sunday task reminders remain disabled because demo mode enables
+  `LOCAL_AUTH_BYPASS`; no reminder emails are sent, even with
+  `TASK_REMINDERS_ENABLED=true`. See [task reminders](../tasks/reminders.md).
 - German content selects the German hymn catalog; the app interface and current
   support-text placeholders remain English. See [hymns](../hymns/README.md).
 - The demo signing key is separate from normal sessions. Switching between modes

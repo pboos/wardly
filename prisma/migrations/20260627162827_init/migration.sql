@@ -5,6 +5,7 @@ CREATE TABLE "ward" (
     "type" TEXT NOT NULL DEFAULT 'ward',
     "content_locale" TEXT NOT NULL DEFAULT 'en',
     "time_zone" TEXT NOT NULL DEFAULT 'UTC',
+    "sacrament_start_time" TEXT,
     "created_at" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updated_at" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
@@ -226,3 +227,23 @@ ON "sunday_meeting_item"("sunday_meeting_id")
 WHERE "type" = 'presiding';
 
 CREATE UNIQUE INDEX "sunday_meeting_item_sunday_meeting_id_slot_key" ON "sunday_meeting_item"("sunday_meeting_id", "slot");
+
+CREATE TABLE "task_digest_delivery" (
+    "id" TEXT NOT NULL PRIMARY KEY,
+    "ward_id" TEXT NOT NULL,
+    "user_id" TEXT NOT NULL,
+    "sunday_date" TEXT NOT NULL,
+    "status" TEXT NOT NULL DEFAULT 'pending',
+    "claim_token" TEXT,
+    "lease_expires_at" DATETIME,
+    "next_attempt_at" DATETIME,
+    "attempts" INTEGER NOT NULL DEFAULT 0,
+    "sent_at" DATETIME,
+    "last_error" TEXT,
+    "created_at" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updated_at" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT "task_digest_delivery_ward_id_fkey" FOREIGN KEY ("ward_id") REFERENCES "ward" ("id") ON DELETE CASCADE ON UPDATE CASCADE,
+    CONSTRAINT "task_digest_delivery_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "user" ("id") ON DELETE CASCADE ON UPDATE CASCADE
+);
+CREATE UNIQUE INDEX "task_digest_delivery_ward_id_user_id_sunday_date_key"
+ON "task_digest_delivery"("ward_id", "user_id", "sunday_date");

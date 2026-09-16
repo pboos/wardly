@@ -1,16 +1,30 @@
 import "server-only";
 import nodemailer from "nodemailer";
+import { renderTaskDigest, type TaskDigest } from "@/lib/tasks/reminder-email";
 
 const transporter = nodemailer.createTransport({
   host: process.env.SMTP_HOST,
   port: Number(process.env.SMTP_PORT ?? 587),
   secure: process.env.SMTP_SECURE === "true",
   requireTLS: process.env.SMTP_SECURE !== "true", // STARTTLS on 587
+  connectionTimeout: 15000,
+  greetingTimeout: 15000,
+  socketTimeout: 30000,
   auth: {
     user: process.env.SMTP_USER,
     pass: process.env.SMTP_PASS,
   },
 });
+
+export async function sendTaskDigestEmail(digest: TaskDigest) {
+  const result = await transporter.sendMail({
+    from: process.env.SMTP_FROM ?? '"Wardly" <wardly@benritec.com>',
+    to: digest.to,
+    ...renderTaskDigest(digest),
+  });
+  if (!result.accepted.length)
+    throw new Error("SMTP did not accept the recipient.");
+}
 
 export async function sendLoginEmail(opts: {
   to: string;

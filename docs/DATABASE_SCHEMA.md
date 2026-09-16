@@ -20,6 +20,7 @@ CREATE TABLE ward (
   type            TEXT NOT NULL DEFAULT 'ward',
   content_locale  TEXT NOT NULL DEFAULT 'en',
   time_zone       TEXT NOT NULL DEFAULT 'UTC',
+  sacrament_start_time TEXT,
   created_at      TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
   updated_at      TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
@@ -28,6 +29,19 @@ CREATE TABLE ward (
 - `content_locale` is the ward-language BCP 47 locale used for hymn catalogs and leading text.
   Setup currently accepts `en` or `de`; see [catalog loading and language maintenance](features/hymns/README.md).
 - `time_zone` is the IANA zone used to determine the current local date and Sunday.
+- `sacrament_start_time` is ward-local `HH:mm`, required in setup. Null means
+  no configured reminder schedule (for wards created outside setup).
+
+### Sunday task email delivery
+
+`task_digest_delivery` tracks one email per `(ward_id, user_id, sunday_date)`.
+Fields: UUID `id`; cascading `ward_id`/`user_id` foreign keys; calendar
+`sunday_date`; `status` (`pending`, `sending`, `sent`); nullable `claim_token`,
+`lease_expires_at`, `next_attempt_at`, `sent_at`, `last_error`; integer
+`attempts` default 0; `created_at`/`updated_at` timestamps. The natural key has
+a unique index. Claims use atomic conditional updates; only the claim owner
+may finalize a delivery. `sent_at` records SMTP acceptance, not inbox delivery.
+See [task reminders](features/tasks/reminders.md) for retry and crash semantics.
 
 ---
 

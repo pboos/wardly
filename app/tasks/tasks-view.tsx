@@ -14,6 +14,7 @@ export function TasksView({
   members,
   taskTypes,
   currentUserId,
+  initialFilter = "all",
 }: {
   activeTasks: Task[];
   pastTasks: Task[];
@@ -21,11 +22,12 @@ export function TasksView({
   members: WardMember[];
   taskTypes: TaskType[];
   currentUserId: string;
+  initialFilter?: "all" | "mine";
 }) {
   const enabledTaskTypes = taskTypes.filter((taskType) => taskType.enabled);
 
   // Filters
-  const [filter, setFilter] = useState<Filter>("all");
+  const [filter, setFilter] = useState<Filter>(initialFilter);
 
   const filteredActive = useMemo(() => {
     if (filter === "all") return activeTasks;
@@ -66,7 +68,11 @@ export function TasksView({
       />
 
       <PastTasks
-        tasks={pastTasks}
+        tasks={
+          filter === "mine"
+            ? pastTasks.filter((t) => t.assigned_user_id === currentUserId)
+            : pastTasks
+        }
         users={users}
         members={members}
         taskTypes={taskTypes}

@@ -38,6 +38,8 @@ test("setup persists supported ward languages and rejects invalid input", async 
   const form = (locale) => {
     const data = new FormData();
     data.set("wardName", "Test ward");
+    data.set("timeZone", "Europe/Zurich");
+    data.set("sacramentStartTime", "09:30");
     data.set("userName", "Test user");
     data.set("userEmail", "test@example.com");
     if (locale !== undefined) data.set("contentLocale", locale);
@@ -52,10 +54,25 @@ test("setup persists supported ward languages and rejects invalid input", async 
       assert.equal(await prisma.ward.count(), 0);
       assert.equal(await prisma.user.count(), 0);
     }
+    for (const [field, value] of [
+      ["timeZone", ""],
+      ["timeZone", "Mars/Base"],
+      ["timeZone", "+02:00"],
+      ["sacramentStartTime", ""],
+      ["sacramentStartTime", "24:00"],
+      ["sacramentStartTime", "9:30"],
+    ]) {
+      const invalid = form("en");
+      invalid.set(field, value);
+      await assert.rejects(setupInitialWard(invalid), /valid/);
+      assert.equal(await prisma.ward.count(), 0);
+    }
     for (const locale of ["en", "de"]) {
       await assert.rejects(setupInitialWard(form(locale)), /redirect:\/login/);
       const ward = await prisma.ward.findFirstOrThrow();
       assert.equal(ward.content_locale, locale);
+      assert.equal(ward.time_zone, "Europe/Zurich");
+      assert.equal(ward.sacrament_start_time, "09:30");
       assert.equal(await prisma.user.count(), 1);
       await assert.rejects(
         setupInitialWard(form(locale)),

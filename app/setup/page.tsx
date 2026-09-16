@@ -12,6 +12,7 @@ import {
 import { Field, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { hymnLanguages } from "@/lib/hymns/locales";
+import { MeetingFields } from "./meeting-fields";
 import {
   Select,
   SelectContent,
@@ -29,7 +30,7 @@ export default async function SetupPage() {
   }
 
   return (
-    <main className="flex min-h-svh items-center justify-center px-4">
+    <main className="flex min-h-svh items-center justify-center px-4 py-6">
       <Card className="w-full max-w-sm">
         <CardHeader>
           <CardTitle className="text-2xl">Set up your ward</CardTitle>
@@ -67,6 +68,9 @@ export default async function SetupPage() {
                   </SelectContent>
                 </Select>
               </Field>
+              <MeetingFields
+                timeZones={["UTC", ...Intl.supportedValuesOf("timeZone")]}
+              />
               <Field>
                 <FieldLabel htmlFor="userName">Your name</FieldLabel>
                 <Input

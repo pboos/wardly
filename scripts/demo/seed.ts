@@ -37,6 +37,7 @@ export async function seedDemo(
         name: "Gemeinde Sonnenberg (Demo)",
         content_locale: "de",
         time_zone: "Europe/Zurich",
+        sacrament_start_time: "09:00",
       },
     });
     const users = [];

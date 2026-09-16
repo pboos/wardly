@@ -50,7 +50,9 @@ for the shared model and [agenda](agenda.md) for ordering and meeting-type trans
   to an existing talk keeps its topic; filling an unused speaker cell appends a talk.
   Desktop reserves at least three speaker columns and expands for existing talks.
 - Information uses a text dialog. Ward settings store a validated content locale
-  and time zone. Dates currently display in English; support wording's locale
+  and time zone. Initial setup exposes the time zone and sacrament start time;
+  [task reminders](../tasks/reminders.md) use these every Sunday independently of
+  saved meetings and conference types. Dates currently display in English; support wording's locale
   limitation is described in [agenda](agenda.md#support-text-and-task-presentations).
 
 ## People picker

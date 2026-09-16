@@ -3,6 +3,7 @@
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { isHymnLocale } from "@/lib/hymns/locales";
+import { isIanaTimeZone, isMeetingTime } from "@/lib/tasks/reminder-schedule";
 
 export async function setupInitialWard(formData: FormData) {
   // Guard: if a ward already exists, refuse to create another
@@ -13,6 +14,8 @@ export async function setupInitialWard(formData: FormData) {
 
   const wardName = String(formData.get("wardName") ?? "").trim();
   const contentLocale = formData.get("contentLocale");
+  const timeZone = formData.get("timeZone");
+  const sacramentStartTime = formData.get("sacramentStartTime");
   const userName = String(formData.get("userName") ?? "").trim();
   const userEmail = String(formData.get("userEmail") ?? "")
     .trim()
@@ -26,6 +29,12 @@ export async function setupInitialWard(formData: FormData) {
   if (!isHymnLocale(contentLocale)) {
     throw new Error("Please select a supported ward language.");
   }
+  if (!isIanaTimeZone(timeZone)) {
+    throw new Error("Please select a valid IANA time zone.");
+  }
+  if (!isMeetingTime(sacramentStartTime)) {
+    throw new Error("Please enter a valid sacrament meeting start time.");
+  }
 
   // Email format check (simple)
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -36,7 +45,12 @@ export async function setupInitialWard(formData: FormData) {
   // Create the ward + first user in a transaction
   await prisma.$transaction(async (tx) => {
     const ward = await tx.ward.create({
-      data: { name: wardName, content_locale: contentLocale },
+      data: {
+        name: wardName,
+        content_locale: contentLocale,
+        time_zone: timeZone,
+        sacrament_start_time: sacramentStartTime,
+      },
     });
 
     await tx.user.create({

@@ -41,6 +41,8 @@ the shared [language registry](../../../lib/hymns/locales.ts) and saves
 Missing or unsupported selections are rejected. The existing field and initial
 migration already support this; see the [schema](../../DATABASE_SCHEMA.md).
 This selects ward content language, not the app's interface language.
+Setup also requires a browser-prefilled ward time zone and sacrament start time
+for [Sunday task reminders](../tasks/reminders.md).
 
 The shared [Sunday hymn picker](../../../app/meetings/sunday/sunday-hymn-picker.tsx)
 uses the ward catalog for number completion and title display in schedule and details.

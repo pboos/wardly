@@ -6,7 +6,7 @@ links identify where to verify details or make changes.
 
 | Feature                 | Overview                                | Read when working on…                                                                                              |
 | ----------------------- | --------------------------------------- | ------------------------------------------------------------------------------------------------------------------ |
-| Tasks                   | [Overview](tasks/README.md)             | Quick entry, keyboard shortcuts, type symbols, task list and settings                                              |
+| Tasks                   | [Overview](tasks/README.md)             | Quick entry, type symbols, task list/settings · [Sunday email reminders](tasks/reminders.md) |
 | Sunday meetings         | [Overview](sunday-meetings/README.md)   | [Schedule, dates, assignments](sunday-meetings/schedule.md) · [Agenda, ordering, tasks](sunday-meetings/agenda.md) |
 | Hymns and ward language | [Overview](hymns/README.md)             | Catalog loading, setup language, refreshing hymns, adding languages                                                |
 | Local development       | [Overview](local-development/README.md) | Demo database, fictional fixtures, email-free login, reset and automation                                          |

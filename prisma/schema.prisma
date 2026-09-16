@@ -8,13 +8,14 @@ datasource db {
 }
 
 model ward {
-  id             String   @id @default(uuid())
-  name           String
-  type           String   @default("ward") // 'ward' | 'branch'
-  content_locale String   @default("en")
-  time_zone      String   @default("UTC")
-  created_at     DateTime @default(now())
-  updated_at     DateTime @default(now())
+  id                   String   @id @default(uuid())
+  name                 String
+  type                 String   @default("ward") // 'ward' | 'branch'
+  content_locale       String   @default("en")
+  time_zone            String   @default("UTC")
+  sacrament_start_time String?
+  created_at           DateTime @default(now())
+  updated_at           DateTime @default(now())
 
   user                       user[]
   member                     member[]
@@ -23,6 +24,7 @@ model ward {
   task_type_state            task_type_state[]
   task_type_state_assignment task_type_state_assignment[]
   sunday_meeting             sunday_meeting[]
+  task_digest_delivery       task_digest_delivery[]
 }
 
 model user {
@@ -33,8 +35,9 @@ model user {
   created_at DateTime @default(now())
   updated_at DateTime @default(now())
 
-  ward  ward   @relation(fields: [ward_id], references: [id], onDelete: Cascade)
-  login login?
+  ward                 ward                   @relation(fields: [ward_id], references: [id], onDelete: Cascade)
+  login                login?
+  task_digest_delivery task_digest_delivery[]
 
   // Tasks assigned to this user
   task                       task[]
@@ -73,8 +76,8 @@ model member {
   created_at  DateTime @default(now())
   updated_at  DateTime @default(now())
 
-  ward ward   @relation(fields: [ward_id], references: [id], onDelete: Cascade)
-  task task[]
+  ward                ward                  @relation(fields: [ward_id], references: [id], onDelete: Cascade)
+  task                task[]
   // Sunday agenda items that name this member (leader, presider, speaker, …)
   sunday_meeting_item sunday_meeting_item[]
 
@@ -98,9 +101,9 @@ model task {
   created_at       DateTime @default(now())
   updated_at       DateTime @default(now())
 
-  ward          ward    @relation(fields: [ward_id], references: [id], onDelete: Cascade)
-  assigned_user user?   @relation(fields: [assigned_user_id], references: [id], onDelete: SetNull)
-  member        member? @relation(fields: [member_id], references: [id], onDelete: SetNull)
+  ward                ward                  @relation(fields: [ward_id], references: [id], onDelete: Cascade)
+  assigned_user       user?                 @relation(fields: [assigned_user_id], references: [id], onDelete: SetNull)
+  member              member?               @relation(fields: [member_id], references: [id], onDelete: SetNull)
   sunday_meeting_item sunday_meeting_item[]
 
   @@index([ward_id])
@@ -172,7 +175,7 @@ model sunday_meeting {
   created_at  DateTime @default(now())
   updated_at  DateTime @default(now())
 
-  ward                ward                @relation(fields: [ward_id], references: [id], onDelete: Cascade)
+  ward                ward                  @relation(fields: [ward_id], references: [id], onDelete: Cascade)
   sunday_meeting_item sunday_meeting_item[]
 
   @@unique([ward_id, date])
@@ -195,15 +198,36 @@ model sunday_meeting_item {
   updated_at        DateTime @default(now())
 
   sunday_meeting sunday_meeting @relation(fields: [sunday_meeting_id], references: [id], onDelete: Cascade)
-  task          task?          @relation(fields: [task_id], references: [id], onDelete: Restrict)
-  member        member?        @relation(fields: [person_member_id], references: [id], onDelete: Restrict)
+  task           task?          @relation(fields: [task_id], references: [id], onDelete: Restrict)
+  member         member?        @relation(fields: [person_member_id], references: [id], onDelete: Restrict)
 
   // The person XOR CHECK (person_member_id / person_name) and the partial
   // unique indexes (at most one 'leader' and one 'presiding' per meeting) are
   // declared in the initial migration because Prisma 7.8 cannot express CHECK
   // constraints or unique partial indexes in the schema DSL.
   @@unique([sunday_meeting_id, slot])
+  @@unique([task_id])
   @@index([sunday_meeting_id])
   @@index([person_member_id])
-  @@unique([task_id])
+}
+
+model task_digest_delivery {
+  id               String    @id @default(uuid())
+  ward_id          String
+  user_id          String
+  sunday_date      String
+  status           String    @default("pending")
+  claim_token      String?
+  lease_expires_at DateTime?
+  next_attempt_at  DateTime?
+  attempts         Int       @default(0)
+  sent_at          DateTime?
+  last_error       String?
+  created_at       DateTime  @default(now())
+  updated_at       DateTime  @default(now())
+
+  ward ward @relation(fields: [ward_id], references: [id], onDelete: Cascade)
+  user user @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@unique([ward_id, user_id, sunday_date])
 }

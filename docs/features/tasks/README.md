@@ -5,6 +5,11 @@ The page retains its Tasks heading and Settings link; a + beside the filters
 opens the add dialog. Active tasks can be filtered by All, Mine, or enabled type.
 Past tasks are collapsible and load the latest 50 completed records.
 
+[Sunday reminders](reminders.md) email each user's unfinished assigned tasks
+one hour before the ward's configured sacrament time. The email's
+`/tasks?filter=mine` link selects Mine after normal login. Mine also filters the
+displayed past tasks to the current assignee.
+
 ## Quick entry
 
 - Click + or press **N** on this page to open the dialog focused on task-type

@@ -7,16 +7,11 @@ This file contains notes about the ideas for wardly. Transcript notes are just s
 COMMON
 Implement the following feature or change on a feature.
 Do not assume something but ask for clarying questions if something is unclear. Give recommendation.
-Propose plan on the feature and implementation (concise).
+Propose plan on the feature and implementation (concise, but also include technical parts, I am a staff software engineer).
 Present plan before implementation.
 For db changes no need to create a new migration. Update the one existing one and then delete db and recreate it.
 
----
-
 tasks
-- remove header bar and add a + that will allow easy adding (also allow keyboard shortcut on that page to trigger same as button)
-  - that opens modal focused on interview type, allow to type which one, enter. then jump to next field to enter it. enter to go to next. last field enter will add the task.
-- symbol for each task type so it is easy to recognize
 - on sunday send to each person that has tasks assigned an overview of tasks in the morning 1h before sacrament meeting starts
   - on ward we need
     - timezone (e.g. Europe/Berlin, Europe/Zurich, America/Denver)
@@ -27,6 +22,8 @@ tasks
     - way to open the page that lists their tasks
 
 - better display in sunday meeting details
+
+- possible to rename To do on some of them? e.g. have it be "Interview" for temple interviews?
 
 member list
 - filters (age range, birth year range - for ap/jd, gender)
