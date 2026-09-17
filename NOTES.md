@@ -11,27 +11,31 @@ Propose plan on the feature and implementation (concise, but also include techni
 Present plan before implementation.
 For db changes no need to create a new migration. Update the one existing one and then delete db and recreate it.
 
-tasks
-- on sunday send to each person that has tasks assigned an overview of tasks in the morning 1h before sacrament meeting starts
-  - on ward we need
-    - timezone (e.g. Europe/Berlin, Europe/Zurich, America/Denver)
-    - meetings start
-  - have that in setup screen chosen (prefill with the one the system is on of the user)
-    - dropdown with all possible ones?
-  - on email send all tasks assigned to them
-    - way to open the page that lists their tasks
+member list
+- sync with script
+  - member uuid from lcr/external - use this to match member instead of the other way we had using name/birthdate/...
+  - store houshold (and role) on record
+    - so we can group by household in list
+- instead of status maybe have flag that marks those that moved out (boolean column)
+- have tags/flags that can be added (multiple) to members
+  - those could then be used to mark "unknown" or "hide" or "focus" or anything.
 
+tasks
 - better display in sunday meeting details
 
 - possible to rename To do on some of them? e.g. have it be "Interview" for temple interviews?
 
 member list
-- filters (age range, birth year range - for ap/jd, gender)
+- filters (tags/flags/labels, age range, birth year range - for ap/jd, gender)
   - quick filters like FHV, AeK, JM, JD, Youth, PV, ...
+  - combination of tags/flags/labels: a AND b (never OR though)
 
 login
 - nicer on paste of all automatically submit
 - have it look nicer. for each letter/number a box. but it should work still with backspace to delete a single one and to enter one by one instead of pasting.
+
+
+send reminder emails to members for talks / prayers
 
 ## Transcripts
 

@@ -36,7 +36,8 @@ export default async function MembersSyncPage() {
                   >
                     LCR member list
                   </Link>{" "}
-                  (opens in a new tab).
+                  (opens in a new tab). Clear search and filters, and wait until
+                  the full member list has loaded.
                 </span>
               </li>
               <li className="flex gap-2">
@@ -49,9 +50,8 @@ export default async function MembersSyncPage() {
               <li className="flex gap-2">
                 <span className="font-medium text-foreground">3.</span>
                 <span>
-                  Type <code className="font-mono text-xs">allow pasting</code>{" "}
-                  and press Enter (Chrome requires this before pasting into the
-                  console).
+                  If Chrome blocks pasting, review the script and follow the
+                  console’s instructions to enable pasting.
                 </span>
               </li>
               <li className="flex gap-2">
@@ -64,15 +64,16 @@ export default async function MembersSyncPage() {
               <li className="flex gap-2">
                 <span className="font-medium text-foreground">5.</span>
                 <span>
-                  Paste the script into the console and press Enter. The console
-                  prints an array of objects.
+                  Paste the script into the console and press Enter. It reads
+                  the loaded member list and copies the export to your
+                  clipboard.
                 </span>
               </li>
               <li className="flex gap-2">
                 <span className="font-medium text-foreground">6.</span>
                 <span>
-                  Right-click the array and select{" "}
-                  <strong className="text-foreground">Copy object</strong>.
+                  Check that “Wardly: exported … members” matches the full
+                  directory count and that the console says “Copied!”.
                 </span>
               </li>
               <li className="flex gap-2">
@@ -82,8 +83,17 @@ export default async function MembersSyncPage() {
             </ol>
 
             <p className="text-xs text-muted-foreground">
-              Note: The script only works on the English LCR site (
+              Use the English LCR site (
               <code className="font-mono">?lang=eng</code>).
+            </p>
+
+            <p className="text-sm text-muted-foreground">
+              If automatic copying is unavailable, run{" "}
+              <code className="font-mono text-xs">copy(wardlyLcr.json)</code> in
+              the console. If the count is wrong, clear filters, reload the
+              directory, wait for it to load, and paste the script again. When
+              LCR does not provide email addresses, existing Wardly emails are
+              preserved.
             </p>
 
             <SyncForm />

@@ -2,6 +2,7 @@
 
 import { getCurrentUser } from "@/lib/auth/dal";
 import { prisma } from "@/lib/prisma";
+import { MAX_SYNC_BYTES, MAX_SYNC_ROWS } from "./limits";
 
 // --- Types (shared with the client component) ---
 
@@ -10,8 +11,8 @@ export type IncomingMember = {
   lastName: string;
   gender: string;
   birthDate: string | null;
-  email: string | null;
-  isBaptized: boolean;
+  email?: string | null;
+  isBaptized?: boolean;
 };
 
 export type ExistingMember = {
@@ -42,7 +43,10 @@ export type SyncDiff = {
   }[];
   unchanged: { id: string; first_name: string; last_name: string }[];
   ambiguous: { incoming: IncomingMember; candidates: ExistingMember[] }[];
-  possibleNameChanges: { incoming: IncomingMember; movedMember: ExistingMember }[];
+  possibleNameChanges: {
+    incoming: IncomingMember;
+    movedMember: ExistingMember;
+  }[];
 };
 
 export type ResolvedPlan = {
@@ -50,25 +54,20 @@ export type ResolvedPlan = {
   moves: string[];
   updates: {
     id: string;
-    email: string | null;
+    email?: string | null;
     birthDate: string | null;
-    isBaptized: boolean;
+    isBaptized?: boolean;
     reactivate: boolean;
   }[];
   merges: {
     existingId: string;
     firstName: string;
     lastName: string;
-    email: string | null;
+    email?: string | null;
     birthDate: string | null;
-    isBaptized: boolean;
+    isBaptized?: boolean;
   }[];
 };
-
-// --- Constants ---
-
-const MAX_RAW_BYTES = 1_000_000;
-const MAX_ROWS = 2000;
 
 // --- Helpers ---
 
@@ -89,8 +88,8 @@ function normalizeIncoming(raw: IncomingMember): IncomingMember {
     lastName: (raw.lastName ?? "").trim().replace(/\s+/g, " "),
     gender: normalizeGender(raw.gender ?? ""),
     birthDate: raw.birthDate?.trim() || null,
-    email: raw.email?.trim() || null,
-    isBaptized: Boolean(raw.isBaptized),
+    email: raw.email === undefined ? undefined : raw.email?.trim() || null,
+    isBaptized: raw.isBaptized,
   };
 }
 
@@ -99,13 +98,16 @@ function computeChanges(
   incoming: IncomingMember,
 ): FieldChanges {
   const changes: FieldChanges = {};
-  if (existing.email !== incoming.email) {
+  if (incoming.email !== undefined && existing.email !== incoming.email) {
     changes.email = { from: existing.email, to: incoming.email };
   }
   if (existing.birth_date !== incoming.birthDate) {
     changes.birth_date = { from: existing.birth_date, to: incoming.birthDate };
   }
-  if (existing.is_baptized !== incoming.isBaptized) {
+  if (
+    incoming.isBaptized !== undefined &&
+    existing.is_baptized !== incoming.isBaptized
+  ) {
     changes.is_baptized = {
       from: existing.is_baptized,
       to: incoming.isBaptized,
@@ -153,7 +155,12 @@ function matchMembers(
           last_name: candidate.last_name,
         });
       } else {
-        result.updated.push({ existing: candidate, incoming: inc, changes, reactivate });
+        result.updated.push({
+          existing: candidate,
+          incoming: inc,
+          changes,
+          reactivate,
+        });
       }
     } else {
       const birthDateMatches = inc.birthDate
@@ -216,23 +223,25 @@ export async function parseSync(
 ): Promise<SyncDiff | { error: string }> {
   const user = await getCurrentUser();
 
-  if (Buffer.byteLength(rawText, "utf8") > MAX_RAW_BYTES) {
-    return { error: "Input exceeds 1 MB limit." };
+  if (Buffer.byteLength(rawText, "utf8") > MAX_SYNC_BYTES) {
+    return { error: "Input exceeds 5 MB limit." };
   }
 
   let parsed: unknown;
   try {
     parsed = JSON.parse(rawText);
   } catch {
-    return { error: "Invalid JSON. Make sure you copied the array from the console." };
+    return {
+      error: "Invalid JSON. Make sure you copied the array from the console.",
+    };
   }
 
   if (!Array.isArray(parsed)) {
     return { error: "Expected a JSON array of member objects." };
   }
 
-  if (parsed.length > MAX_ROWS) {
-    return { error: `Input exceeds ${MAX_ROWS} row limit.` };
+  if (parsed.length > MAX_SYNC_ROWS) {
+    return { error: `Input exceeds ${MAX_SYNC_ROWS} row limit.` };
   }
 
   const incoming: IncomingMember[] = [];
@@ -243,16 +252,38 @@ export async function parseSync(
     }
     const row = item as Record<string, unknown>;
     if (typeof row.firstName !== "string" || typeof row.lastName !== "string") {
-      return { error: `Row ${i + 1}: firstName and lastName are required strings.` };
+      return {
+        error: `Row ${i + 1}: firstName and lastName are required strings.`,
+      };
     }
+    if (
+      Object.hasOwn(row, "email") &&
+      row.email !== null &&
+      typeof row.email !== "string"
+    ) {
+      return {
+        error: `Row ${i + 1}: email must be a string or null, or omitted to preserve it.`,
+      };
+    }
+    if (row.isBaptized != null && typeof row.isBaptized !== "boolean") {
+      return {
+        error: `Row ${i + 1}: isBaptized must be a boolean, null, or omitted.`,
+      };
+    }
+    // Explicit allowlist: source snapshots and future export fields stay out of DB writes.
     incoming.push(
       normalizeIncoming({
         firstName: row.firstName,
         lastName: row.lastName,
         gender: typeof row.gender === "string" ? row.gender : "",
         birthDate: typeof row.birthDate === "string" ? row.birthDate : null,
-        email: typeof row.email === "string" ? row.email : null,
-        isBaptized: Boolean(row.isBaptized),
+        email: Object.hasOwn(row, "email")
+          ? typeof row.email === "string"
+            ? row.email
+            : null
+          : undefined,
+        isBaptized:
+          typeof row.isBaptized === "boolean" ? row.isBaptized : undefined,
       }),
     );
   }
@@ -299,8 +330,8 @@ export async function commitSync(plan: ResolvedPlan): Promise<{
           last_name: inc.lastName,
           gender: inc.gender,
           birth_date: inc.birthDate,
-          email: inc.email,
-          is_baptized: inc.isBaptized,
+          email: inc.email ?? null,
+          is_baptized: inc.isBaptized ?? false,
           status: "active",
         },
       });
@@ -317,9 +348,11 @@ export async function commitSync(plan: ResolvedPlan): Promise<{
 
     for (const upd of plan.updates) {
       const data: Record<string, unknown> = {
-        email: upd.email,
+        ...(upd.email !== undefined ? { email: upd.email } : {}),
         birth_date: upd.birthDate,
-        is_baptized: upd.isBaptized,
+        ...(upd.isBaptized !== undefined
+          ? { is_baptized: upd.isBaptized }
+          : {}),
         updated_at: new Date(),
       };
       if (upd.reactivate) {
@@ -338,9 +371,11 @@ export async function commitSync(plan: ResolvedPlan): Promise<{
         data: {
           first_name: merge.firstName,
           last_name: merge.lastName,
-          email: merge.email,
+          ...(merge.email !== undefined ? { email: merge.email } : {}),
           birth_date: merge.birthDate,
-          is_baptized: merge.isBaptized,
+          ...(merge.isBaptized !== undefined
+            ? { is_baptized: merge.isBaptized }
+            : {}),
           status: "active",
           updated_at: new Date(),
         },

@@ -6,6 +6,7 @@ links identify where to verify details or make changes.
 
 | Feature                 | Overview                                | Read when working on…                                                                                              |
 | ----------------------- | --------------------------------------- | ------------------------------------------------------------------------------------------------------------------ |
+| Member sync | [Overview](member-sync/README.md) | LCR page export, sync validation, and troubleshooting |
 | Tasks                   | [Overview](tasks/README.md)             | Quick entry, type symbols, task list/settings · [Sunday email reminders](tasks/reminders.md) |
 | Sunday meetings         | [Overview](sunday-meetings/README.md)   | [Schedule, dates, assignments](sunday-meetings/schedule.md) · [Agenda, ordering, tasks](sunday-meetings/agenda.md) |
 | Hymns and ward language | [Overview](hymns/README.md)             | Catalog loading, setup language, refreshing hymns, adding languages                                                |
