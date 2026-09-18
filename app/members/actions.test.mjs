@@ -38,6 +38,7 @@ test("tag actions isolate wards, share edits, avoid duplicates and cascade delet
   db.close();
   const { prisma } = await import("../../lib/prisma.ts");
   const { saveTag, deleteTag, setMemberTag } = await import("./actions.ts");
+  const { bulkUpdateMemberTags } = await import("./bulk-tag-actions.ts");
   try {
     for (const id of ["ward-a", "ward-b"])
       await prisma.ward.create({ data: { id, name: id } });
@@ -92,6 +93,98 @@ test("tag actions isolate wards, share edits, avoid duplicates and cascade delet
     assert.equal(await prisma.member_tag_assignment.count(), 0);
     assert.equal(await prisma.member.count(), 2);
     assert.equal(await prisma.member_tag.count(), 1);
+    await saveTag(null, "Bulk one", "blue");
+    await saveTag(null, "Bulk two", "green");
+    const localTags = await prisma.member_tag.findMany({
+      where: { ward_id: "ward-a" },
+    });
+    const tagIds = localTags.map((tag) => tag.id);
+    const memberIds = Array.from(
+      { length: 105 },
+      (_, index) => `bulk-member-${index}`,
+    );
+    await prisma.member.createMany({
+      data: memberIds.map((id) => ({
+        id,
+        ward_id: "ward-a",
+        first_name: "Bulk",
+        last_name: id,
+        gender: "m",
+        is_baptized: false,
+      })),
+    });
+    // Unselected members and unrelated assignments survive bulk operations.
+    await setMemberTag(a.id, tagIds[0], true);
+    await setMemberTag(memberIds[0], tagIds[1], true);
+    const snapshot = async () =>
+      (
+        await prisma.member_tag_assignment.findMany({
+          orderBy: [{ member_id: "asc" }, { tag_id: "asc" }],
+        })
+      ).map(({ member_id, tag_id }) => [member_id, tag_id]);
+    const before = await snapshot();
+    for (const operation of ["add", "remove"]) {
+      for (const [ids, tags] of [
+        [[memberIds[0], b.id], tagIds],
+        [memberIds, [tagIds[0], foreign.id]],
+        [[memberIds[0], "missing-member"], tagIds],
+        [memberIds, [tagIds[0], "deleted-tag"]],
+      ]) {
+        await assert.rejects(
+          bulkUpdateMemberTags(ids, tags, operation),
+          /unavailable/,
+        );
+        assert.deepEqual(await snapshot(), before);
+      }
+    }
+    for (const [ids, tags, operation] of [
+      [[], tagIds, "add"],
+      [memberIds, [], "remove"],
+      [null, tagIds, "add"],
+      [[undefined], tagIds, "add"],
+      [memberIds, [null], "add"],
+      [memberIds, tagIds, "replace"],
+      [Array(2001).fill(a.id), tagIds, "add"],
+      [memberIds, Array(51).fill(tagIds[0]), "add"],
+    ]) {
+      await assert.rejects(
+        bulkUpdateMemberTags(ids, tags, operation),
+        /Invalid/,
+      );
+      assert.deepEqual(await snapshot(), before);
+    }
+    // Failure in the second member batch must undo the first batch too.
+    await prisma.$executeRawUnsafe(`CREATE TRIGGER fail_bulk_insert BEFORE INSERT ON member_tag_assignment
+      WHEN NEW.member_id = 'bulk-member-104' BEGIN SELECT RAISE(ABORT, 'test failure'); END`);
+    await assert.rejects(bulkUpdateMemberTags(memberIds, tagIds, "add"));
+    assert.deepEqual(await snapshot(), before);
+    await prisma.$executeRawUnsafe("DROP TRIGGER fail_bulk_insert");
+    await bulkUpdateMemberTags(
+      [...memberIds, memberIds[0]],
+      [...tagIds, tagIds[0]],
+      "add",
+    );
+    assert.equal(await prisma.member_tag_assignment.count(), 211);
+    await bulkUpdateMemberTags(memberIds, tagIds, "add");
+    assert.equal(
+      await prisma.member_tag_assignment.count(),
+      211,
+      "repeated additions do not duplicate",
+    );
+    await bulkUpdateMemberTags(memberIds, [tagIds[0]], "remove");
+    assert.equal(
+      await prisma.member_tag_assignment.count(),
+      106,
+      "other tags and unselected members survive",
+    );
+    await bulkUpdateMemberTags(memberIds, [tagIds[0]], "remove");
+    assert.equal(
+      await prisma.member_tag_assignment.count(),
+      106,
+      "absent removal is harmless",
+    );
+    await bulkUpdateMemberTags(memberIds, [tagIds[1]], "remove");
+    assert.deepEqual(await snapshot(), [[a.id, tagIds[0]]]);
   } finally {
     await prisma.$disconnect();
     rmSync(directory, { recursive: true, force: true });

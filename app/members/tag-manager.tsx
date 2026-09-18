@@ -16,7 +16,13 @@ import { TagBadge } from "./tag-badge";
 import { TagEditor } from "./tag-editor";
 import type { MemberTag } from "./tags";
 
-export function TagManager({ tags }: { tags: MemberTag[] }) {
+export function TagManager({
+  tags,
+  disabled = false,
+}: {
+  tags: MemberTag[];
+  disabled?: boolean;
+}) {
   const [editing, setEditing] = useState<MemberTag | "new" | null>(null);
   const [deleting, setDeleting] = useState<MemberTag | null>(null);
   const [pending, startTransition] = useTransition();
@@ -28,7 +34,9 @@ export function TagManager({ tags }: { tags: MemberTag[] }) {
       }}
     >
       <DialogTrigger asChild>
-        <Button variant="outline">Manage tags</Button>
+        <Button variant="outline" disabled={disabled}>
+          Manage tags
+        </Button>
       </DialogTrigger>
       <DialogContent className="max-h-[85dvh] overflow-y-auto">
         <DialogHeader>

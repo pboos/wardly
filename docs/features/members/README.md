@@ -31,6 +31,24 @@ preserve tags. See [member sync](../member-sync/README.md).
   badge with a departure icon. It is not a user tag and cannot be edited manually.
   Header totals exclude moved-out members; shown counts reflect filters.
 
+## Bulk tag editing
+
+- Check individual members on desktop or mobile. “Select all shown” selects only
+  members matching the current filters and shows a mixed state for partial selection.
+- The selection toolbar offers Add tags, Remove tags, and Clear. Both operations
+  open a searchable multi-tag dialog with an explicit “Apply to N members” action.
+  Existing tags are preserved on add; removal affects only the chosen tags.
+- Changing any filter clears selection. Data refreshes prune members no longer
+  visible. Success clears selection; failure retains it and shows an error.
+  Selection, filters, and tag controls are disabled during submission.
+- All selected member and tag IDs must belong to the signed-in user's ward.
+  Missing or foreign IDs reject the entire operation. Writes are batched inside
+  one transaction; repeated adds/removals are harmless. The action accepts up to
+  2,000 members and 50 tags per request. Moved-out membership is never changed.
+- [Bulk action](../../../app/members/bulk-tag-actions.ts),
+  [toolbar/dialog](../../../app/members/bulk-tag-toolbar.tsx), and
+  [selection state](../../../app/members/use-member-selection.ts) implement this flow.
+
 ## Household grouping
 
 - Members sharing a saved external household UUID appear together. Missing or
@@ -62,4 +80,5 @@ membership is inferred from names, addresses, or age.
 - [Tag actions](../../../app/members/actions.ts) and [validation/filter rules](../../../app/members/tags.ts)
 
 Run `npm test` for grouping, AND/exclusion filters, tag lifecycle, ward isolation,
-and returning-member tag clearing regression cases.
+returning-member tag clearing, and atomic bulk updates across batches.
+Browser checks cover selection, filters, and bulk editing on desktop/mobile.

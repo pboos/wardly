@@ -18,6 +18,7 @@ export function MemberTags({
   tags,
   movedOut = false,
   compact = false,
+  disabled = false,
 }: {
   memberId: string;
   name: string;
@@ -25,6 +26,7 @@ export function MemberTags({
   tags: MemberTag[];
   movedOut?: boolean;
   compact?: boolean;
+  disabled?: boolean;
 }) {
   const [pending, startTransition] = useTransition();
   const [selected, update] = useOptimistic(
@@ -79,7 +81,7 @@ export function MemberTags({
         label={`Edit tags for ${name}`}
         tags={tags}
         selected={selected}
-        disabled={pending}
+        disabled={pending || disabled}
         onChange={(id, assigned) =>
           startTransition(async () => {
             update({ id, assigned });
