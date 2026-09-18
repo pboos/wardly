@@ -34,6 +34,11 @@ database can also use the fixed code; unknown email addresses cannot log in.
   It includes completed/overdue/unassigned tasks, a linked calling, hymn history,
   participants, speakers, and partially empty future agendas. Names, emails,
   and personal details are fictional. Existing automatic task types are reused.
+- All twelve members have stable fictional external UUIDs and canonical `m`/`f`
+  genders. Seven households include Martin/Elena/Noah (HEAD/SPOUSE/CHILD),
+  Anna/Mia, Sarah/Jonas, Daniel/Clara, and three single-person households for
+  Lukas, Peter, and Ruth (HEAD). Household UUIDs are stable across resets and
+  stored on each member. Shared households can include different surnames.
 - The demo ward uses `Europe/Zurich` and an example sacrament start time of
   `09:00`. Sunday task reminders remain disabled because demo mode enables
   `LOCAL_AUTH_BYPASS`; no reminder emails are sent, even with

@@ -7,20 +7,26 @@ import {
 } from "../../lib/sunday-meetings/calendar.ts";
 import { standardAgendaForMeeting } from "../../lib/sunday-meetings/templates.ts";
 
+// Explicit numeric keys keep fictional UUIDs stable when fixture rows are reordered.
+// Columns: member key, household key, role, first name, last name, gender, birth date.
 const people = [
-  ["Martin", "Keller", "male", "1981-04-12"],
-  ["Anna", "Meier", "female", "1986-08-21"],
-  ["Lukas", "Weber", "male", "1990-02-03"],
-  ["Sarah", "Fischer", "female", "1994-06-18"],
-  ["Daniel", "Huber", "male", "1975-11-09"],
-  ["Elena", "Baumann", "female", "2000-03-25"],
-  ["Noah", "Keller", "male", "2010-07-14"],
-  ["Mia", "Meier", "female", "2012-09-02"],
-  ["Jonas", "Fischer", "male", "2014-01-30"],
-  ["Clara", "Huber", "female", "2019-12-06"],
-  ["Peter", "Schmid", "male", "1952-05-17"],
-  ["Ruth", "Schmid", "female", "1954-10-11"],
-];
+  [1, 1, "HEAD", "Martin", "Keller", "m", "1981-04-12"],
+  [2, 2, "HEAD", "Anna", "Meier", "f", "1986-08-21"],
+  [3, 3, "HEAD", "Lukas", "Weber", "m", "1990-02-03"],
+  [4, 4, "HEAD", "Sarah", "Fischer", "f", "1994-06-18"],
+  [5, 5, "HEAD", "Daniel", "Huber", "m", "1975-11-09"],
+  [6, 1, "SPOUSE", "Elena", "Baumann", "f", "2000-03-25"],
+  [7, 1, "CHILD", "Noah", "Keller", "m", "2010-07-14"],
+  [8, 2, "CHILD", "Mia", "Meier", "f", "2012-09-02"],
+  [9, 4, "CHILD", "Jonas", "Fischer", "m", "2014-01-30"],
+  [10, 5, "CHILD", "Clara", "Huber", "f", "2019-12-06"],
+  [11, 6, "HEAD", "Peter", "Schmid", "m", "1952-05-17"],
+  [12, 7, "HEAD", "Ruth", "Schmid", "f", "1954-10-11"],
+] as const;
+
+function fixtureUuid(kind: "member" | "household", key: number): string {
+  return `00000000-0000-4000-${kind === "member" ? "8000" : "9000"}-${String(key).padStart(12, "0")}`;
+}
 
 /** One atomic fixture, seeded only into an empty database. Restarts preserve edits. */
 export async function seedDemo(
@@ -53,12 +59,23 @@ export async function seedDemo(
     const members = [];
     for (const [
       index,
-      [first_name, last_name, gender, birth_date],
+      [
+        memberKey,
+        householdKey,
+        external_household_role,
+        first_name,
+        last_name,
+        gender,
+        birth_date,
+      ],
     ] of people.entries()) {
       members.push(
         await tx.member.create({
           data: {
             ward_id: ward.id,
+            external_uuid: fixtureUuid("member", memberKey),
+            external_household_uuid: fixtureUuid("household", householdKey),
+            external_household_role,
             first_name,
             last_name,
             gender,

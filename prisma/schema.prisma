@@ -71,6 +71,7 @@ model member {
   external_household_role String?
   first_name  String
   last_name   String
+  // Restricted to m/f by the member_gender_check CHECK in the initial migration.
   gender      String
   birth_date  String?
   email       String?

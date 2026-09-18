@@ -88,10 +88,11 @@ CREATE INDEX idx_login_created_at ON login (created_at);
 
 Members are retained for assignment history even after moving away. External UUIDs
 are unique within a ward and are the sole sync identity; internal IDs retain
-assignment references. Nullable external IDs support local/demo members, which
+assignment references. Nullable external IDs support local members, which
 sync leaves untouched. Household UUID and source role are stored on each member;
 there is no household entity. Omitted household fields preserve saved values;
-explicit null or blank values clear them.
+explicit null or blank values clear them. Gender is stored only as `m` or `f`,
+enforced by a database CHECK constraint.
 
 ```sql
 CREATE TABLE member (
@@ -102,7 +103,7 @@ CREATE TABLE member (
   external_household_role TEXT,
   first_name   TEXT NOT NULL,
   last_name    TEXT NOT NULL,
-  gender       TEXT NOT NULL,
+  gender       TEXT NOT NULL CHECK (gender IN ('m', 'f')),
   birth_date   TEXT,
   email        TEXT,
   is_baptized  BOOLEAN NOT NULL,

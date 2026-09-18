@@ -76,6 +76,45 @@ test("sync matches UUIDs, persists households, isolates wards, and preserves unk
     const saved = () =>
       prisma.member.findUniqueOrThrow({ where: { id: existing.id } });
     const preview = (row) => parseSync(JSON.stringify([row]));
+    for (const [gender, expected] of [
+      ["m", "m"],
+      ["f", "f"],
+      [" M ", "m"],
+      [" F ", "f"],
+      ["MALE", "m"],
+      ["female", "f"],
+    ]) {
+      const row = { ...incoming, externalUuid: `gender-${gender.trim()}`, gender };
+      const result = await preview(row);
+      assert.equal(result.new[0].gender, expected);
+      // Send the original alias to exercise commit's independent normalization.
+      await commitSync(plan({ inserts: [row] }));
+      const savedGender = await prisma.member.findFirstOrThrow({
+        where: { external_uuid: row.externalUuid },
+      });
+      assert.equal(savedGender.gender, expected);
+      await prisma.member.delete({ where: { id: savedGender.id } });
+    }
+    for (const gender of [
+      undefined,
+      null,
+      "",
+      " ",
+      "unknown",
+      "other",
+      1,
+      {},
+      [],
+    ]) {
+      const row = { ...incoming, gender };
+      assert.match((await preview(row)).error, /gender/);
+      await assert.rejects(commitSync(plan({ inserts: [row] })), /gender/);
+      await assert.rejects(
+        commitSync(plan({ updates: [{ ...row, id: existing.id }] })),
+        /gender/,
+      );
+    }
+
     let diff = await preview(incoming);
     assert.equal(diff.unchanged.length, 1);
     assert.equal(diff.updated.length, 0);

@@ -49,7 +49,10 @@ strings rather than an enum. Changes appear in the sync preview.
 ## Data and sync rules
 
 Every exported member must provide a nonempty UUID and preferred name,
-MALE/FEMALE sex, and birth date (YYYY-MM-DD or null).
+MALE/FEMALE sex, and birth date (YYYY-MM-DD or null). The exporter emits `m`/`f`.
+Import accepts `m`/`f` and `male`/`female` case-insensitively with surrounding
+whitespace removed, then stores only `m`/`f`. Missing or other values fail both
+preview and commit; a database CHECK also rejects noncanonical direct writes.
 Email may be omitted, null, or a string. Optional household identifiers are
 retained in JSON. Empty lists, more than 2000 rows, and exports over 5 MB fail (the export and importer share the same limits).
 

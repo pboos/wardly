@@ -6,7 +6,7 @@ export type IncomingMember = {
   externalHouseholdRole?: string | null;
   firstName: string;
   lastName: string;
-  gender: string;
+  gender: "m" | "f";
   birthDate: string | null;
   email?: string | null;
   isBaptized?: boolean;
@@ -84,8 +84,13 @@ export function parseIncoming(rawText: string): IncomingMember[] {
     };
     if (row.isBaptized != null && typeof row.isBaptized !== "boolean")
       fail("isBaptized must be a boolean, null, or omitted.");
-    const gender =
+    const rawGender =
       typeof row.gender === "string" ? row.gender.trim().toLowerCase() : "";
+    const gender =
+      rawGender === "male" ? "m" : rawGender === "female" ? "f" : rawGender;
+    if (gender !== "m" && gender !== "f") {
+      return fail("gender must be m or f (male/female are also accepted).");
+    }
     // Explicit allowlist: nested source data and arbitrary keys never reach writes.
     return {
       externalUuid,
@@ -93,7 +98,7 @@ export function parseIncoming(rawText: string): IncomingMember[] {
       externalHouseholdRole: optionalString("externalHouseholdRole"),
       firstName: row.firstName.trim().replace(/\s+/g, " "),
       lastName: row.lastName.trim().replace(/\s+/g, " "),
-      gender: gender === "male" ? "m" : gender === "female" ? "f" : gender,
+      gender,
       birthDate:
         typeof row.birthDate === "string" ? row.birthDate.trim() || null : null,
       email: optionalString("email"),

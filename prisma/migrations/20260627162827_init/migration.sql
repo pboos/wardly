@@ -41,7 +41,7 @@ CREATE TABLE "member" (
     "external_household_role" TEXT,
     "first_name" TEXT NOT NULL,
     "last_name" TEXT NOT NULL,
-    "gender" TEXT NOT NULL,
+    "gender" TEXT NOT NULL CONSTRAINT "member_gender_check" CHECK ("gender" IN ('m', 'f')),
     "birth_date" TEXT,
     "email" TEXT,
     "is_baptized" BOOLEAN NOT NULL,
