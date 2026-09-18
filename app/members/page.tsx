@@ -20,6 +20,8 @@ export default async function MembersPage() {
     email: m.email,
     is_baptized: m.is_baptized,
     status: m.status,
+    external_household_uuid: m.external_household_uuid,
+    external_household_role: m.external_household_role,
   }));
 
   const totalMembers = members.filter((m) => m.status !== "moved").length;

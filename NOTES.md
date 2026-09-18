@@ -12,11 +12,7 @@ Present plan before implementation.
 For db changes no need to create a new migration. Update the one existing one and then delete db and recreate it.
 
 member list
-- sync with script
-  - member uuid from lcr/external - use this to match member instead of the other way we had using name/birthdate/...
-  - store houshold (and role) on record
-    - so we can group by household in list
-- instead of status maybe have flag that marks those that moved out (boolean column)
+- instead of status maybe have a boolean column that marks those that moved out specifically
 - have tags/flags that can be added (multiple) to members
   - those could then be used to mark "unknown" or "hide" or "focus" or anything.
 
