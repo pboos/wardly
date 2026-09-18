@@ -36,6 +36,9 @@ CREATE TABLE "login" (
 CREATE TABLE "member" (
     "id" TEXT NOT NULL PRIMARY KEY,
     "ward_id" TEXT NOT NULL,
+    "external_uuid" TEXT,
+    "external_household_uuid" TEXT,
+    "external_household_role" TEXT,
     "first_name" TEXT NOT NULL,
     "last_name" TEXT NOT NULL,
     "gender" TEXT NOT NULL,
@@ -247,3 +250,5 @@ CREATE TABLE "task_digest_delivery" (
 );
 CREATE UNIQUE INDEX "task_digest_delivery_ward_id_user_id_sunday_date_key"
 ON "task_digest_delivery"("ward_id", "user_id", "sunday_date");
+
+CREATE UNIQUE INDEX "member_ward_id_external_uuid_key" ON "member"("ward_id", "external_uuid");

@@ -39,11 +39,12 @@ undefined/empty array slots become null. Unsupported objects/nonfinite numbers,
 cycles, and excessive nesting fail rather than silently losing data. Object keys
 are sorted so source property order does not cause false list conflicts.
 
-The importer explicitly reads only supported top-level fields. It ignores `lcr`,
-external identifiers, and other extra fields; it never writes arbitrary keys or
-uses source values to override normalized fields. These extra fields survive in
-the copied JSON only, not in the database or sync preview. Keep the export if it
-will be needed later, or re-export once database support is added.
+The importer reads an explicit allowlist, including `externalUuid`,
+`externalHouseholdUuid`, and `externalHouseholdRole`. It ignores nested `lcr` and
+other extra fields. Household UUID and source role are stored directly on each
+member, without a separate household entity. Omitted household fields preserve
+saved values; explicit null or blank strings clear them. Roles remain source
+strings rather than an enum. Changes appear in the sync preview.
 
 ## Data and sync rules
 
@@ -53,22 +54,28 @@ Email may be omitted, null, or a string. Optional household identifiers are
 retained in JSON. Empty lists, more than 2000 rows, and exports over 5 MB fail (the export and importer share the same limits).
 
 Missing email means unknown: preview ignores email changes and commits preserve
-existing emails for updates, reactivations, ambiguity resolutions, and name-change
-merges. New members without an email are inserted with null. Explicit null or an
+existing emails for updates and reactivations. New members without an email
+are inserted with null. Explicit null or an
 empty email string still clears a saved email; a provided string updates it.
 Malformed email values are rejected by the import action.
 
 A missing or null LCR baptism flag exports without `isBaptized`. The importer
 also accepts null as unknown. Preview ignores unknown baptism values and commits
-preserve saved values for updates, reactivations, ambiguity resolutions, and
-merges. Explicit true/false updates the value; other types are rejected. New
+preserve saved values for updates and reactivations. Explicit true/false updates
+the value; other types are rejected. New
 members with unknown baptism status retain the importer's false default because
 the database requires a boolean. The console reports how many members lack the
 flag and asks for review of new members; unknown is not evidence of no baptism.
 
-The current sync action matches normalized first/last names, using birth date to
-resolve duplicate names. It uses birth date and gender to suggest name changes.
-Exported external IDs are not persisted or used for matching.
+Sync matches only `externalUuid` within the current ward. Missing/blank or
+duplicate external UUIDs are rejected before preview and again on commit.
+Names, gender, birth dates, and household changes update the same internal
+member ID, preserving assignment history. No name-based fallback or manual
+merge suggestions remain. Unknown UUIDs create members; missing imported UUIDs
+mark members moved; returning UUIDs reactivate moved members. Locally created
+members without external UUIDs are left untouched. Old exports without UUIDs
+must be exported again. UUIDs are treated as opaque, trimmed source identifiers.
+The database enforces uniqueness per ward; commit checks both ward and identity.
 
 ## Limitations and troubleshooting
 
@@ -83,10 +90,11 @@ Missing email addresses cannot be recovered from this payload.
 
 - [Console script](../../../app/admin/sync/lcr-script.ts)
 - [Instructions](../../../app/admin/sync/page.tsx)
-- [Preview and resolution UI](../../../app/admin/sync/sync-form.tsx)
-- [Parsing, matching, and applying](../../../app/admin/sync/actions.ts)
+- [Preview and confirmation UI](../../../app/admin/sync/sync-form.tsx)
+- [Server actions and applying](../../../app/admin/sync/actions.ts)
+- [Validation, matching, and field mapping](../../../app/admin/sync/sync-model.ts)
 - [Synthetic browser tests](../../../app/admin/sync/lcr-script.test.mjs)
-- [Sync email persistence tests](../../../app/admin/sync/actions.test.mjs)
+- [Sync identity and persistence tests](../../../app/admin/sync/actions.test.mjs)
 
 Run `npm test`. Synthetic browser tests verify extraction and failure cases;
 live LCR still requires verification in the signed-in browser.

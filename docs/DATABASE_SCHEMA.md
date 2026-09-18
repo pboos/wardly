@@ -86,12 +86,20 @@ CREATE INDEX idx_login_created_at ON login (created_at);
 
 ## 4. `member`
 
-Members are retained for assignment history even after moving away.
+Members are retained for assignment history even after moving away. External UUIDs
+are unique within a ward and are the sole sync identity; internal IDs retain
+assignment references. Nullable external IDs support local/demo members, which
+sync leaves untouched. Household UUID and source role are stored on each member;
+there is no household entity. Omitted household fields preserve saved values;
+explicit null or blank values clear them.
 
 ```sql
 CREATE TABLE member (
   id           TEXT PRIMARY KEY,
   ward_id      TEXT NOT NULL REFERENCES ward (id) ON DELETE CASCADE,
+  external_uuid TEXT,
+  external_household_uuid TEXT,
+  external_household_role TEXT,
   first_name   TEXT NOT NULL,
   last_name    TEXT NOT NULL,
   gender       TEXT NOT NULL,
@@ -103,6 +111,7 @@ CREATE TABLE member (
   updated_at   TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
+CREATE UNIQUE INDEX idx_member_ward_external_uuid ON member (ward_id, external_uuid);
 CREATE INDEX idx_member_ward_id ON member (ward_id);
 CREATE INDEX idx_member_ward_status ON member (ward_id, status);
 ```

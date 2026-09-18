@@ -133,3 +133,7 @@ const wards = await prisma.ward.findMany();
 ```
 
 The singleton pattern avoids exhausting connections during Next.js hot reloading in development.
+
+The initial migration also includes member external UUID, household UUID, and
+household role, with unique member UUIDs per ward. Reset local databases after
+this schema change; see [member sync](features/member-sync/README.md).

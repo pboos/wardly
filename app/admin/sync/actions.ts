@@ -2,387 +2,102 @@
 
 import { getCurrentUser } from "@/lib/auth/dal";
 import { prisma } from "@/lib/prisma";
-import { MAX_SYNC_BYTES, MAX_SYNC_ROWS } from "./limits";
-
-// --- Types (shared with the client component) ---
-
-export type IncomingMember = {
-  firstName: string;
-  lastName: string;
-  gender: string;
-  birthDate: string | null;
-  email?: string | null;
-  isBaptized?: boolean;
-};
-
-export type ExistingMember = {
-  id: string;
-  first_name: string;
-  last_name: string;
-  gender: string;
-  birth_date: string | null;
-  email: string | null;
-  is_baptized: boolean;
-  status: string;
-};
-
-export type FieldChanges = {
-  email?: { from: string | null; to: string | null };
-  birth_date?: { from: string | null; to: string | null };
-  is_baptized?: { from: boolean; to: boolean };
-};
-
-export type SyncDiff = {
-  new: IncomingMember[];
-  moved: ExistingMember[];
-  updated: {
-    existing: ExistingMember;
-    incoming: IncomingMember;
-    changes: FieldChanges;
-    reactivate: boolean;
-  }[];
-  unchanged: { id: string; first_name: string; last_name: string }[];
-  ambiguous: { incoming: IncomingMember; candidates: ExistingMember[] }[];
-  possibleNameChanges: {
-    incoming: IncomingMember;
-    movedMember: ExistingMember;
-  }[];
-};
-
-export type ResolvedPlan = {
-  inserts: IncomingMember[];
-  moves: string[];
-  updates: {
-    id: string;
-    email?: string | null;
-    birthDate: string | null;
-    isBaptized?: boolean;
-    reactivate: boolean;
-  }[];
-  merges: {
-    existingId: string;
-    firstName: string;
-    lastName: string;
-    email?: string | null;
-    birthDate: string | null;
-    isBaptized?: boolean;
-  }[];
-};
-
-// --- Helpers ---
-
-function normalizeName(name: string): string {
-  return name.trim().replace(/\s+/g, " ").toLowerCase();
-}
-
-function normalizeGender(gender: string): string {
-  const g = gender.trim().toLowerCase();
-  if (g === "male" || g === "m") return "m";
-  if (g === "female" || g === "f") return "f";
-  return g;
-}
-
-function normalizeIncoming(raw: IncomingMember): IncomingMember {
-  return {
-    firstName: (raw.firstName ?? "").trim().replace(/\s+/g, " "),
-    lastName: (raw.lastName ?? "").trim().replace(/\s+/g, " "),
-    gender: normalizeGender(raw.gender ?? ""),
-    birthDate: raw.birthDate?.trim() || null,
-    email: raw.email === undefined ? undefined : raw.email?.trim() || null,
-    isBaptized: raw.isBaptized,
-  };
-}
-
-function computeChanges(
-  existing: ExistingMember,
-  incoming: IncomingMember,
-): FieldChanges {
-  const changes: FieldChanges = {};
-  if (incoming.email !== undefined && existing.email !== incoming.email) {
-    changes.email = { from: existing.email, to: incoming.email };
-  }
-  if (existing.birth_date !== incoming.birthDate) {
-    changes.birth_date = { from: existing.birth_date, to: incoming.birthDate };
-  }
-  if (
-    incoming.isBaptized !== undefined &&
-    existing.is_baptized !== incoming.isBaptized
-  ) {
-    changes.is_baptized = {
-      from: existing.is_baptized,
-      to: incoming.isBaptized,
-    };
-  }
-  return changes;
-}
-
-function matchMembers(
-  incoming: IncomingMember[],
-  members: ExistingMember[],
-): SyncDiff {
-  const matchedMemberIds = new Set<string>();
-
-  const result: SyncDiff = {
-    new: [],
-    moved: [],
-    updated: [],
-    unchanged: [],
-    ambiguous: [],
-    possibleNameChanges: [],
-  };
-
-  for (const inc of incoming) {
-    const normalizedFirst = normalizeName(inc.firstName);
-    const normalizedLast = normalizeName(inc.lastName);
-
-    const candidates = members.filter(
-      (m) =>
-        normalizeName(m.first_name) === normalizedFirst &&
-        normalizeName(m.last_name) === normalizedLast,
-    );
-
-    if (candidates.length === 0) {
-      result.new.push(inc);
-    } else if (candidates.length === 1) {
-      const candidate = candidates[0];
-      matchedMemberIds.add(candidate.id);
-      const changes = computeChanges(candidate, inc);
-      const reactivate = candidate.status === "moved";
-      if (Object.keys(changes).length === 0 && !reactivate) {
-        result.unchanged.push({
-          id: candidate.id,
-          first_name: candidate.first_name,
-          last_name: candidate.last_name,
-        });
-      } else {
-        result.updated.push({
-          existing: candidate,
-          incoming: inc,
-          changes,
-          reactivate,
-        });
-      }
-    } else {
-      const birthDateMatches = inc.birthDate
-        ? candidates.filter((c) => c.birth_date === inc.birthDate)
-        : [];
-      if (birthDateMatches.length === 1) {
-        const candidate = birthDateMatches[0];
-        matchedMemberIds.add(candidate.id);
-        const changes = computeChanges(candidate, inc);
-        const reactivate = candidate.status === "moved";
-        if (Object.keys(changes).length === 0 && !reactivate) {
-          result.unchanged.push({
-            id: candidate.id,
-            first_name: candidate.first_name,
-            last_name: candidate.last_name,
-          });
-        } else {
-          result.updated.push({
-            existing: candidate,
-            incoming: inc,
-            changes,
-            reactivate,
-          });
-        }
-      } else {
-        result.ambiguous.push({ incoming: inc, candidates });
-      }
-    }
-  }
-
-  for (const m of members) {
-    if (!matchedMemberIds.has(m.id) && m.status !== "moved") {
-      result.moved.push(m);
-    }
-  }
-
-  return result;
-}
-
-function findPossibleNameChanges(
-  newRows: IncomingMember[],
-  movedRows: ExistingMember[],
-): { incoming: IncomingMember; movedMember: ExistingMember }[] {
-  const pairs: { incoming: IncomingMember; movedMember: ExistingMember }[] = [];
-  for (const inc of newRows) {
-    if (!inc.birthDate) continue;
-    for (const moved of movedRows) {
-      if (inc.birthDate === moved.birth_date && inc.gender === moved.gender) {
-        pairs.push({ incoming: inc, movedMember: moved });
-      }
-    }
-  }
-  return pairs;
-}
-
-// --- Action 1: parse + classify ---
+import {
+  matchMembers,
+  memberData,
+  parseIncoming,
+  type ResolvedPlan,
+  type SyncDiff,
+} from "./sync-model";
+export type {
+  IncomingMember,
+  ExistingMember,
+  FieldChanges,
+  SyncDiff,
+  ResolvedPlan,
+} from "./sync-model";
 
 export async function parseSync(
   rawText: string,
 ): Promise<SyncDiff | { error: string }> {
   const user = await getCurrentUser();
-
-  if (Buffer.byteLength(rawText, "utf8") > MAX_SYNC_BYTES) {
-    return { error: "Input exceeds 5 MB limit." };
-  }
-
-  let parsed: unknown;
+  let incoming;
   try {
-    parsed = JSON.parse(rawText);
-  } catch {
+    incoming = parseIncoming(rawText);
+  } catch (error) {
     return {
-      error: "Invalid JSON. Make sure you copied the array from the console.",
+      error: error instanceof Error ? error.message : "Invalid member list.",
     };
   }
-
-  if (!Array.isArray(parsed)) {
-    return { error: "Expected a JSON array of member objects." };
-  }
-
-  if (parsed.length > MAX_SYNC_ROWS) {
-    return { error: `Input exceeds ${MAX_SYNC_ROWS} row limit.` };
-  }
-
-  const incoming: IncomingMember[] = [];
-  for (let i = 0; i < parsed.length; i++) {
-    const item = parsed[i];
-    if (typeof item !== "object" || item === null) {
-      return { error: `Row ${i + 1}: expected an object.` };
-    }
-    const row = item as Record<string, unknown>;
-    if (typeof row.firstName !== "string" || typeof row.lastName !== "string") {
-      return {
-        error: `Row ${i + 1}: firstName and lastName are required strings.`,
-      };
-    }
-    if (
-      Object.hasOwn(row, "email") &&
-      row.email !== null &&
-      typeof row.email !== "string"
-    ) {
-      return {
-        error: `Row ${i + 1}: email must be a string or null, or omitted to preserve it.`,
-      };
-    }
-    if (row.isBaptized != null && typeof row.isBaptized !== "boolean") {
-      return {
-        error: `Row ${i + 1}: isBaptized must be a boolean, null, or omitted.`,
-      };
-    }
-    // Explicit allowlist: source snapshots and future export fields stay out of DB writes.
-    incoming.push(
-      normalizeIncoming({
-        firstName: row.firstName,
-        lastName: row.lastName,
-        gender: typeof row.gender === "string" ? row.gender : "",
-        birthDate: typeof row.birthDate === "string" ? row.birthDate : null,
-        email: Object.hasOwn(row, "email")
-          ? typeof row.email === "string"
-            ? row.email
-            : null
-          : undefined,
-        isBaptized:
-          typeof row.isBaptized === "boolean" ? row.isBaptized : undefined,
-      }),
-    );
-  }
-
   const members = await prisma.member.findMany({
     where: { ward_id: user.ward_id },
-    select: {
-      id: true,
-      first_name: true,
-      last_name: true,
-      gender: true,
-      birth_date: true,
-      email: true,
-      is_baptized: true,
-      status: true,
-    },
   });
-
-  const diff = matchMembers(incoming, members as ExistingMember[]);
-  diff.possibleNameChanges = findPossibleNameChanges(diff.new, diff.moved);
-
-  return diff;
+  return matchMembers(incoming, members);
 }
 
-// --- Action 2: commit ---
-
-export async function commitSync(plan: ResolvedPlan): Promise<{
-  added: number;
-  moved: number;
-  updated: number;
-}> {
+export async function commitSync(
+  plan: ResolvedPlan,
+): Promise<{ added: number; moved: number; updated: number }> {
   const user = await getCurrentUser();
-
+  if (
+    !plan ||
+    !Array.isArray(plan.inserts) ||
+    !Array.isArray(plan.updates) ||
+    !Array.isArray(plan.moves)
+  )
+    throw new Error("Invalid sync plan.");
+  // Validate again at the server boundary, including uniqueness across all writes.
+  const rows = [...plan.inserts, ...plan.updates];
+  const normalized = rows.length ? parseIncoming(JSON.stringify(rows)) : [];
+  const updateIds = plan.updates.map((row) => row.id);
+  const ids = [...plan.moves, ...updateIds];
+  if (
+    ids.some((id) => typeof id !== "string" || !id) ||
+    new Set(ids).size !== ids.length
+  )
+    throw new Error("Invalid or duplicate member IDs in sync plan.");
   return prisma.$transaction(async (tx) => {
-    let added = 0;
     let moved = 0;
-    let updated = 0;
-
-    for (const inc of plan.inserts) {
+    for (const incoming of normalized.slice(0, plan.inserts.length)) {
       await tx.member.create({
         data: {
+          ...memberData(incoming),
           ward_id: user.ward_id,
-          first_name: inc.firstName,
-          last_name: inc.lastName,
-          gender: inc.gender,
-          birth_date: inc.birthDate,
-          email: inc.email ?? null,
-          is_baptized: inc.isBaptized ?? false,
+          is_baptized: incoming.isBaptized ?? false,
           status: "active",
         },
       });
-      added++;
     }
-
     for (const id of plan.moves) {
-      await tx.member.updateMany({
-        where: { id, ward_id: user.ward_id },
+      const result = await tx.member.updateMany({
+        where: { id, ward_id: user.ward_id, external_uuid: { not: null } },
         data: { status: "moved", updated_at: new Date() },
       });
-      moved++;
+      if (result.count !== 1)
+        throw new Error(
+          "Member changed or is unavailable. Preview the sync again.",
+        );
+      moved += result.count;
     }
-
-    for (const upd of plan.updates) {
-      const data: Record<string, unknown> = {
-        ...(upd.email !== undefined ? { email: upd.email } : {}),
-        birth_date: upd.birthDate,
-        ...(upd.isBaptized !== undefined
-          ? { is_baptized: upd.isBaptized }
-          : {}),
-        updated_at: new Date(),
-      };
-      if (upd.reactivate) {
-        data.status = "active";
-      }
-      await tx.member.updateMany({
-        where: { id: upd.id, ward_id: user.ward_id },
-        data,
-      });
-      updated++;
-    }
-
-    for (const merge of plan.merges) {
-      await tx.member.updateMany({
-        where: { id: merge.existingId, ward_id: user.ward_id },
+    for (const [index, update] of plan.updates.entries()) {
+      const incoming = normalized[plan.inserts.length + index];
+      const result = await tx.member.updateMany({
+        where: {
+          id: update.id,
+          ward_id: user.ward_id,
+          external_uuid: incoming.externalUuid,
+        },
         data: {
-          first_name: merge.firstName,
-          last_name: merge.lastName,
-          ...(merge.email !== undefined ? { email: merge.email } : {}),
-          birth_date: merge.birthDate,
-          ...(merge.isBaptized !== undefined
-            ? { is_baptized: merge.isBaptized }
-            : {}),
-          status: "active",
+          ...memberData(incoming),
+          ...(update.reactivate === true ? { status: "active" } : {}),
           updated_at: new Date(),
         },
       });
-      updated++;
+      if (result.count !== 1)
+        throw new Error(
+          "Member identity changed or is unavailable. Preview the sync again.",
+        );
     }
-
-    return { added, moved, updated };
+    return { added: plan.inserts.length, moved, updated: plan.updates.length };
   });
 }
