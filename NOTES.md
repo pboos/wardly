@@ -12,15 +12,7 @@ Present plan before implementation.
 For db changes no need to create a new migration. Update the one existing one and then delete db and recreate it.
 
 member list
-- sync
-  - store the member uuid from lcr/external - use this to match member instead of the other way we had using name/birthdate/...
-  - store in db also: houshold and household role from lcr/external
-- group by household in list
-  - show head of household first and then the others
-  - somehow with colors or border (or something else) show which belong to the same household.
-    - option is to have alternating colors for each houshold (as normally with each row, now with each household)
-    - or indenting the members beside the household a bit to the right
-- instead of status maybe have flag that marks those that moved out (boolean column)
+- instead of status maybe have a boolean column that marks those that moved out specifically
 - have tags/flags that can be added (multiple) to members
   - those could then be used to mark "unknown" or "hide" or "focus" or anything.
 

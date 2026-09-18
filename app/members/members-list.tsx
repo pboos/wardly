@@ -4,7 +4,6 @@ import { useEffect, useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { IconCheck } from "@tabler/icons-react";
-import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
@@ -23,10 +22,9 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { cn } from "@/lib/utils";
-import {
-  updateMemberStatus,
-  type MemberStatus,
-} from "./actions";
+import { groupMembersByHousehold } from "./households";
+import { StatusBadge } from "./status-badge";
+import { updateMemberStatus, type MemberStatus } from "./actions";
 
 export type Member = {
   id: string;
@@ -37,38 +35,11 @@ export type Member = {
   email: string | null;
   is_baptized: boolean;
   status: string;
+  external_household_uuid: string | null;
+  external_household_role: string | null;
 };
 
 type StatusScope = "active" | "except_moved" | "all";
-
-const STATUS_BADGE_VARIANT: Record<
-  string,
-  "default" | "secondary" | "outline" | "destructive"
-> = {
-  active: "default",
-  unknown: "outline",
-  unknown_address: "outline",
-  no_contact: "outline",
-  moved: "outline",
-  hidden: "secondary",
-};
-
-const STATUS_LABEL: Record<string, string> = {
-  active: "Active",
-  moved: "Moved",
-  unknown: "Unknown",
-  unknown_address: "Unknown address",
-  no_contact: "No contact",
-  hidden: "Hidden",
-};
-
-const TARGET_STATUSES: MemberStatus[] = [
-  "active",
-  "unknown",
-  "unknown_address",
-  "no_contact",
-  "hidden",
-];
 
 export function MembersList({
   members,
@@ -112,15 +83,25 @@ export function MembersList({
     });
   }, [localMembers, nameQuery, statusScope]);
 
+  const households = useMemo(() => {
+    const visibleIds = new Set(filtered.map((member) => member.id));
+    return groupMembersByHousehold(localMembers)
+      .map((household) => ({
+        ...household,
+        members: household.members.filter((member) =>
+          visibleIds.has(member.id),
+        ),
+      }))
+      .filter((household) => household.members.length > 0);
+  }, [localMembers, filtered]);
+
   useEffect(() => {
     onShownCountChange?.(filtered.length);
   }, [filtered, onShownCountChange]);
 
   function handleStatusChange(member: Member, newStatus: MemberStatus) {
     setLocalMembers((prev) =>
-      prev.map((m) =>
-        m.id === member.id ? { ...m, status: newStatus } : m,
-      ),
+      prev.map((m) => (m.id === member.id ? { ...m, status: newStatus } : m)),
     );
     startTransition(async () => {
       try {
@@ -169,8 +150,6 @@ export function MembersList({
         </div>
       </div>
 
-      <div>
-      </div>
       {filtered.length === 0 ? (
         <p className="py-8 text-center text-sm text-muted-foreground">
           No members match.
@@ -191,110 +170,87 @@ export function MembersList({
                   <TableHead>Status</TableHead>
                 </TableRow>
               </TableHeader>
-              <TableBody>
-                {filtered.map((m) => (
-                  <TableRow key={m.id}>
-                    <TableCell className="font-medium">
-                      {m.last_name}, {m.first_name}
-                    </TableCell>
-                    <TableCell>{m.gender}</TableCell>
-                    <TableCell>{m.birth_date ?? "—"}</TableCell>
-                    <TableCell>{m.email ?? "—"}</TableCell>
-                    <TableCell>
-                      {m.is_baptized ? (
-                        <IconCheck className="size-4" />
-                      ) : (
-                        "—"
-                      )}
-                    </TableCell>
-                    <TableCell>
-                      <StatusBadge
-                        member={m}
-                        onStatusChange={handleStatusChange}
-                      />
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
+              {households.map((household, index) => (
+                <TableBody
+                  key={household.key}
+                  aria-label={household.label}
+                  className={cn(
+                    "border-b border-border last:border-b-0",
+                    index % 2 === 1 && "bg-muted/40",
+                  )}
+                >
+                  {household.members.map((m) => (
+                    <TableRow key={m.id} className="border-0">
+                      <TableCell
+                        className={cn(
+                          "font-medium",
+                          household.isHousehold &&
+                            m.id !== household.displayHeadId &&
+                            "pl-6",
+                        )}
+                      >
+                        {household.isHousehold &&
+                          m.id === household.displayHeadId && (
+                            <span className="sr-only">Head of household: </span>
+                          )}
+                        {m.last_name}, {m.first_name}
+                      </TableCell>
+                      <TableCell>{m.gender}</TableCell>
+                      <TableCell>{m.birth_date ?? "—"}</TableCell>
+                      <TableCell>{m.email ?? "—"}</TableCell>
+                      <TableCell>
+                        {m.is_baptized ? <IconCheck className="size-4" /> : "—"}
+                      </TableCell>
+                      <TableCell>
+                        <StatusBadge
+                          member={m}
+                          onStatusChange={handleStatusChange}
+                        />
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              ))}
             </Table>
           </div>
 
           {/* Mobile: name-only list */}
           <ul className="flex flex-col divide-y divide-border sm:hidden">
-            {filtered.map((m) => (
-              <li key={m.id} className="flex items-center gap-3 py-2.5">
-                <span className="flex-1 text-sm">
-                  {m.first_name} {m.last_name}
-                </span>
-                <StatusBadge
-                  member={m}
-                  onStatusChange={handleStatusChange}
-                />
+            {households.map((household, index) => (
+              <li
+                key={household.key}
+                className={cn("py-1", index % 2 === 1 && "bg-muted/40")}
+              >
+                <ul aria-label={household.label}>
+                  {household.members.map((m) => (
+                    <li
+                      key={m.id}
+                      className={cn(
+                        "flex items-center gap-3 px-2 py-2.5",
+                        household.isHousehold &&
+                          m.id !== household.displayHeadId &&
+                          "pl-6",
+                      )}
+                    >
+                      <span className="min-w-0 flex-1 break-words text-sm">
+                        {household.isHousehold &&
+                          m.id === household.displayHeadId && (
+                            <span className="sr-only">Head of household: </span>
+                          )}
+                        {m.first_name} {m.last_name}
+                      </span>
+                      <StatusBadge
+                        member={m}
+                        onStatusChange={handleStatusChange}
+                      />
+                    </li>
+                  ))}
+                </ul>
               </li>
             ))}
           </ul>
         </>
       )}
     </div>
-  );
-}
-
-function StatusBadge({
-  member,
-  onStatusChange,
-}: {
-  member: Member;
-  onStatusChange: (member: Member, status: MemberStatus) => void;
-}) {
-  const [editing, setEditing] = useState(false);
-  const isMoved = member.status === "moved";
-
-  if (isMoved || !editing) {
-    return (
-      <button
-        type="button"
-        disabled={isMoved}
-        onClick={() => setEditing(true)}
-        className={cn(
-          "inline-flex items-center rounded-4xl transition-colors",
-          !isMoved &&
-            "cursor-pointer hover:bg-muted focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50",
-          isMoved && "cursor-default",
-        )}
-        aria-label={isMoved ? undefined : `Edit status of ${member.first_name} ${member.last_name}`}
-      >
-        <Badge
-          variant={STATUS_BADGE_VARIANT[member.status] ?? "outline"}
-          className={cn(member.status === "moved" && "text-muted-foreground")}
-        >
-          {STATUS_LABEL[member.status] ?? member.status}
-        </Badge>
-      </button>
-    );
-  }
-
-  return (
-    <Select
-      open={editing}
-      onOpenChange={(o) => {
-        if (!o) setEditing(false);
-      }}
-      value=""
-      onValueChange={(v) => {
-        setEditing(false);
-        onStatusChange(member, v as MemberStatus);
-      }}
-    >
-      <SelectTrigger size="sm" className="min-w-36">
-        <SelectValue placeholder={STATUS_LABEL[member.status] ?? member.status} />
-      </SelectTrigger>
-      <SelectContent>
-        {TARGET_STATUSES.map((s) => (
-          <SelectItem key={s} value={s}>
-            {STATUS_LABEL[s]}
-          </SelectItem>
-        ))}
-      </SelectContent>
-    </Select>
   );
 }
