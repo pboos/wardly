@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { IconCheck } from "@tabler/icons-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
@@ -26,7 +25,6 @@ import { MemberTags } from "./member-tags";
 import { TagPicker } from "./tag-picker";
 import { TagManager } from "./tag-manager";
 import { matchesTags, type MemberTag } from "./tags";
-import { Badge } from "@/components/ui/badge";
 
 export type Member = {
   id: string;
@@ -181,10 +179,7 @@ export function MembersList({
                   <TableHead>Name</TableHead>
                   <TableHead>Gender</TableHead>
                   <TableHead>Birth date</TableHead>
-                  <TableHead>Email</TableHead>
-                  <TableHead>Baptized</TableHead>
                   <TableHead>Tags</TableHead>
-                  <TableHead>Moved out</TableHead>
                 </TableRow>
               </TableHeader>
               {households.map((household, index) => (
@@ -214,19 +209,15 @@ export function MembersList({
                       </TableCell>
                       <TableCell>{m.gender}</TableCell>
                       <TableCell>{m.birth_date ?? "—"}</TableCell>
-                      <TableCell>{m.email ?? "—"}</TableCell>
-                      <TableCell>
-                        {m.is_baptized ? <IconCheck className="size-4" /> : "—"}
-                      </TableCell>
                       <TableCell>
                         <MemberTags
+                          movedOut={m.is_moved_out}
                           memberId={m.id}
                           name={m.first_name + " " + m.last_name}
                           tagIds={m.tagIds}
                           tags={tags}
                         />
                       </TableCell>
-                      <TableCell>{m.is_moved_out ? "Yes" : "—"}</TableCell>
                     </TableRow>
                   ))}
                 </TableBody>
@@ -246,7 +237,7 @@ export function MembersList({
                     <li
                       key={m.id}
                       className={cn(
-                        "flex flex-col gap-2 px-2 py-2.5",
+                        "flex items-center gap-2 px-2 py-2.5",
                         household.isHousehold &&
                           m.id !== household.displayHeadId &&
                           "pl-6",
@@ -259,10 +250,9 @@ export function MembersList({
                           )}
                         {m.first_name} {m.last_name}
                       </span>
-                      {m.is_moved_out && (
-                        <Badge variant="outline">Moved out</Badge>
-                      )}
                       <MemberTags
+                        compact
+                        movedOut={m.is_moved_out}
                         memberId={m.id}
                         name={m.first_name + " " + m.last_name}
                         tagIds={m.tagIds}
