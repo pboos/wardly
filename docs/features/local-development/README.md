@@ -66,6 +66,16 @@ previously issued fixed code when the flag is disabled. Login requests, hashed
 codes, expiration, attempt limits, one-time use, redirects, and signed sessions
 remain in place. Only code generation and email delivery change.
 
+## Browser UI checks
+
+Use the repository's [check-ui skill](../../../.agents/skills/check-ui/SKILL.md)
+for Playwright checks against the local demo: email-free login, responsive
+screenshots, interaction assertions, light/dark colors, and failure recovery.
+It includes a reusable runner and scenario template, plus Linux/WSL browser
+setup and stale development CSS troubleshooting. Dependencies, session state,
+and screenshots stay outside the repository; temporary demo records are cleaned
+up without resetting existing data. Invoke it as `$check-ui` in a task.
+
 ## Implementation and verification
 
 - [Launcher](../../../scripts/demo.mjs) prepares the isolated database before Next starts.
