@@ -146,7 +146,7 @@ export type AssignmentDate = {
 export type SundayMeetingMemberHistory = {
   id: string;
   name: string;
-  status: string;
+  is_moved_out: boolean;
   lastTalk: AssignmentDate | null;
   nextTalk: AssignmentDate | null;
   lastPrayer: AssignmentDate | null;

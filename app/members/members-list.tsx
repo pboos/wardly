@@ -1,8 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState, useTransition } from "react";
-import { useRouter } from "next/navigation";
-import { toast } from "sonner";
+import { useEffect, useMemo, useState } from "react";
 import { IconCheck } from "@tabler/icons-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -10,6 +8,7 @@ import {
   Select,
   SelectContent,
   SelectItem,
+  SelectGroup,
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
@@ -23,8 +22,11 @@ import {
 } from "@/components/ui/table";
 import { cn } from "@/lib/utils";
 import { groupMembersByHousehold } from "./households";
-import { StatusBadge } from "./status-badge";
-import { updateMemberStatus, type MemberStatus } from "./actions";
+import { MemberTags } from "./member-tags";
+import { TagPicker } from "./tag-picker";
+import { TagManager } from "./tag-manager";
+import { matchesTags, type MemberTag } from "./tags";
+import { Badge } from "@/components/ui/badge";
 
 export type Member = {
   id: string;
@@ -34,40 +36,46 @@ export type Member = {
   birth_date: string | null;
   email: string | null;
   is_baptized: boolean;
-  status: string;
+  is_moved_out: boolean;
+  tagIds: string[];
   external_household_uuid: string | null;
   external_household_role: string | null;
 };
 
-type StatusScope = "active" | "except_moved" | "all";
+type StatusScope = "current" | "moved" | "all";
 
 export function MembersList({
+  tags,
   members,
   onShownCountChange,
 }: {
+  tags: MemberTag[];
   members: Member[];
   onShownCountChange?: (count: number) => void;
 }) {
-  const router = useRouter();
-  const [, startTransition] = useTransition();
-
-  const [localMembers, setLocalMembers] = useState<Member[]>(members);
   const [nameQuery, setNameQuery] = useState("");
-  const [statusScope, setStatusScope] = useState<StatusScope>("active");
-
-  // Reset local state when the server-provided prop changes (e.g. after reload).
-  // Adjusting state during render avoids cascading renders from useEffect.
-  const [prevMembers, setPrevMembers] = useState(members);
-  if (members !== prevMembers) {
-    setPrevMembers(members);
-    setLocalMembers(members);
-  }
+  const [statusScope, setStatusScope] = useState<StatusScope>("current");
+  const [included, setIncluded] = useState<string[]>([]);
+  const [excluded, setExcluded] = useState<string[]>([]);
+  const includedIds = included.filter((id) =>
+    tags.some((tag) => tag.id === id),
+  );
+  const excludedIds = excluded.filter((id) =>
+    tags.some((tag) => tag.id === id),
+  );
 
   const filtered = useMemo(() => {
+    const includedIds = included.filter((id) =>
+      tags.some((tag) => tag.id === id),
+    );
+    const excludedIds = excluded.filter((id) =>
+      tags.some((tag) => tag.id === id),
+    );
     const q = nameQuery.trim().toLowerCase();
-    return localMembers.filter((m) => {
-      if (statusScope === "active" && m.status !== "active") return false;
-      if (statusScope === "except_moved" && m.status === "moved") return false;
+    return members.filter((m) => {
+      if (statusScope === "current" && m.is_moved_out) return false;
+      if (statusScope === "moved" && !m.is_moved_out) return false;
+      if (!matchesTags(m.tagIds, includedIds, excludedIds)) return false;
 
       if (q) {
         const full = `${m.first_name} ${m.last_name}`.toLowerCase();
@@ -81,11 +89,11 @@ export function MembersList({
       }
       return true;
     });
-  }, [localMembers, nameQuery, statusScope]);
+  }, [members, nameQuery, statusScope, included, excluded, tags]);
 
   const households = useMemo(() => {
     const visibleIds = new Set(filtered.map((member) => member.id));
-    return groupMembersByHousehold(localMembers)
+    return groupMembersByHousehold(members)
       .map((household) => ({
         ...household,
         members: household.members.filter((member) =>
@@ -93,36 +101,15 @@ export function MembersList({
         ),
       }))
       .filter((household) => household.members.length > 0);
-  }, [localMembers, filtered]);
+  }, [members, filtered]);
 
   useEffect(() => {
     onShownCountChange?.(filtered.length);
   }, [filtered, onShownCountChange]);
 
-  function handleStatusChange(member: Member, newStatus: MemberStatus) {
-    setLocalMembers((prev) =>
-      prev.map((m) => (m.id === member.id ? { ...m, status: newStatus } : m)),
-    );
-    startTransition(async () => {
-      try {
-        await updateMemberStatus(member.id, newStatus);
-      } catch {
-        toast.error(
-          "Failed to update the member's status. We recommend reloading the data to make sure the list is accurate.",
-          {
-            action: {
-              label: "Reload",
-              onClick: () => router.refresh(),
-            },
-          },
-        );
-      }
-    });
-  }
-
   return (
     <div className="flex flex-col gap-4">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
+      <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-end">
         <div className="flex flex-col gap-1.5 sm:flex-1">
           <Label htmlFor="name-filter">Filter by name</Label>
           <Input
@@ -133,7 +120,7 @@ export function MembersList({
           />
         </div>
         <div className="flex flex-col gap-1.5 sm:w-56">
-          <Label htmlFor="status-scope">Status</Label>
+          <Label htmlFor="status-scope">Membership</Label>
           <Select
             value={statusScope}
             onValueChange={(v) => setStatusScope(v as StatusScope)}
@@ -142,14 +129,43 @@ export function MembersList({
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="active">Active only</SelectItem>
-              <SelectItem value="except_moved">All except moved</SelectItem>
-              <SelectItem value="all">All</SelectItem>
+              <SelectGroup>
+                <SelectItem value="current">Current members</SelectItem>
+                <SelectItem value="moved">Moved out</SelectItem>
+                <SelectItem value="all">All members</SelectItem>
+              </SelectGroup>
             </SelectContent>
           </Select>
         </div>
       </div>
 
+      <div className="flex flex-wrap items-center gap-2">
+        <TagPicker
+          label="Include tags (all)"
+          tags={tags}
+          selected={includedIds}
+          onChange={(id, checked) => {
+            setIncluded((ids) =>
+              checked ? [...ids, id] : ids.filter((value) => value !== id),
+            );
+            if (checked)
+              setExcluded((ids) => ids.filter((value) => value !== id));
+          }}
+        />
+        <TagPicker
+          label="Exclude tags"
+          tags={tags}
+          selected={excludedIds}
+          onChange={(id, checked) => {
+            setExcluded((ids) =>
+              checked ? [...ids, id] : ids.filter((value) => value !== id),
+            );
+            if (checked)
+              setIncluded((ids) => ids.filter((value) => value !== id));
+          }}
+        />
+        <TagManager tags={tags} />
+      </div>
       {filtered.length === 0 ? (
         <p className="py-8 text-center text-sm text-muted-foreground">
           No members match.
@@ -167,7 +183,8 @@ export function MembersList({
                   <TableHead>Birth date</TableHead>
                   <TableHead>Email</TableHead>
                   <TableHead>Baptized</TableHead>
-                  <TableHead>Status</TableHead>
+                  <TableHead>Tags</TableHead>
+                  <TableHead>Moved out</TableHead>
                 </TableRow>
               </TableHeader>
               {households.map((household, index) => (
@@ -202,11 +219,14 @@ export function MembersList({
                         {m.is_baptized ? <IconCheck className="size-4" /> : "—"}
                       </TableCell>
                       <TableCell>
-                        <StatusBadge
-                          member={m}
-                          onStatusChange={handleStatusChange}
+                        <MemberTags
+                          memberId={m.id}
+                          name={m.first_name + " " + m.last_name}
+                          tagIds={m.tagIds}
+                          tags={tags}
                         />
                       </TableCell>
+                      <TableCell>{m.is_moved_out ? "Yes" : "—"}</TableCell>
                     </TableRow>
                   ))}
                 </TableBody>
@@ -226,7 +246,7 @@ export function MembersList({
                     <li
                       key={m.id}
                       className={cn(
-                        "flex items-center gap-3 px-2 py-2.5",
+                        "flex flex-col gap-2 px-2 py-2.5",
                         household.isHousehold &&
                           m.id !== household.displayHeadId &&
                           "pl-6",
@@ -239,9 +259,14 @@ export function MembersList({
                           )}
                         {m.first_name} {m.last_name}
                       </span>
-                      <StatusBadge
-                        member={m}
-                        onStatusChange={handleStatusChange}
+                      {m.is_moved_out && (
+                        <Badge variant="outline">Moved out</Badge>
+                      )}
+                      <MemberTags
+                        memberId={m.id}
+                        name={m.first_name + " " + m.last_name}
+                        tagIds={m.tagIds}
+                        tags={tags}
                       />
                     </li>
                   ))}

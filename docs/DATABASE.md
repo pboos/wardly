@@ -14,7 +14,8 @@ This project uses **Prisma ORM** with **SQLite**.
 
 - **Table names are singular** (`ward`, `user`, `member`, ...). This applies across code, API routes, and database references.
 - All primary keys are UUIDs stored as `TEXT` (Prisma `@default(uuid())`).
-- Timestamps are stored as `TEXT` in ISO‑8601. Prisma `DateTime` maps to TEXT in SQLite and `@default(now())` emits an ISO‑8601 string at insert time.
+- Prisma `DateTime` columns use SQLite `DATETIME` declarations in migrations, with
+  `CURRENT_TIMESTAMP` defaults. The Prisma driver handles timestamp serialization.
 - Every table has `created_at` and `updated_at` columns.
 - Foreign keys use `onDelete: Cascade` (or `Set Null` where noted in the schema) — see [`docs/DATABASE_SCHEMA.md`](./DATABASE_SCHEMA.md).
 
@@ -138,3 +139,7 @@ The initial migration also includes member external UUID, household UUID, and
 household role, with unique member UUIDs per ward, plus a CHECK restricting
 member gender to `m` or `f`. Reset local databases after
 this schema change; see [member sync](features/member-sync/README.md).
+
+The initial migration replaces member status with `is_moved_out` and includes
+ward-owned `member_tag` and `member_tag_assignment` tables. Reset existing local
+and demo databases after this change; see [members](features/members/README.md).

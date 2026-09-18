@@ -18,6 +18,7 @@ model ward {
   updated_at           DateTime @default(now())
 
   user                       user[]
+  member_tag                 member_tag[]
   member                     member[]
   task                       task[]
   task_type                  task_type[]
@@ -64,30 +65,31 @@ model login {
 }
 
 model member {
-  id          String   @id @default(uuid())
-  ward_id     String
-  external_uuid String?
+  id                      String                  @id @default(uuid())
+  ward_id                 String
+  external_uuid           String?
   external_household_uuid String?
   external_household_role String?
-  first_name  String
-  last_name   String
+  first_name              String
+  last_name               String
   // Restricted to m/f by the member_gender_check CHECK in the initial migration.
-  gender      String
-  birth_date  String?
-  email       String?
-  is_baptized Boolean
-  status      String   @default("active") // 'active' | 'moved' | 'unknown' | 'unknown_address' | 'no_contact' | 'hidden'
-  created_at  DateTime @default(now())
-  updated_at  DateTime @default(now())
+  gender                  String
+  birth_date              String?
+  email                   String?
+  is_baptized             Boolean
+  is_moved_out            Boolean                 @default(false)
+  tag_assignments         member_tag_assignment[]
+  created_at              DateTime                @default(now())
+  updated_at              DateTime                @default(now())
 
   ward                ward                  @relation(fields: [ward_id], references: [id], onDelete: Cascade)
   task                task[]
   // Sunday agenda items that name this member (leader, presider, speaker, …)
   sunday_meeting_item sunday_meeting_item[]
 
-  @@index([ward_id])
   @@unique([ward_id, external_uuid])
-  @@index([ward_id, status])
+  @@index([ward_id])
+  @@index([ward_id, is_moved_out])
 }
 
 model task {
@@ -235,4 +237,31 @@ model task_digest_delivery {
   user user @relation(fields: [user_id], references: [id], onDelete: Cascade)
 
   @@unique([ward_id, user_id, sunday_date])
+}
+
+model member_tag {
+  id              String                  @id @default(uuid())
+  ward_id         String
+  name            String
+  normalized_name String
+  color           String
+  created_at      DateTime                @default(now())
+  updated_at      DateTime                @default(now())
+  ward            ward                    @relation(fields: [ward_id], references: [id], onDelete: Cascade)
+  assignments     member_tag_assignment[]
+
+  @@unique([ward_id, normalized_name])
+}
+
+model member_tag_assignment {
+  id         String     @id @default(uuid())
+  member_id  String
+  tag_id     String
+  created_at DateTime   @default(now())
+  updated_at DateTime   @default(now())
+  member     member     @relation(fields: [member_id], references: [id], onDelete: Cascade)
+  tag        member_tag @relation(fields: [tag_id], references: [id], onDelete: Cascade)
+
+  @@unique([member_id, tag_id])
+  @@index([tag_id])
 }

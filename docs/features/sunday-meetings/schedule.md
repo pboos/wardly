@@ -77,7 +77,8 @@ pending state blocks duplicate submissions. IME composition Enter does not save.
 
 History is derived from all saved member-linked talk/prayer items in the ward,
 independent of the selected meeting or schedule page. Free-text people have no
-member history. “Last” is the latest date before ward-local today; “next” is the
+member history. Member read models carry `is_moved_out` rather than the former
+status string; history still includes all ward members. “Last” is the latest date before ward-local today; “next” is the
 earliest date on/after today. The details view and person picker can use this data.
 The history list sorts by last-talk date, falling back to last-prayer date,
 with no history first; it does not compute a combined most-recent assignment.

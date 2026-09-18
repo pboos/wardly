@@ -75,7 +75,11 @@ duplicate external UUIDs are rejected before preview and again on commit.
 Names, gender, birth dates, and household changes update the same internal
 member ID, preserving assignment history. No name-based fallback or manual
 merge suggestions remain. Unknown UUIDs create members; missing imported UUIDs
-mark members moved; returning UUIDs reactivate moved members. Locally created
+set `is_moved_out`; returning UUIDs clear that flag and all tag assignments
+in the same transaction. Preview labels returning members with “tags cleared”.
+Commit derives this transition from saved membership, not the client
+reactivation flag; repeated updates do not clear newly assigned tags. Ordinary
+updates and departures preserve tags. Locally created
 members without external UUIDs are left untouched. Old exports without UUIDs
 must be exported again. UUIDs are treated as opaque, trimmed source identifiers.
 The database enforces uniqueness per ward; commit checks both ward and identity.

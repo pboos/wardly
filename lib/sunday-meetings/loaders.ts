@@ -327,7 +327,12 @@ export async function loadSundayMeetingMemberHistory(
   const [members, itemRecords] = await Promise.all([
     prisma.member.findMany({
       where: { ward_id: wardId },
-      select: { id: true, first_name: true, last_name: true, status: true },
+      select: {
+        id: true,
+        first_name: true,
+        last_name: true,
+        is_moved_out: true,
+      },
       orderBy: [{ last_name: "asc" }, { first_name: "asc" }],
     }),
     prisma.sunday_meeting_item.findMany({

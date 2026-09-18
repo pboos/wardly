@@ -15,6 +15,11 @@ member list
 - instead of status maybe have a boolean column that marks those that moved out specifically
 - have tags/flags that can be added (multiple) to members
   - those could then be used to mark "unknown" or "hide" or "focus" or anything.
+  - each tag has a name and color
+  - we will also need a way to manage the tags (e.g. rename a tag, assign different color)
+
+- have a way to select multiple members and add/remove tags to/from all of them
+- default excluded tags (e.g. unknown, no contact, ...)
 
 tasks
 - better display in sunday meeting details

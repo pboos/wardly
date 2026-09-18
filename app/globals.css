@@ -5,6 +5,8 @@
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {
+  --color-member-tag: var(--member-tag);
+  --color-member-tag-foreground: var(--member-tag-foreground);
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --font-sans: var(--font-sans);
@@ -125,4 +127,57 @@
   html {
     @apply font-sans;
   }
+}
+[data-color="gray"] {
+  --member-tag: oklch(0.94 0 260);
+  --member-tag-foreground: oklch(0.35 0 260);
+}
+.dark [data-color="gray"] {
+  --member-tag: oklch(0.3 0 260);
+  --member-tag-foreground: oklch(0.9 0 260);
+}
+
+[data-color="blue"] {
+  --member-tag: oklch(0.94 0.04 250);
+  --member-tag-foreground: oklch(0.35 0.12 250);
+}
+.dark [data-color="blue"] {
+  --member-tag: oklch(0.3 0.04 250);
+  --member-tag-foreground: oklch(0.9 0.06 250);
+}
+
+[data-color="green"] {
+  --member-tag: oklch(0.94 0.03333333333333333 150);
+  --member-tag-foreground: oklch(0.35 0.1 150);
+}
+.dark [data-color="green"] {
+  --member-tag: oklch(0.3 0.03333333333333333 150);
+  --member-tag-foreground: oklch(0.9 0.05 150);
+}
+
+[data-color="amber"] {
+  --member-tag: oklch(0.94 0.04 80);
+  --member-tag-foreground: oklch(0.35 0.12 80);
+}
+.dark [data-color="amber"] {
+  --member-tag: oklch(0.3 0.04 80);
+  --member-tag-foreground: oklch(0.9 0.06 80);
+}
+
+[data-color="purple"] {
+  --member-tag: oklch(0.94 0.04 300);
+  --member-tag-foreground: oklch(0.35 0.12 300);
+}
+.dark [data-color="purple"] {
+  --member-tag: oklch(0.3 0.04 300);
+  --member-tag-foreground: oklch(0.9 0.06 300);
+}
+
+[data-color="rose"] {
+  --member-tag: oklch(0.94 0.04 10);
+  --member-tag-foreground: oklch(0.35 0.12 10);
+}
+.dark [data-color="rose"] {
+  --member-tag: oklch(0.3 0.04 10);
+  --member-tag-foreground: oklch(0.9 0.06 10);
 }

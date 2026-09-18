@@ -1,8 +1,29 @@
 # Members
 
-The member directory shows the signed-in user's ward, with name and status
-filters and inline status editing. It starts with active members only. Moved
-members have read-only status; the header's total excludes moved members.
+The member directory shows the signed-in user's ward. Membership is represented
+by a sync-managed `is_moved_out` boolean, independent of local tags. Returning
+members have all tags cleared atomically by sync; other updates and departures
+preserve tags. See [member sync](../member-sync/README.md).
+
+## Tags and filtering
+
+- Every signed-in ward user can create, rename, recolor, delete, assign, and
+  remove tags. Actions validate both member and tag ownership within that ward.
+- Tags have names of 1–40 characters, case-insensitively unique within the ward
+  after trimming/collapsing whitespace, and one of six theme-aware palette colors.
+  Tags are plain labels: names such as “Hide” have no automatic behavior.
+- Multiple tags appear as badges per member. “Edit tags” opens a searchable
+  checkbox picker; saves are optimistic, block further edits while pending,
+  and roll back with an error toast on failure.
+- “Manage tags” opens a responsive dialog with usage counts and create/edit
+  forms. Deletion confirms removal from every assigned member, then cascades
+  assignments without deleting members. Renames/recolors affect all uses.
+- Filters combine name, Current / Moved out / All, included tags, and excluded
+  tags. Current is the default. Every included tag must match (AND); any excluded
+  tag disqualifies a member. A tag cannot be included and excluded together.
+  Deleted tags cease to affect filters. Filters are local to the current page.
+- Moved-out state is read-only in the list and cannot be edited manually.
+  Header totals exclude moved-out members; shown counts reflect filters.
 
 ## Household grouping
 
@@ -31,6 +52,8 @@ membership is inferred from names, addresses, or age.
 - [Ward query and client data](../../../app/members/page.tsx)
 - [Grouping and sorting](../../../app/members/households.ts)
 - [Filters and responsive list](../../../app/members/members-list.tsx)
-- [Inline status control](../../../app/members/status-badge.tsx)
+- [Inline tag editing](../../../app/members/member-tags.tsx) and [tag management](../../../app/members/tag-manager.tsx)
+- [Tag actions](../../../app/members/actions.ts) and [validation/filter rules](../../../app/members/tags.ts)
 
-Run `npm test` for grouping regression cases.
+Run `npm test` for grouping, AND/exclusion filters, tag lifecycle, ward isolation,
+and returning-member tag clearing regression cases.
