@@ -1,3 +1,4 @@
+import { groupedMemberChoices } from "@/lib/members/choices";
 import type {
   SundayMeetingMemberHistory,
   SundayPersonInput,
@@ -20,13 +21,19 @@ export function sundayPersonChoices(
   const matching = members.filter((member) =>
     member.name.toLocaleLowerCase().includes(normalized),
   );
-  // Keep an exact name first, even when many partial matches fill the list.
-  matching.sort(
-    (a, b) =>
-      Number(b.name.toLocaleLowerCase() === normalized) -
-      Number(a.name.toLocaleLowerCase() === normalized),
+  const groups = groupedMemberChoices(
+    matching.map((member) => ({
+      ...member,
+      value: member.id,
+      label: member.name,
+    })),
+    query,
+    8,
   );
-  const choices: SundayPersonChoice[] = matching.slice(0, 8).map((member) => ({
+  const choices: SundayPersonChoice[] = [
+    ...groups.regular,
+    ...groups.excluded,
+  ].map((member) => ({
     value: member.id,
     label: member.name,
     member,

@@ -45,7 +45,7 @@ CREATE TABLE "member" (
     "birth_date" TEXT,
     "email" TEXT,
     "is_baptized" BOOLEAN NOT NULL,
-    "status" TEXT NOT NULL DEFAULT 'active',
+    "is_moved_out" BOOLEAN NOT NULL DEFAULT false,
     "created_at" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updated_at" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT "member_ward_id_fkey" FOREIGN KEY ("ward_id") REFERENCES "ward" ("id") ON DELETE CASCADE ON UPDATE CASCADE
@@ -67,7 +67,7 @@ CREATE UNIQUE INDEX "login_token_hash_key" ON "login"("token_hash");
 CREATE INDEX "member_ward_id_idx" ON "member"("ward_id");
 
 -- CreateIndex
-CREATE INDEX "member_ward_id_status_idx" ON "member"("ward_id", "status");
+CREATE INDEX "member_ward_id_is_moved_out_idx" ON "member"("ward_id", "is_moved_out");
 
 -- CreateTable
 CREATE TABLE "task" (
@@ -252,3 +252,24 @@ CREATE UNIQUE INDEX "task_digest_delivery_ward_id_user_id_sunday_date_key"
 ON "task_digest_delivery"("ward_id", "user_id", "sunday_date");
 
 CREATE UNIQUE INDEX "member_ward_id_external_uuid_key" ON "member"("ward_id", "external_uuid");
+
+CREATE TABLE member_tag (
+  id TEXT NOT NULL PRIMARY KEY,
+  ward_id TEXT NOT NULL REFERENCES ward(id) ON DELETE CASCADE ON UPDATE CASCADE,
+  name TEXT NOT NULL,
+  normalized_name TEXT NOT NULL,
+  color TEXT NOT NULL,
+  is_default_excluded BOOLEAN NOT NULL DEFAULT false,
+  created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+CREATE UNIQUE INDEX member_tag_ward_id_normalized_name_key ON member_tag(ward_id, normalized_name);
+CREATE TABLE member_tag_assignment (
+  id TEXT NOT NULL PRIMARY KEY,
+  member_id TEXT NOT NULL REFERENCES member(id) ON DELETE CASCADE ON UPDATE CASCADE,
+  tag_id TEXT NOT NULL REFERENCES member_tag(id) ON DELETE CASCADE ON UPDATE CASCADE,
+  created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+CREATE UNIQUE INDEX member_tag_assignment_member_id_tag_id_key ON member_tag_assignment(member_id, tag_id);
+CREATE INDEX member_tag_assignment_tag_id_idx ON member_tag_assignment(tag_id);

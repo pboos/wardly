@@ -144,9 +144,10 @@ export type AssignmentDate = {
 };
 
 export type SundayMeetingMemberHistory = {
+  exclusionTags?: import("@/lib/members/choices").ExclusionTag[];
   id: string;
   name: string;
-  status: string;
+  is_moved_out: boolean;
   lastTalk: AssignmentDate | null;
   nextTalk: AssignmentDate | null;
   lastPrayer: AssignmentDate | null;

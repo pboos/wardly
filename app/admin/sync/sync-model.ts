@@ -22,7 +22,7 @@ export type ExistingMember = {
   birth_date: string | null;
   email: string | null;
   is_baptized: boolean;
-  status: string;
+  is_moved_out: boolean;
 };
 export type FieldChanges = Record<
   string,
@@ -148,7 +148,7 @@ export function matchMembers(
       const before = existing[key as keyof ExistingMember];
       if (before !== value) changes[key] = { from: before, to: value };
     }
-    const reactivate = existing.status === "moved";
+    const reactivate = existing.is_moved_out;
     if (Object.keys(changes).length || reactivate)
       diff.updated.push({ existing, incoming: row, changes, reactivate });
     else
@@ -159,8 +159,7 @@ export function matchMembers(
       });
   }
   diff.moved = members.filter(
-    (m) =>
-      m.external_uuid && !seen.has(m.external_uuid) && m.status !== "moved",
+    (m) => m.external_uuid && !seen.has(m.external_uuid) && !m.is_moved_out,
   );
   return diff;
 }

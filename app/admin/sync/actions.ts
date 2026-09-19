@@ -1,5 +1,6 @@
 "use server";
 
+import { revalidatePath } from "next/cache";
 import { getCurrentUser } from "@/lib/auth/dal";
 import { prisma } from "@/lib/prisma";
 import {
@@ -56,7 +57,7 @@ export async function commitSync(
     new Set(ids).size !== ids.length
   )
     throw new Error("Invalid or duplicate member IDs in sync plan.");
-  return prisma.$transaction(async (tx) => {
+  const summary = await prisma.$transaction(async (tx) => {
     let moved = 0;
     for (const incoming of normalized.slice(0, plan.inserts.length)) {
       await tx.member.create({
@@ -64,14 +65,14 @@ export async function commitSync(
           ...memberData(incoming),
           ward_id: user.ward_id,
           is_baptized: incoming.isBaptized ?? false,
-          status: "active",
+          is_moved_out: false,
         },
       });
     }
     for (const id of plan.moves) {
       const result = await tx.member.updateMany({
         where: { id, ward_id: user.ward_id, external_uuid: { not: null } },
-        data: { status: "moved", updated_at: new Date() },
+        data: { is_moved_out: true, updated_at: new Date() },
       });
       if (result.count !== 1)
         throw new Error(
@@ -81,6 +82,22 @@ export async function commitSync(
     }
     for (const [index, update] of plan.updates.entries()) {
       const incoming = normalized[plan.inserts.length + index];
+      const current = await tx.member.findFirst({
+        where: {
+          id: update.id,
+          ward_id: user.ward_id,
+          external_uuid: incoming.externalUuid,
+        },
+      });
+      if (!current)
+        throw new Error(
+          "Member identity changed or is unavailable. Preview the sync again.",
+        );
+      if (current.is_moved_out) {
+        await tx.member_tag_assignment.deleteMany({
+          where: { member_id: current.id },
+        });
+      }
       const result = await tx.member.updateMany({
         where: {
           id: update.id,
@@ -89,7 +106,7 @@ export async function commitSync(
         },
         data: {
           ...memberData(incoming),
-          ...(update.reactivate === true ? { status: "active" } : {}),
+          is_moved_out: false,
           updated_at: new Date(),
         },
       });
@@ -100,4 +117,6 @@ export async function commitSync(
     }
     return { added: plan.inserts.length, moved, updated: plan.updates.length };
   });
+  revalidatePath("/members");
+  return summary;
 }

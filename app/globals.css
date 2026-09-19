@@ -126,3 +126,65 @@
     @apply font-sans;
   }
 }
+/* Keep tag styling with its palette so development and production use the
+   same explicit badge rule. Fallbacks also keep unknown colors legible. */
+@layer components {
+  .member-tag {
+    background-color: var(--member-tag, var(--secondary));
+    color: var(--member-tag-foreground, var(--secondary-foreground));
+  }
+}
+
+.member-tag[data-color="gray"] {
+  --member-tag: oklch(0.94 0 260);
+  --member-tag-foreground: oklch(0.35 0 260);
+}
+.dark .member-tag[data-color="gray"] {
+  --member-tag: oklch(0.3 0 260);
+  --member-tag-foreground: oklch(0.9 0 260);
+}
+
+.member-tag[data-color="blue"] {
+  --member-tag: oklch(0.94 0.04 250);
+  --member-tag-foreground: oklch(0.35 0.12 250);
+}
+.dark .member-tag[data-color="blue"] {
+  --member-tag: oklch(0.3 0.04 250);
+  --member-tag-foreground: oklch(0.9 0.06 250);
+}
+
+.member-tag[data-color="green"] {
+  --member-tag: oklch(0.94 0.03333333333333333 150);
+  --member-tag-foreground: oklch(0.35 0.1 150);
+}
+.dark .member-tag[data-color="green"] {
+  --member-tag: oklch(0.3 0.03333333333333333 150);
+  --member-tag-foreground: oklch(0.9 0.05 150);
+}
+
+.member-tag[data-color="amber"] {
+  --member-tag: oklch(0.94 0.04 80);
+  --member-tag-foreground: oklch(0.35 0.12 80);
+}
+.dark .member-tag[data-color="amber"] {
+  --member-tag: oklch(0.3 0.04 80);
+  --member-tag-foreground: oklch(0.9 0.06 80);
+}
+
+.member-tag[data-color="purple"] {
+  --member-tag: oklch(0.94 0.04 300);
+  --member-tag-foreground: oklch(0.35 0.12 300);
+}
+.dark .member-tag[data-color="purple"] {
+  --member-tag: oklch(0.3 0.04 300);
+  --member-tag-foreground: oklch(0.9 0.06 300);
+}
+
+.member-tag[data-color="rose"] {
+  --member-tag: oklch(0.94 0.04 10);
+  --member-tag-foreground: oklch(0.35 0.12 10);
+}
+.dark .member-tag[data-color="rose"] {
+  --member-tag: oklch(0.3 0.04 10);
+  --member-tag-foreground: oklch(0.9 0.06 10);
+}

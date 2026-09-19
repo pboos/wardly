@@ -9,6 +9,11 @@ import Database from "better-sqlite3";
 // Stub only the signed-in identity; exercise the real preview, commit, and DB.
 registerHooks({
   resolve(specifier, context, nextResolve) {
+    if (specifier === "next/cache")
+      return {
+        shortCircuit: true,
+        url: "data:text/javascript,export function revalidatePath() {}",
+      };
     if (specifier === "@/lib/auth/dal") {
       return {
         shortCircuit: true,
@@ -63,7 +68,7 @@ test("sync matches UUIDs, persists households, isolates wards, and preserves unk
         birth_date: "2000-02-29",
         is_baptized: true,
         email: "saved@example.test",
-        status: "active",
+        is_moved_out: false,
       },
     });
     const task = await prisma.task.create({
@@ -84,7 +89,11 @@ test("sync matches UUIDs, persists households, isolates wards, and preserves unk
       ["MALE", "m"],
       ["female", "f"],
     ]) {
-      const row = { ...incoming, externalUuid: `gender-${gender.trim()}`, gender };
+      const row = {
+        ...incoming,
+        externalUuid: `gender-${gender.trim()}`,
+        gender,
+      };
       const result = await preview(row);
       assert.equal(result.new[0].gender, expected);
       // Send the original alias to exercise commit's independent normalization.
@@ -119,10 +128,22 @@ test("sync matches UUIDs, persists households, isolates wards, and preserves unk
     assert.equal(diff.unchanged.length, 1);
     assert.equal(diff.updated.length, 0);
 
-    await prisma.member.update({
-      where: { id: existing.id },
-      data: { status: "moved" },
+    const tag = await prisma.member_tag.create({
+      data: {
+        ward_id: "sync-test-ward",
+        name: "Focus",
+        normalized_name: "focus",
+        color: "blue",
+        assignments: { create: { member_id: existing.id } },
+      },
     });
+    await commitSync(plan({ moves: [existing.id] }));
+    assert.equal(
+      await prisma.member_tag_assignment.count(),
+      1,
+      "departure preserves tags",
+    );
+
     diff = await preview({ ...incoming, isBaptized: false });
     assert.equal(diff.updated.length, 1);
     assert.equal(diff.updated[0].changes.email, undefined);
@@ -141,7 +162,32 @@ test("sync matches UUIDs, persists households, isolates wards, and preserves unk
     );
     assert.equal((await saved()).email, "saved@example.test");
     assert.equal((await saved()).is_baptized, false);
-    assert.equal((await saved()).status, "active");
+    assert.equal((await saved()).is_moved_out, false);
+    assert.equal(
+      await prisma.member_tag_assignment.count(),
+      0,
+      "return clears tags",
+    );
+    await prisma.member_tag_assignment.create({
+      data: { member_id: existing.id, tag_id: tag.id },
+    });
+    await commitSync(
+      plan({ updates: [{ ...incoming, id: existing.id, reactivate: true }] }),
+    );
+    assert.equal(
+      await prisma.member_tag_assignment.count(),
+      1,
+      "replayed return preserves newly assigned tags",
+    );
+    await commitSync(plan({ moves: [existing.id] }));
+    await commitSync(
+      plan({ updates: [{ ...incoming, id: existing.id, reactivate: false }] }),
+    );
+    assert.equal(
+      await prisma.member_tag_assignment.count(),
+      0,
+      "saved moved state controls clearing",
+    );
 
     diff = await preview({ ...incoming, lastName: "Renamed" });
     assert.equal(diff.updated.length, 1);
@@ -230,7 +276,7 @@ test("sync matches UUIDs, persists households, isolates wards, and preserves unk
     );
     assert.equal(inserted.external_household_role, "HEAD");
     assert.equal(inserted.ward_id, "sync-test-ward");
-    assert.equal(inserted.status, "active");
+    assert.equal(inserted.is_moved_out, false);
     assert.equal(inserted.email, null);
     assert.equal(inserted.is_baptized, true);
     assert.equal(Object.hasOwn(inserted, "lcr"), false);
@@ -331,8 +377,8 @@ test("sync matches UUIDs, persists households, isolates wards, and preserves unk
     await commitSync(plan({ moves: [inserted.id] }));
     assert.equal(
       (await prisma.member.findUniqueOrThrow({ where: { id: inserted.id } }))
-        .status,
-      "moved",
+        .is_moved_out,
+      true,
     );
     await assert.rejects(commitSync(plan({ inserts: [incoming] })));
     const oversized = await preview({

@@ -1,6 +1,7 @@
 "use client";
 
 import { useRef, useState } from "react";
+import { MemberChoiceLabel } from "@/components/member-choice-label";
 import { Button } from "@/components/ui/button";
 import {
   Command,
@@ -108,25 +109,47 @@ export function SundayPersonPickerDialog({
             }}
           />
           <CommandList className="max-h-[min(16rem,40svh)]" aria-label="People">
-            <CommandGroup>
-              {choices.map((choice) => (
-                <CommandItem
-                  key={choice.value}
-                  value={choice.value}
-                  disabled={pending}
-                  onSelect={() => onAdd(choice.person)}
-                >
-                  <span className="flex min-w-0 flex-col gap-1 whitespace-normal break-words">
-                    <span>{choice.label}</span>
-                    {!choice.member && (
-                      <span className="text-muted-foreground">
-                        Enter to add a non-member
-                      </span>
-                    )}
-                  </span>
-                </CommandItem>
-              ))}
-            </CommandGroup>
+            {[
+              choices.filter(
+                (choice) =>
+                  choice.member && !choice.member.exclusionTags?.length,
+              ),
+              choices.filter(
+                (choice) => !!choice.member?.exclusionTags?.length,
+              ),
+              choices.filter((choice) => !choice.member),
+            ].map(
+              (group, index) =>
+                group.length > 0 && (
+                  <CommandGroup
+                    key={index}
+                    heading={index === 1 ? "Excluded by default" : undefined}
+                  >
+                    {group.map((choice) => (
+                      <CommandItem
+                        key={choice.value}
+                        value={choice.value}
+                        disabled={pending}
+                        onSelect={() => onAdd(choice.person)}
+                      >
+                        <span className="flex min-w-0 flex-col gap-1 whitespace-normal break-words">
+                          <MemberChoiceLabel
+                            item={{
+                              ...choice,
+                              exclusionTags: choice.member?.exclusionTags,
+                            }}
+                          />
+                          {!choice.member && (
+                            <span className="text-muted-foreground">
+                              Enter to add a non-member
+                            </span>
+                          )}
+                        </span>
+                      </CommandItem>
+                    ))}
+                  </CommandGroup>
+                ),
+            )}
             {!choices.length && (
               <p className="px-3 py-4 text-sm text-muted-foreground">
                 Type a name to add a person.

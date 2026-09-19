@@ -23,6 +23,9 @@ displayed past tasks to the current assignee.
   Title uses Enter or Next. Back revisits earlier fields; Escape dismisses.
 - Choosing a type with no title clears any earlier title. Search matches names;
   member/user IDs identify options, including people with identical names.
+- Member choices in creation and editing group matches with default-excluded tags
+  last, with muted names and explanatory tag badges. These members remain
+  selectable. Exact matches rank first within each group; see [members](../members/README.md#member-selectors).
 - Saving blocks repeat submissions and dismissal. Errors retain the draft and
   allow retry; success closes the modal, restores focus to +, and revalidates
   the page through the existing server action. Reopening starts a fresh draft.

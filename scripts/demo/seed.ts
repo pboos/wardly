@@ -56,7 +56,7 @@ export async function seedDemo(
         await tx.user.create({ data: { ward_id: ward.id, name, email } }),
       );
     }
-    const members = [];
+    const members: { id: string }[] = [];
     for (const [
       index,
       [
@@ -82,11 +82,28 @@ export async function seedDemo(
             birth_date,
             email: `${first_name.toLowerCase()}@example.test`,
             is_baptized: index !== 9,
-            status:
-              index === 10 ? "moved" : index === 11 ? "no_contact" : "active",
+            is_moved_out: index === 10,
           },
         }),
       );
+    }
+    for (const [name, color, indices] of [
+      ["Focus", "blue", [0, 3]],
+      ["Unknown", "amber", [3]],
+      ["No contact", "gray", [11]],
+    ] as const) {
+      await tx.member_tag.create({
+        data: {
+          ward_id: ward.id,
+          name,
+          normalized_name: name.toLowerCase(),
+          is_default_excluded: name === "Unknown" || name === "No contact",
+          color,
+          assignments: {
+            create: indices.map((index) => ({ member_id: members[index].id })),
+          },
+        },
+      });
     }
     const today = localToday(ward.time_zone, now);
     const sunday = upcomingSunday(today);

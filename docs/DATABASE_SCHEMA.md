@@ -107,14 +107,14 @@ CREATE TABLE member (
   birth_date   TEXT,
   email        TEXT,
   is_baptized  BOOLEAN NOT NULL,
-  status       TEXT NOT NULL DEFAULT 'active',
+  is_moved_out BOOLEAN NOT NULL DEFAULT false,
   created_at   TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
   updated_at   TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
 CREATE UNIQUE INDEX idx_member_ward_external_uuid ON member (ward_id, external_uuid);
 CREATE INDEX idx_member_ward_id ON member (ward_id);
-CREATE INDEX idx_member_ward_status ON member (ward_id, status);
+CREATE INDEX idx_member_ward_moved_out ON member (ward_id, is_moved_out);
 ```
 
 ---
@@ -387,4 +387,37 @@ CREATE TABLE task_type_state_assignment (
 
 CREATE INDEX idx_task_type_state_assignment_user_id
   ON task_type_state_assignment (assign_to_user_id);
+```
+
+## Member tags
+
+Tags are ward-owned labels without behavioral semantics. Names are trimmed,
+whitespace-collapsed and case-insensitively unique per ward via normalized_name.
+Color is a validated palette key. `is_default_excluded` defaults to false and
+controls initial directory exclusion and member-selector ordering (see [members](features/members/README.md)).
+Assignment actions enforce same-ward ownership.
+Sync preserves assignments except when a moved-out member returns: that transition
+clears all assignments in the same transaction. Deleting a tag cascades assignments.
+
+```sql
+CREATE TABLE member_tag (
+  id TEXT NOT NULL PRIMARY KEY,
+  ward_id TEXT NOT NULL REFERENCES ward(id) ON DELETE CASCADE ON UPDATE CASCADE,
+  name TEXT NOT NULL,
+  normalized_name TEXT NOT NULL,
+  color TEXT NOT NULL,
+  is_default_excluded BOOLEAN NOT NULL DEFAULT false,
+  created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+CREATE UNIQUE INDEX member_tag_ward_id_normalized_name_key ON member_tag(ward_id, normalized_name);
+CREATE TABLE member_tag_assignment (
+  id TEXT NOT NULL PRIMARY KEY,
+  member_id TEXT NOT NULL REFERENCES member(id) ON DELETE CASCADE ON UPDATE CASCADE,
+  tag_id TEXT NOT NULL REFERENCES member_tag(id) ON DELETE CASCADE ON UPDATE CASCADE,
+  created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+CREATE UNIQUE INDEX member_tag_assignment_member_id_tag_id_key ON member_tag_assignment(member_id, tag_id);
+CREATE INDEX member_tag_assignment_tag_id_idx ON member_tag_assignment(tag_id);
 ```

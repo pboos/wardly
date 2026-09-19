@@ -327,7 +327,16 @@ export async function loadSundayMeetingMemberHistory(
   const [members, itemRecords] = await Promise.all([
     prisma.member.findMany({
       where: { ward_id: wardId },
-      select: { id: true, first_name: true, last_name: true, status: true },
+      select: {
+        id: true,
+        first_name: true,
+        last_name: true,
+        is_moved_out: true,
+        tag_assignments: {
+          where: { tag: { is_default_excluded: true } },
+          select: { tag: { select: { id: true, name: true, color: true } } },
+        },
+      },
       orderBy: [{ last_name: "asc" }, { first_name: "asc" }],
     }),
     prisma.sunday_meeting_item.findMany({
@@ -344,6 +353,12 @@ export async function loadSundayMeetingMemberHistory(
     }),
   ]);
 
+  const exclusions = new Map(
+    members.map((member) => [
+      member.id,
+      member.tag_assignments.map(({ tag }) => tag),
+    ]),
+  );
   return buildSundayMeetingMemberHistory(
     members,
     itemRecords.flatMap((item) =>
@@ -357,7 +372,10 @@ export async function loadSundayMeetingMemberHistory(
     ),
     today,
     isSundayMeetingType,
-  );
+  ).map((member) => ({
+    ...member,
+    exclusionTags: exclusions.get(member.id) ?? [],
+  }));
 }
 
 export async function loadLeadingSundayMeeting(

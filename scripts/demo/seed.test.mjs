@@ -43,6 +43,15 @@ test("demo fixture is atomic, relationally valid, and preserves edits on restart
     assert.equal(ward.sacrament_start_time, "09:00");
     assert.equal(await prisma.user.count(), 3);
     assert.equal(await prisma.member.count(), 12);
+    assert.deepEqual(
+      (
+        await prisma.member_tag.findMany({
+          where: { is_default_excluded: true },
+          orderBy: { name: "asc" },
+        })
+      ).map((tag) => tag.name),
+      ["No contact", "Unknown"],
+    );
     const members = await prisma.member.findMany();
     const uuid =
       /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/;

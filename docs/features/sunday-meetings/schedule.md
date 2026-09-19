@@ -68,7 +68,10 @@ Clicking + opens a compact modal with a dimmed background and an autofocus searc
 input. Partial names show member suggestions; arrow keys change the selection.
 Enter adds the selected member. With no match, Enter adds the trimmed free-text
 name and the option says “Enter to add a non-member”. A free-text alternative is
-also available for partial matches; an exact member name defaults to that member.
+also available for partial matches. Default-excluded members appear after regular
+matches in a labeled group with muted names and their exclusion tags, and remain
+selectable. Exact names rank first within each group, including when excluded.
+Each group shows up to eight matches; the free-text alternative follows both.
 The Add button supports touch input. Success closes the modal; Escape, Cancel,
 or clicking outside dismisses the draft. Save errors keep the draft for retry;
 pending state blocks duplicate submissions. IME composition Enter does not save.
@@ -77,7 +80,8 @@ pending state blocks duplicate submissions. IME composition Enter does not save.
 
 History is derived from all saved member-linked talk/prayer items in the ward,
 independent of the selected meeting or schedule page. Free-text people have no
-member history. “Last” is the latest date before ward-local today; “next” is the
+member history. Member read models carry `is_moved_out` rather than the former
+status string; history still includes all ward members. “Last” is the latest date before ward-local today; “next” is the
 earliest date on/after today. The details view and person picker can use this data.
 The history list sorts by last-talk date, falling back to last-prayer date,
 with no history first; it does not compute a combined most-recent assignment.

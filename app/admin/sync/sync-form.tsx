@@ -177,7 +177,9 @@ export function SyncForm() {
                   <span className="text-sm font-medium">
                     {u.incoming.firstName} {u.incoming.lastName}
                   </span>
-                  {u.reactivate && <Badge variant="outline">reactivate</Badge>}
+                  {u.reactivate && (
+                    <Badge variant="outline">Returning · tags cleared</Badge>
+                  )}
                 </div>
                 <FieldChangeList changes={u.changes} />
               </div>

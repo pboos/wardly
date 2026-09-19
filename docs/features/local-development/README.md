@@ -34,6 +34,9 @@ database can also use the fixed code; unknown email addresses cannot log in.
   It includes completed/overdue/unassigned tasks, a linked calling, hymn history,
   participants, speakers, and partially empty future agendas. Names, emails,
   and personal details are fictional. Existing automatic task types are reused.
+- Member fixtures include one moved-out member and shared Focus, Unknown, and
+  No contact tags, including a member with multiple tags. Unknown and No contact
+  have “Exclude by default” enabled; Focus does not.
 - All twelve members have stable fictional external UUIDs and canonical `m`/`f`
   genders. Seven households include Martin/Elena/Noah (HEAD/SPOUSE/CHILD),
   Anna/Mia, Sarah/Jonas, Daniel/Clara, and three single-person households for
@@ -63,6 +66,16 @@ in a build or production startup throws an error. Verification also rejects a
 previously issued fixed code when the flag is disabled. Login requests, hashed
 codes, expiration, attempt limits, one-time use, redirects, and signed sessions
 remain in place. Only code generation and email delivery change.
+
+## Browser UI checks
+
+Use the repository's [check-ui skill](../../../.agents/skills/check-ui/SKILL.md)
+for Playwright checks against the local demo: email-free login, responsive
+screenshots, interaction assertions, light/dark colors, and failure recovery.
+It includes a reusable runner and scenario template, plus Linux/WSL browser
+setup and stale development CSS troubleshooting. Dependencies, session state,
+and screenshots stay outside the repository; temporary demo records are cleaned
+up without resetting existing data. Invoke it as `$check-ui` in a task.
 
 ## Implementation and verification
 

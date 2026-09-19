@@ -8,7 +8,7 @@ type HistoryMember = {
   id: string;
   first_name: string;
   last_name: string;
-  status: string;
+  is_moved_out: boolean;
 };
 
 /** A persisted agenda item naming a member; `type` is "talk" | "prayer". */
@@ -46,7 +46,10 @@ export function buildSundayMeetingMemberHistory(
     const key = `${item.memberId}:${item.type}`;
     const boundary = boundaries.get(key) ?? {};
     const date = item.sunday_meeting.date;
-    if (date < today && (!boundary.past || date > boundary.past.sunday_meeting.date)) {
+    if (
+      date < today &&
+      (!boundary.past || date > boundary.past.sunday_meeting.date)
+    ) {
       boundary.past = item;
     } else if (
       date >= today &&
@@ -71,7 +74,7 @@ export function buildSundayMeetingMemberHistory(
     .map((member) => ({
       id: member.id,
       name: `${member.first_name} ${member.last_name}`.trim(),
-      status: member.status,
+      is_moved_out: member.is_moved_out,
       lastTalk: dateFor(member.id, "talk", "past"),
       nextTalk: dateFor(member.id, "talk", "future"),
       lastPrayer: dateFor(member.id, "prayer", "past"),

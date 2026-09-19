@@ -1,16 +1,19 @@
 "use client";
 
+import type { MemberTag } from "./tags";
 import { useState } from "react";
 import { MembersList, type Member } from "./members-list";
 
 export function MembersView({
+  tags,
   members,
   totalMembers,
 }: {
+  tags: MemberTag[];
   members: Member[];
   totalMembers: number;
 }) {
-  const initialShown = members.filter((m) => m.status === "active").length;
+  const initialShown = members.filter((m) => !m.is_moved_out).length;
   const [membersShow, setMembersShow] = useState(initialShown);
 
   return (
@@ -21,7 +24,11 @@ export function MembersView({
           {membersShow}/{totalMembers} total in your ward.
         </p>
       </header>
-      <MembersList members={members} onShownCountChange={setMembersShow} />
+      <MembersList
+        tags={tags}
+        members={members}
+        onShownCountChange={setMembersShow}
+      />
     </>
   );
 }
