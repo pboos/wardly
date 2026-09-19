@@ -393,7 +393,9 @@ CREATE INDEX idx_task_type_state_assignment_user_id
 
 Tags are ward-owned labels without behavioral semantics. Names are trimmed,
 whitespace-collapsed and case-insensitively unique per ward via normalized_name.
-Color is a validated palette key. Assignment actions enforce same-ward ownership.
+Color is a validated palette key. `is_default_excluded` defaults to false and
+controls initial directory exclusion and member-selector ordering (see [members](features/members/README.md)).
+Assignment actions enforce same-ward ownership.
 Sync preserves assignments except when a moved-out member returns: that transition
 clears all assignments in the same transaction. Deleting a tag cascades assignments.
 
@@ -404,6 +406,7 @@ CREATE TABLE member_tag (
   name TEXT NOT NULL,
   normalized_name TEXT NOT NULL,
   color TEXT NOT NULL,
+  is_default_excluded BOOLEAN NOT NULL DEFAULT false,
   created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
   updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
 );

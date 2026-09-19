@@ -35,6 +35,7 @@ export default async function MembersPage() {
     id: tag.id,
     name: tag.name,
     color: tag.color,
+    isDefaultExcluded: tag.is_default_excluded,
     memberCount: tag._count.assignments,
   }));
   const totalMembers = members.filter((m) => !m.is_moved_out).length;

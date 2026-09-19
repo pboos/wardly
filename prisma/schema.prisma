@@ -240,15 +240,16 @@ model task_digest_delivery {
 }
 
 model member_tag {
-  id              String                  @id @default(uuid())
-  ward_id         String
-  name            String
-  normalized_name String
-  color           String
-  created_at      DateTime                @default(now())
-  updated_at      DateTime                @default(now())
-  ward            ward                    @relation(fields: [ward_id], references: [id], onDelete: Cascade)
-  assignments     member_tag_assignment[]
+  id                  String                  @id @default(uuid())
+  ward_id             String
+  name                String
+  is_default_excluded Boolean                 @default(false)
+  normalized_name     String
+  color               String
+  created_at          DateTime                @default(now())
+  updated_at          DateTime                @default(now())
+  ward                ward                    @relation(fields: [ward_id], references: [id], onDelete: Cascade)
+  assignments         member_tag_assignment[]
 
   @@unique([ward_id, normalized_name])
 }

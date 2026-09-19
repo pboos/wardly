@@ -35,7 +35,8 @@ database can also use the fixed code; unknown email addresses cannot log in.
   participants, speakers, and partially empty future agendas. Names, emails,
   and personal details are fictional. Existing automatic task types are reused.
 - Member fixtures include one moved-out member and shared Focus, Unknown, and
-  No contact tags, including a member with multiple tags.
+  No contact tags, including a member with multiple tags. Unknown and No contact
+  have “Exclude by default” enabled; Focus does not.
 - All twelve members have stable fictional external UUIDs and canonical `m`/`f`
   genders. Seven households include Martin/Elena/Noah (HEAD/SPOUSE/CHILD),
   Anna/Mia, Sarah/Jonas, Daniel/Clara, and three single-person households for

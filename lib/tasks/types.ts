@@ -70,6 +70,7 @@ export type WardUser = {
 
 /** Client shape of a ward member (for member autocomplete). */
 export type WardMember = {
+  exclusionTags: import("@/lib/members/choices").ExclusionTag[];
   id: string;
   first_name: string;
   last_name: string;

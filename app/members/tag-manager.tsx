@@ -105,6 +105,7 @@ export function TagManager({
                   <TagBadge tag={tag} />
                   <span className="text-xs text-muted-foreground">
                     {tag.memberCount} members
+                    {tag.isDefaultExcluded && " · Excluded by default"}
                   </span>
                 </div>
                 <div className="flex gap-1">

@@ -17,7 +17,7 @@ import { findTaskType } from "@/lib/tasks/utils";
 import { useState } from "react";
 import { StatePicker } from "./state-picker";
 import { TypeBadge } from "./type-badge";
-type Item = { value: string; label: string };
+type Item = import("@/lib/members/choices").MemberChoice;
 export function EditTaskModal({
   task,
   taskTypes,

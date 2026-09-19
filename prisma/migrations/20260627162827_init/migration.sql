@@ -259,6 +259,7 @@ CREATE TABLE member_tag (
   name TEXT NOT NULL,
   normalized_name TEXT NOT NULL,
   color TEXT NOT NULL,
+  is_default_excluded BOOLEAN NOT NULL DEFAULT false,
   created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
   updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
 );

@@ -29,7 +29,7 @@ import { groupMembersByHousehold } from "./households";
 import { MemberTags } from "./member-tags";
 import { TagPicker } from "./tag-picker";
 import { TagManager } from "./tag-manager";
-import { matchesTags, type MemberTag } from "./tags";
+import { matchesTags, excludedTagIds, type MemberTag } from "./tags";
 
 export type Member = {
   id: string;
@@ -60,7 +60,13 @@ export function MembersList({
   const [nameQuery, setNameQuery] = useState("");
   const [statusScope, setStatusScope] = useState<StatusScope>("current");
   const [included, setIncluded] = useState<string[]>([]);
-  const [excluded, setExcluded] = useState<string[]>([]);
+  const [exclusionOverrides, setExclusionOverrides] = useState<
+    Record<string, boolean>
+  >({});
+  const excluded = useMemo(
+    () => excludedTagIds(tags, exclusionOverrides),
+    [tags, exclusionOverrides],
+  );
   const includedIds = included.filter((id) =>
     tags.some((tag) => tag.id === id),
   );
@@ -186,7 +192,7 @@ export function MembersList({
               checked ? [...ids, id] : ids.filter((value) => value !== id),
             );
             if (checked)
-              setExcluded((ids) => ids.filter((value) => value !== id));
+              setExclusionOverrides((values) => ({ ...values, [id]: false }));
           }}
         />
         <TagPicker
@@ -195,9 +201,7 @@ export function MembersList({
           tags={tags}
           selected={excludedIds}
           onChange={(id, checked) => {
-            setExcluded((ids) =>
-              checked ? [...ids, id] : ids.filter((value) => value !== id),
-            );
+            setExclusionOverrides((values) => ({ ...values, [id]: checked }));
             if (checked)
               setIncluded((ids) => ids.filter((value) => value !== id));
           }}

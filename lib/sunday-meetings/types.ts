@@ -144,6 +144,7 @@ export type AssignmentDate = {
 };
 
 export type SundayMeetingMemberHistory = {
+  exclusionTags?: import("@/lib/members/choices").ExclusionTag[];
   id: string;
   name: string;
   is_moved_out: boolean;

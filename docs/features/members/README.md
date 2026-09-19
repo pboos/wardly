@@ -11,7 +11,8 @@ preserve tags. See [member sync](../member-sync/README.md).
   remove tags. Actions validate both member and tag ownership within that ward.
 - Tags have names of 1–40 characters, case-insensitively unique within the ward
   after trimming/collapsing whitespace, and one of six theme-aware palette colors.
-  Tags are plain labels: names such as “Hide” have no automatic behavior.
+  Each tag has an “Exclude by default” setting (off for new tags). Names alone
+  have no automatic behavior. The setting is shared across the ward.
 - The desktop list shows name, gender, birth date, and tags; email and baptism
   data remain stored but are not displayed.
 - Multiple tags appear as colored badges per member. A pencil icon opens a searchable
@@ -23,13 +24,30 @@ preserve tags. See [member sync](../member-sync/README.md).
 - Filters combine name, Current / Moved out / All, included tags, and excluded
   tags. Current is the default. Every included tag must match (AND); any excluded
   tag disqualifies a member. A tag cannot be included and excluded together.
-  Deleted tags cease to affect filters. Filters are local to the current page.
+  Excluded filters initially contain tags flagged “Exclude by default”. Per-tag
+  manual overrides persist during the visit; refreshed defaults affect untouched
+  tags. Including a tag explicitly overrides its default exclusion. Deleted tags
+  cease to affect filters. Reopening the page restores defaults. Header totals
+  still count all current members; shown counts reflect exclusions.
 - Mobile rows place tags to the right of the name on one line. Overflow ends
   in an ellipsis; the pencil stays outside that clipped area and is always visible.
   The picker exposes all tags, including those clipped in the row.
 - Moved-out state appears first beside tags as a distinct read-only “Moved out”
   badge with a departure icon. It is not a user tag and cannot be edited manually.
   Header totals exclude moved-out members; shown counts reflect filters.
+
+## Member selectors
+
+Task creation/editing and Sunday meeting selectors keep all members searchable.
+Matching excluded members appear in an “Excluded by default” group after regular
+matches, with muted names and the exclusion tag badges. Exact-name matches rank
+first only within their group. Excluded members remain selectable by keyboard or
+touch; existing assignments remain valid. Sunday suggestions allow up to eight
+results per group, followed by the existing free-text alternative.
+
+- [Grouping/search rules](../../../lib/members/choices.ts) and
+  [choice labels](../../../components/member-choice-label.tsx) are shared.
+- Tag changes revalidate the directory, tasks, and Sunday meeting views.
 
 ## Bulk tag editing
 

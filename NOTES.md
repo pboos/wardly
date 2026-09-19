@@ -11,10 +11,6 @@ Propose plan on the feature and implementation (concise, but also include techni
 Present plan before implementation.
 For db changes no need to create a new migration. Update the one existing one and then delete db and recreate it.
 
-member list
-- have a way to select multiple members and add/remove tags to/from all of them
-- default excluded tags (e.g. unknown, no contact, ...)
-
 tasks
 - better display in sunday meeting details
 
@@ -29,6 +25,8 @@ login
 - nicer on paste of all automatically submit
 - have it look nicer. for each letter/number a box. but it should work still with backspace to delete a single one and to enter one by one instead of pasting.
 
+auth
+- if a request fails with 403/401 -> redirect to login? or show a popup showing to log in (and they can do it in a different tab?)
 
 send reminder emails to members for talks / prayers
 

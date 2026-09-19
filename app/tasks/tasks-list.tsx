@@ -54,6 +54,7 @@ export function TasksList({
       members.map((m) => ({
         value: m.id,
         label: `${m.first_name} ${m.last_name}`,
+        exclusionTags: m.exclusionTags,
       })),
     [members],
   );

@@ -16,11 +16,11 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
+import { groupedMemberChoices, type MemberChoice } from "@/lib/members/choices";
+import { MemberChoiceLabel } from "@/components/member-choice-label";
 import { cn } from "@/lib/utils";
 
-export type ComboboxItem = {
-  value: string;
-  label: string;
+export type ComboboxItem = MemberChoice & {
   icon?: React.ReactNode;
 };
 
@@ -54,10 +54,21 @@ export function Combobox({
   onKeyDown?: React.KeyboardEventHandler<HTMLButtonElement>;
 }) {
   const [open, setOpen] = React.useState(false);
+  const [search, setSearch] = React.useState("");
+  const memberChoices = items.some((item) => item.exclusionTags !== undefined);
+  const groups = memberChoices
+    ? groupedMemberChoices(items, search)
+    : { regular: items, excluded: [] };
   const selected = items.find((i) => i.value === value) ?? null;
 
   return (
-    <Popover open={open} onOpenChange={setOpen}>
+    <Popover
+      open={open}
+      onOpenChange={(next) => {
+        setOpen(next);
+        if (!next) setSearch("");
+      }}
+    >
       <PopoverTrigger asChild>
         <Button
           id={id}
@@ -89,12 +100,16 @@ export function Combobox({
         )}
         align="start"
       >
-        <Command>
-          <CommandInput placeholder={searchPlaceholder} />
+        <Command shouldFilter={!memberChoices}>
+          <CommandInput
+            placeholder={searchPlaceholder}
+            value={search}
+            onValueChange={setSearch}
+          />
           <CommandList>
             <CommandEmpty>{emptyText}</CommandEmpty>
             <CommandGroup>
-              {clearable && (
+              {clearable && (!memberChoices || !search.trim()) && (
                 <CommandItem
                   onSelect={() => {
                     onChange(null);
@@ -105,29 +120,40 @@ export function Combobox({
                   {clearLabel}
                 </CommandItem>
               )}
-              {items.map((item) => (
-                <CommandItem
-                  key={item.value}
-                  value={item.label}
-                  onSelect={(label) => {
-                    const match = items.find((i) => i.label === label);
-                    onChange(match ? match.value : item.value);
-                    setOpen(false);
-                  }}
-                >
-                  {item.icon}
-                  {item.label}
-                  <Check
-                    className={cn(
-                      "ml-auto",
-                      selected?.value === item.value
-                        ? "opacity-100"
-                        : "opacity-0",
-                    )}
-                  />
-                </CommandItem>
-              ))}
             </CommandGroup>
+            {[groups.regular, groups.excluded].map(
+              (group, index) =>
+                group.length > 0 && (
+                  <CommandGroup
+                    key={index}
+                    heading={index === 1 ? "Excluded by default" : undefined}
+                  >
+                    {group.map((item) => (
+                      <CommandItem
+                        key={item.value}
+                        value={item.value}
+                        keywords={[item.label]}
+                        onSelect={() => {
+                          onChange(item.value);
+                          setOpen(false);
+                          setSearch("");
+                        }}
+                      >
+                        {item.icon}
+                        <MemberChoiceLabel item={item} />
+                        <Check
+                          className={cn(
+                            "ml-auto",
+                            selected?.value === item.value
+                              ? "opacity-100"
+                              : "opacity-0",
+                          )}
+                        />
+                      </CommandItem>
+                    ))}
+                  </CommandGroup>
+                ),
+            )}
           </CommandList>
         </Command>
       </PopoverContent>

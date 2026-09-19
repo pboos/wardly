@@ -139,6 +139,7 @@ export function NewTaskDialog({
             items={members.map((m) => ({
               value: m.id,
               label: `${m.first_name} ${m.last_name}`,
+              exclusionTags: m.exclusionTags,
             }))}
             onChoose={(value) => {
               setMemberId(value);

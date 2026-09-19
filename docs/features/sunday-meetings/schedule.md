@@ -68,7 +68,10 @@ Clicking + opens a compact modal with a dimmed background and an autofocus searc
 input. Partial names show member suggestions; arrow keys change the selection.
 Enter adds the selected member. With no match, Enter adds the trimmed free-text
 name and the option says “Enter to add a non-member”. A free-text alternative is
-also available for partial matches; an exact member name defaults to that member.
+also available for partial matches. Default-excluded members appear after regular
+matches in a labeled group with muted names and their exclusion tags, and remain
+selectable. Exact names rank first within each group, including when excluded.
+Each group shows up to eight matches; the free-text alternative follows both.
 The Add button supports touch input. Success closes the modal; Escape, Cancel,
 or clicking outside dismisses the draft. Save errors keep the draft for retry;
 pending state blocks duplicate submissions. IME composition Enter does not save.

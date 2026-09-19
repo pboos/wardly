@@ -1,6 +1,6 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
+import { revalidateMemberViews } from "@/lib/members/revalidate";
 import { getCurrentUser } from "@/lib/auth/dal";
 import { prisma } from "@/lib/prisma";
 
@@ -71,5 +71,5 @@ export async function bulkUpdateMemberTags(
     },
     { timeout: 30_000 },
   );
-  revalidatePath("/members");
+  revalidateMemberViews();
 }

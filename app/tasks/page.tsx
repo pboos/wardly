@@ -43,7 +43,15 @@ export default async function TasksPage({
       }),
       prisma.member.findMany({
         where: { ward_id: wardId },
-        select: { id: true, first_name: true, last_name: true },
+        select: {
+          id: true,
+          first_name: true,
+          last_name: true,
+          tag_assignments: {
+            where: { tag: { is_default_excluded: true } },
+            select: { tag: { select: { id: true, name: true, color: true } } },
+          },
+        },
         orderBy: [{ last_name: "asc" }, { first_name: "asc" }],
       }),
       loadTaskTypes(wardId),
@@ -53,7 +61,12 @@ export default async function TasksPage({
   const mappedActive: Task[] = activeTasks.map(mapTask);
   const mappedPast: Task[] = pastTasks.map(mapTask);
   const mappedUsers: WardUser[] = users;
-  const mappedMembers: WardMember[] = members;
+  const mappedMembers: WardMember[] = members.map(
+    ({ tag_assignments, ...member }) => ({
+      ...member,
+      exclusionTags: tag_assignments.map(({ tag }) => tag),
+    }),
+  );
 
   return (
     <div className="flex flex-col gap-6">

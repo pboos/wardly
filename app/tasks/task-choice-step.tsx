@@ -10,9 +10,11 @@ import {
 } from "@/components/ui/command";
 import { Field, FieldLabel } from "@/components/ui/field";
 import { useEffect, useRef, useState } from "react";
+import { groupedMemberChoices, type MemberChoice } from "@/lib/members/choices";
+import { MemberChoiceLabel } from "@/components/member-choice-label";
 import { TaskTypeIcon } from "./task-type-icon";
 
-export type TaskChoice = { value: string; label: string; type?: string };
+export type TaskChoice = MemberChoice & { type?: string };
 
 export function TaskChoiceStep({
   label,
@@ -28,6 +30,10 @@ export function TaskChoiceStep({
   optionalLabel?: string;
 }) {
   const [search, setSearch] = useState("");
+  const memberChoices = items.some((item) => item.exclusionTags !== undefined);
+  const groups = memberChoices
+    ? groupedMemberChoices(items, search)
+    : { regular: items, excluded: [] };
   const inputRef = useRef<HTMLInputElement>(null);
   useEffect(() => {
     if (!disabled) inputRef.current?.focus();
@@ -38,6 +44,7 @@ export function TaskChoiceStep({
         <span>{label}</span>
       </FieldLabel>
       <Command
+        shouldFilter={!memberChoices}
         label={label}
         onKeyDownCapture={(event) => {
           // IME confirmation and held Enter must never select or submit.
@@ -70,7 +77,7 @@ export function TaskChoiceStep({
                 {optionalLabel}
               </CommandItem>
             )}
-            {items.map((item) => (
+            {groups.regular.map((item) => (
               <CommandItem
                 key={item.value}
                 value={item.value}
@@ -79,10 +86,24 @@ export function TaskChoiceStep({
                 onSelect={() => onChoose(item.value)}
               >
                 {item.type && <TaskTypeIcon type={item.type} />}
-                {item.label}
+                <MemberChoiceLabel item={item} />
               </CommandItem>
             ))}
           </CommandGroup>
+          {!!groups.excluded.length && (
+            <CommandGroup heading="Excluded by default">
+              {groups.excluded.map((item) => (
+                <CommandItem
+                  key={item.value}
+                  value={item.value}
+                  disabled={disabled}
+                  onSelect={() => onChoose(item.value)}
+                >
+                  <MemberChoiceLabel item={item} />
+                </CommandItem>
+              ))}
+            </CommandGroup>
+          )}
         </CommandList>
       </Command>
     </Field>

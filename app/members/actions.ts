@@ -1,15 +1,25 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
+import { revalidateMemberViews } from "@/lib/members/revalidate";
 import { getCurrentUser } from "@/lib/auth/dal";
 import { prisma } from "@/lib/prisma";
 import { validateTag } from "./tags";
 
-export async function saveTag(id: string | null, name: string, color: string) {
+export async function saveTag(
+  id: string | null,
+  name: string,
+  color: string,
+  isDefaultExcluded: boolean,
+) {
   const user = await getCurrentUser();
   if (id !== null && (typeof id !== "string" || !id))
     throw new Error("Invalid tag ID.");
-  const data = validateTag(name, color);
+  if (typeof isDefaultExcluded !== "boolean")
+    throw new Error("Invalid exclusion setting.");
+  const data = {
+    ...validateTag(name, color),
+    is_default_excluded: isDefaultExcluded,
+  };
   try {
     if (id === null) {
       await prisma.member_tag.create({
@@ -34,7 +44,7 @@ export async function saveTag(id: string | null, name: string, color: string) {
     }
     throw error;
   }
-  revalidatePath("/members");
+  revalidateMemberViews();
 }
 
 export async function deleteTag(id: string) {
@@ -45,7 +55,7 @@ export async function deleteTag(id: string) {
   });
   if (result.count !== 1)
     throw new Error("Tag is unavailable. Reload the list.");
-  revalidatePath("/members");
+  revalidateMemberViews();
 }
 
 export async function setMemberTag(
@@ -82,5 +92,5 @@ export async function setMemberTag(
       });
     }
   });
-  revalidatePath("/members");
+  revalidateMemberViews();
 }

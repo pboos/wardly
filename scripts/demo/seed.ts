@@ -97,6 +97,7 @@ export async function seedDemo(
           ward_id: ward.id,
           name,
           normalized_name: name.toLowerCase(),
+          is_default_excluded: name === "Unknown" || name === "No contact",
           color,
           assignments: {
             create: indices.map((index) => ({ member_id: members[index].id })),

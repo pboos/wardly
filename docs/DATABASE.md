@@ -143,3 +143,7 @@ this schema change; see [member sync](features/member-sync/README.md).
 The initial migration replaces member status with `is_moved_out` and includes
 ward-owned `member_tag` and `member_tag_assignment` tables. Reset existing local
 and demo databases after this change; see [members](features/members/README.md).
+
+The initial migration includes `member_tag.is_default_excluded` (default false).
+Reset existing local and demo databases after this change. See
+[members](features/members/README.md) for default filters and selector ordering.

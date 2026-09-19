@@ -47,3 +47,22 @@ test("an exact match takes priority beyond the visible suggestion limit", () => 
   assert.equal(choices[0].person.memberId, "alice");
   assert.equal(choices.length, 8);
 });
+
+test("excluded exact matches follow regular partial matches and remain selectable beyond the regular limit", () => {
+  const excluded = {
+    id: "excluded",
+    name: "Alice Adams",
+    exclusionTags: [{ id: "no-contact", name: "No contact", color: "gray" }],
+  };
+  const regular = Array.from({ length: 10 }, (_, i) => ({
+    id: `regular-${i}`,
+    name: `Alice Adams ${i}`,
+  }));
+  const choices = sundayPersonChoices([excluded, ...regular], "Alice Adams");
+  assert.equal(choices.length, 9);
+  assert.equal(choices.at(-1).person.memberId, "excluded");
+  assert.equal(
+    sundayPersonChoices([excluded], "Alice Adams")[0].person.memberId,
+    "excluded",
+  );
+});

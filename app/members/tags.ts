@@ -12,6 +12,7 @@ export type MemberTag = {
   name: string;
   color: string;
   memberCount: number;
+  isDefaultExcluded: boolean;
 };
 
 export function validateTag(name: string, color: string) {
@@ -34,4 +35,14 @@ export function matchesTags(
     included.every((id) => ids.includes(id)) &&
     excluded.every((id) => !ids.includes(id))
   );
+}
+
+/** Overrides are page-local; untouched tags continue to follow refreshed defaults. */
+export function excludedTagIds(
+  tags: Pick<MemberTag, "id" | "isDefaultExcluded">[],
+  overrides: Record<string, boolean>,
+) {
+  return tags
+    .filter((tag) => overrides[tag.id] ?? tag.isDefaultExcluded)
+    .map((tag) => tag.id);
 }

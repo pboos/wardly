@@ -54,16 +54,19 @@ test("tag actions isolate wards, share edits, avoid duplicates and cascade delet
       });
     const a = await createMember("ward-a");
     const b = await createMember("ward-b");
-    await saveTag(null, " Focus ", "blue");
+    await saveTag(null, " Focus ", "blue", false);
     for (const id of [undefined, null, "", 42]) {
       await assert.rejects(deleteTag(id), /Invalid/);
       if (id !== null)
-        await assert.rejects(saveTag(id, "Unsafe", "blue"), /Invalid/);
+        await assert.rejects(saveTag(id, "Unsafe", "blue", false), /Invalid/);
     }
     const tag = await prisma.member_tag.findFirstOrThrow({
       where: { ward_id: "ward-a" },
     });
-    await assert.rejects(saveTag(null, "FOCUS", "green"), /already exists/);
+    await assert.rejects(
+      saveTag(null, "FOCUS", "green", false),
+      /already exists/,
+    );
     const foreign = await prisma.member_tag.create({
       data: {
         ward_id: "ward-b",
@@ -72,7 +75,10 @@ test("tag actions isolate wards, share edits, avoid duplicates and cascade delet
         color: "green",
       },
     });
-    await assert.rejects(saveTag(foreign.id, "Rename", "gray"), /unavailable/);
+    await assert.rejects(
+      saveTag(foreign.id, "Rename", "gray", true),
+      /unavailable/,
+    );
     await assert.rejects(deleteTag(foreign.id), /unavailable/);
     await assert.rejects(setMemberTag(a.id, foreign.id, true), /unavailable/);
     await assert.rejects(setMemberTag(b.id, tag.id, true), /unavailable/);
@@ -80,12 +86,18 @@ test("tag actions isolate wards, share edits, avoid duplicates and cascade delet
     await setMemberTag(a.id, tag.id, true);
     await setMemberTag(a.id, tag.id, true);
     assert.equal(await prisma.member_tag_assignment.count(), 1);
-    await saveTag(tag.id, "Attention", "rose");
+    await saveTag(tag.id, "Attention", "rose", true);
     const assignment = await prisma.member_tag_assignment.findFirstOrThrow({
       include: { tag: true },
     });
     assert.equal(assignment.tag.name, "Attention");
     assert.equal(assignment.tag.color, "rose");
+    assert.equal(assignment.tag.is_default_excluded, true);
+    await assert.rejects(
+      saveTag(tag.id, "Attention", "rose", "true"),
+      /Invalid/,
+    );
+    assert.equal(foreign.is_default_excluded, false);
     await setMemberTag(a.id, tag.id, false);
     assert.equal(await prisma.member_tag_assignment.count(), 0);
     await setMemberTag(a.id, tag.id, true);
@@ -93,8 +105,8 @@ test("tag actions isolate wards, share edits, avoid duplicates and cascade delet
     assert.equal(await prisma.member_tag_assignment.count(), 0);
     assert.equal(await prisma.member.count(), 2);
     assert.equal(await prisma.member_tag.count(), 1);
-    await saveTag(null, "Bulk one", "blue");
-    await saveTag(null, "Bulk two", "green");
+    await saveTag(null, "Bulk one", "blue", false);
+    await saveTag(null, "Bulk two", "green", false);
     const localTags = await prisma.member_tag.findMany({
       where: { ward_id: "ward-a" },
     });
