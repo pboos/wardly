@@ -13,7 +13,6 @@ For db changes no need to create a new migration. Update the one existing one an
 
 tasks
 - better display in sunday meeting details
-
 - possible to rename To do on some of them? e.g. have it be "Interview" for temple interviews?
 
 member list
