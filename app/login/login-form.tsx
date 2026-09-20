@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -16,6 +16,7 @@ import {
   FieldLabel,
 } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
+import { LoginCodeInput } from "./login-code-input";
 import { requestLogin, verifyCode, type LoginState } from "./actions";
 
 export function LoginForm({
@@ -25,11 +26,15 @@ export function LoginForm({
   redirect: string;
   localCode?: string;
 }) {
+  const submitting = useRef(false);
   const [state, dispatch, pending] = useActionState<LoginState, FormData>(
     async (prev, fd) => {
-      // Route to the right action based on current state.
-      if (prev.status === "email_sent") return verifyCode(prev, fd);
-      return requestLogin(prev, fd);
+      try {
+        if (prev.status === "email_sent") return await verifyCode(prev, fd);
+        return await requestLogin(prev, fd);
+      } finally {
+        submitting.current = false;
+      }
     },
     { status: "idle" },
   );
@@ -50,7 +55,17 @@ export function LoginForm({
         </CardDescription>
       </CardHeader>
       <CardContent>
-        <form action={dispatch} className="w-full">
+        <form
+          action={dispatch}
+          className="w-full"
+          onSubmit={(event) => {
+            if (submitting.current || pending) {
+              event.preventDefault();
+              return;
+            }
+            submitting.current = true;
+          }}
+        >
           <input type="hidden" name="redirect" value={redirect} />
           <FieldGroup>
             {!showCode && (
@@ -61,6 +76,7 @@ export function LoginForm({
                   type="email"
                   name="email"
                   required
+                  autoFocus
                   autoComplete="email"
                   placeholder="you@example.com"
                   aria-invalid={!!errorMessage}
@@ -79,18 +95,7 @@ export function LoginForm({
                 <input type="hidden" name="email" value={state.email} />
                 <Field data-invalid={!!errorMessage}>
                   <FieldLabel htmlFor="code">Code</FieldLabel>
-                  <Input
-                    id="code"
-                    name="code"
-                    required
-                    autoFocus
-                    maxLength={6}
-                    inputMode="text"
-                    autoComplete="one-time-code"
-                    placeholder={localCode ?? "ABC123"}
-                    className="text-center tracking-[0.5em] uppercase"
-                    aria-invalid={!!errorMessage}
-                  />
+                  <LoginCodeInput pending={pending} />
                   {errorMessage && <FieldError>{errorMessage}</FieldError>}
                 </Field>
               </>

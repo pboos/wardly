@@ -6,10 +6,11 @@ links identify where to verify details or make changes.
 
 | Feature                 | Overview                                | Read when working on…                                                                                              |
 | ----------------------- | --------------------------------------- | ------------------------------------------------------------------------------------------------------------------ |
-| Ward settings | [Overview](ward-settings/README.md) | Admin ward name, content language, meeting start time, and time zone |
-| Member sync | [Overview](member-sync/README.md) | LCR page export, sync validation, and troubleshooting |
-| Members | [Overview](members/README.md) | Directory filters, household grouping, member tags, and moved-out membership |
-| Tasks                   | [Overview](tasks/README.md)             | Quick entry, type symbols, task list/settings · [Sunday email reminders](tasks/reminders.md) |
+| Ward settings           | [Overview](ward-settings/README.md)     | Admin ward name, content language, meeting start time, and time zone                                               |
+| Login                   | [Overview](login/README.md)             | Email focus, code entry, paste submission, and verification                                                        |
+| Member sync             | [Overview](member-sync/README.md)       | LCR page export, sync validation, and troubleshooting                                                              |
+| Members                 | [Overview](members/README.md)           | Directory filters, household grouping, member tags, and moved-out membership                                       |
+| Tasks                   | [Overview](tasks/README.md)             | Quick entry, type symbols, task list/settings · [Sunday email reminders](tasks/reminders.md)                       |
 | Sunday meetings         | [Overview](sunday-meetings/README.md)   | [Schedule, dates, assignments](sunday-meetings/schedule.md) · [Agenda, ordering, tasks](sunday-meetings/agenda.md) |
 | Hymns and ward language | [Overview](hymns/README.md)             | Catalog loading, setup language, refreshing hymns, adding languages                                                |
 | Local development       | [Overview](local-development/README.md) | Demo database, fictional fixtures, email-free login, reset and automation                                          |
