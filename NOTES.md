@@ -12,8 +12,11 @@ Present plan before implementation.
 For db changes no need to create a new migration. Update the one existing one and then delete db and recreate it.
 
 tasks
-- better display in sunday meeting details
 - possible to rename To do on some of them? e.g. have it be "Interview" for temple interviews?
+- better display in sunday meeting details
+- new task types
+  - temple ordinance for living (endowment, sealing)
+- sort by percentage done of the task (and then by task type)
 
 member list
 - filters (tags/flags/labels, age range, birth year range - for ap/jd, gender)

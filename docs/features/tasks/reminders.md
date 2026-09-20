@@ -14,7 +14,9 @@ Conference Sundays send normally; no saved Sunday meeting is required.
   by the [setup action](../../../app/setup/actions.ts).
 - The existing ward `time_zone` also controls Sunday schedule dates. Wards
   created outside setup with no `sacrament_start_time` receive no reminders.
-  There is currently no UI for changing the meeting start time after setup.
+  Signed-in ward users can change these settings under
+  [Admin → Ward settings](../ward-settings/README.md). Changes are read on
+  subsequent scheduler passes.
 - Emails include type/state labels, title, member name, description, priority,
   and due date. HTML values are escaped; a plain-text version is also sent.
   Email wording is currently English regardless of ward content language.

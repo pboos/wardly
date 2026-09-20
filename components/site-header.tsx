@@ -49,6 +49,7 @@ const NAV_ITEMS: NavItem[] = [
     match: "/admin",
     children: [
       { label: "Users", href: "/admin/users" },
+      { label: "Ward settings", href: "/admin/ward" },
       { label: "Sync", href: "/admin/sync" },
     ],
   },

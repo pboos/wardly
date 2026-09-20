@@ -6,6 +6,7 @@ links identify where to verify details or make changes.
 
 | Feature                 | Overview                                | Read when working on…                                                                                              |
 | ----------------------- | --------------------------------------- | ------------------------------------------------------------------------------------------------------------------ |
+| Ward settings | [Overview](ward-settings/README.md) | Admin ward name, content language, meeting start time, and time zone |
 | Member sync | [Overview](member-sync/README.md) | LCR page export, sync validation, and troubleshooting |
 | Members | [Overview](members/README.md) | Directory filters, household grouping, member tags, and moved-out membership |
 | Tasks                   | [Overview](tasks/README.md)             | Quick entry, type symbols, task list/settings · [Sunday email reminders](tasks/reminders.md) |

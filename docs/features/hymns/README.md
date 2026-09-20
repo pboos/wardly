@@ -32,7 +32,7 @@ Unsupported/malformed locales return `undefined`; missing numbers also return
 `undefined`. There is no fallback to another language because hymn numbering
 differs by language. Treat returned snapshots as read-only.
 
-## Ward setup
+## Ward setup and settings
 
 [Setup page](../../../app/setup/page.tsx) offers English/Deutsch (English by
 default). Its [server action](../../../app/setup/actions.ts) validates against
@@ -41,6 +41,7 @@ the shared [language registry](../../../lib/hymns/locales.ts) and saves
 Missing or unsupported selections are rejected. The existing field and initial
 migration already support this; see the [schema](../../DATABASE_SCHEMA.md).
 This selects ward content language, not the app's interface language.
+Signed-in ward users can edit it under [Admin → Ward settings](../ward-settings/README.md).
 Setup also requires a browser-prefilled ward time zone and sacrament start time
 for [Sunday task reminders](../tasks/reminders.md).
 
