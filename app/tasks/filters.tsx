@@ -24,7 +24,7 @@ export function Filters({
       : null;
 
   return (
-    <div className="flex flex-wrap items-center gap-2">
+    <div className="flex min-w-0 flex-1 flex-wrap items-center gap-2">
       <ToggleButton
         active={filter === "all"}
         onClick={() => onFilterChange("all")}
@@ -38,7 +38,7 @@ export function Filters({
         Mine
       </ToggleButton>
       {typeItems.length > 0 && (
-        <div className="w-44">
+        <div className="w-80 max-w-full">
           <Combobox
             items={typeItems}
             value={selectedType}
@@ -46,6 +46,8 @@ export function Filters({
             placeholder="Filter by type"
             searchPlaceholder="Search types…"
             emptyText="No types found."
+            popoverClassName="w-max min-w-[var(--radix-popover-trigger-width)] max-w-[calc(100vw-2rem)]"
+            itemLabelClassName="truncate"
             clearable
             clearLabel="All types"
           />

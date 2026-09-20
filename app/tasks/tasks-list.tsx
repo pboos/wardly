@@ -9,6 +9,7 @@ import {
 } from "@/components/ui/table";
 import type { Task, TaskType, WardMember, WardUser } from "@/lib/tasks/types";
 import { findTaskState, findTaskType } from "@/lib/tasks/utils";
+import { sortTasksByProgress } from "@/lib/tasks/sort";
 import { useRouter } from "next/navigation";
 import { useMemo, useState, useTransition } from "react";
 import { toast } from "sonner";
@@ -48,6 +49,11 @@ export function TasksList({
     setPrevTasks(tasks);
     setLocalTasks(tasks);
   }
+
+  const sortedTasks = useMemo(
+    () => (past ? localTasks : sortTasksByProgress(localTasks, taskTypes)),
+    [localTasks, taskTypes, past],
+  );
 
   const memberItems = useMemo(
     () =>
@@ -118,7 +124,7 @@ export function TasksList({
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {localTasks.map((task) => {
+                {sortedTasks.map((task) => {
                   const typeDef = findTaskType(taskTypes, task.type);
                   const memberName = getMemberName(task);
 

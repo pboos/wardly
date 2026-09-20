@@ -2,12 +2,18 @@ import { TagBadge } from "@/app/members/tag-badge";
 import type { MemberChoice } from "@/lib/members/choices";
 import { cn } from "@/lib/utils";
 
-export function MemberChoiceLabel({ item }: { item: MemberChoice }) {
+export function MemberChoiceLabel({
+  item,
+  labelClassName,
+}: {
+  item: MemberChoice;
+  labelClassName?: string;
+}) {
   return (
     <span className="flex min-w-0 flex-col gap-1">
       <span
         className={cn(
-          "whitespace-normal break-words",
+          labelClassName ?? "whitespace-normal break-words",
           !!item.exclusionTags?.length && "text-muted-foreground",
         )}
       >

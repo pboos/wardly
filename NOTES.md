@@ -12,8 +12,6 @@ Present plan before implementation.
 For db changes no need to create a new migration. Update the one existing one and then delete db and recreate it.
 
 tasks
-- sort by percentage done of the task (and then by task type)
-- filter type selector too short (text wraps on multiple lines, should be on one line)
 - better display in sunday meeting details (currently too big)
   - also when selecting next to each a button to select. instead of having checkboxes and then separate to add all those selected.
 - new task types

@@ -4,6 +4,14 @@
 The page retains its Tasks heading and Settings link; a + beside the filters
 opens the add dialog. Active tasks can be filtered by All, Mine, or enabled type.
 Past tasks are collapsible and load the latest 50 completed records.
+Active tasks sort by resolved lifecycle completion percentage, highest first,
+then by type display name A–Z. Equal ties retain newest-created-first order.
+Status edits immediately re-sort the local list. Unknown types/states count as
+0%; unknown types sort by their stored type key. Past tasks remain ordered by
+completion date, newest first.
+The type filter uses a wider selector and a viewport-constrained dropdown.
+Type labels stay on one line, with ellipsis for names that exceed the available
+width; filter controls wrap onto another row on narrow screens.
 
 [Sunday reminders](reminders.md) email each user's unfinished assigned tasks
 one hour before the ward's configured sacrament time. The email's

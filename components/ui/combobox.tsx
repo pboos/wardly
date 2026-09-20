@@ -37,6 +37,7 @@ export function Combobox({
   className,
   disabled,
   popoverClassName,
+  itemLabelClassName,
   onKeyDown,
 }: {
   id?: string;
@@ -51,6 +52,7 @@ export function Combobox({
   className?: string;
   disabled?: boolean;
   popoverClassName?: string;
+  itemLabelClassName?: string;
   onKeyDown?: React.KeyboardEventHandler<HTMLButtonElement>;
 }) {
   const [open, setOpen] = React.useState(false);
@@ -140,7 +142,10 @@ export function Combobox({
                         }}
                       >
                         {item.icon}
-                        <MemberChoiceLabel item={item} />
+                        <MemberChoiceLabel
+                          item={item}
+                          labelClassName={itemLabelClassName}
+                        />
                         <Check
                           className={cn(
                             "ml-auto",
