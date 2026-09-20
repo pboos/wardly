@@ -28,7 +28,7 @@ export const DEFAULT_TASK_TYPES: TaskType[] = withDefaultStateValues([
     enabled: true,
     source: "default",
     states: [
-      { state: "todo", label: "To do", color: "#3b82f6", state_group: "not_started", assign_to_user_id: null },
+      { state: "todo", label: "Interview", color: "#3b82f6", state_group: "not_started", assign_to_user_id: null },
       { state: "organize_stake", label: "Organize stake", color: "#f59e0b", state_group: "active", assign_to_user_id: null },
       { state: "stake_interview", label: "Stake interview", color: "#f97316", state_group: "active", assign_to_user_id: null },
       { state: "print_handout", label: "Print handout", color: "#a855f7", state_group: "active", assign_to_user_id: null },
@@ -44,7 +44,7 @@ export const DEFAULT_TASK_TYPES: TaskType[] = withDefaultStateValues([
     enabled: true,
     source: "default",
     states: [
-      { state: "todo", label: "To do", color: "#3b82f6", state_group: "not_started", assign_to_user_id: null },
+      { state: "todo", label: "Interview", color: "#3b82f6", state_group: "not_started", assign_to_user_id: null },
       { state: "print_handout", label: "Print handout", color: "#a855f7", state_group: "active", assign_to_user_id: null },
       { state: "done", label: "Done", color: "#22c55e", state_group: "closed", assign_to_user_id: null },
     ],
@@ -58,7 +58,7 @@ export const DEFAULT_TASK_TYPES: TaskType[] = withDefaultStateValues([
     enabled: true,
     source: "default",
     states: [
-      { state: "todo", label: "To do", color: "#3b82f6", state_group: "not_started", assign_to_user_id: null },
+      { state: "todo", label: "Interview", color: "#3b82f6", state_group: "not_started", assign_to_user_id: null },
       { state: "done", label: "Done", color: "#22c55e", state_group: "closed", assign_to_user_id: null },
     ],
   },
@@ -88,8 +88,7 @@ export const DEFAULT_TASK_TYPES: TaskType[] = withDefaultStateValues([
     enabled: true,
     source: "default",
     states: [
-      { state: "todo", label: "To do", color: "#475569", state_group: "not_started", assign_to_user_id: null },
-      { state: "interview", label: "Interview", color: "#2563eb", state_group: "active", assign_to_user_id: null },
+      { state: "todo", label: "Interview", color: "#475569", state_group: "not_started", assign_to_user_id: null },
       { state: "sustain", label: "Sustain in front of quorum", color: "#7e22ce", state_group: "active", assign_to_user_id: null },
       { state: "confer_ordain", label: "(Confer &) Ordain", color: "#b45309", state_group: "active", assign_to_user_id: null },
       { state: "record", label: "Record in LCR", color: "#0f766e", state_group: "active", assign_to_user_id: null },
@@ -106,8 +105,7 @@ export const DEFAULT_TASK_TYPES: TaskType[] = withDefaultStateValues([
     enabled: true,
     source: "default",
     states: [
-      { state: "todo", label: "To do", color: "#475569", state_group: "not_started", assign_to_user_id: null },
-      { state: "interview", label: "Interview", color: "#2563eb", state_group: "active", assign_to_user_id: null },
+      { state: "todo", label: "Interview", color: "#475569", state_group: "not_started", assign_to_user_id: null },
       { state: "stake_interview", label: "Stake interview", color: "#2563eb", state_group: "active", assign_to_user_id: null },
       { state: "sustain", label: "Sustain at stake conference", color: "#7e22ce", state_group: "active", assign_to_user_id: null },
       { state: "confer_ordain", label: "Confer & Ordain", color: "#b45309", state_group: "active", assign_to_user_id: null },

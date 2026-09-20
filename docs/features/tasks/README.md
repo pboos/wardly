@@ -33,6 +33,21 @@ displayed past tasks to the current assignee.
   an explanation appears. Search lists and the dialog have viewport height
   limits and scroll on small screens.
 
+## Initial statuses
+
+Both temple recommend types, youth interviews, Aaronic Priesthood, and
+Melchizedek Priesthood start with **Interview**. This is the display label for
+the internal `todo` state: it remains `not_started`, with 0% progress and the
+same color and dashed status icon as before. Priesthood workflows have a single
+initial Interview step, followed by Sustain (Aaronic) or Stake interview
+(Melchizedek); active progress is spaced evenly across the remaining steps.
+Other types still start with **To do**.
+
+These are code defaults. Stored ward lifecycle overrides retain their own labels
+and steps. Older databases with priesthood tasks or state assignments using the
+removed `interview` key need those mapped to `todo` before using the new default
+lifecycle (or a development database reset).
+
 ## Type symbols
 
 [TaskTypeIcon](../../../app/tasks/task-type-icon.tsx) maps stable type keys to

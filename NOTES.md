@@ -12,11 +12,12 @@ Present plan before implementation.
 For db changes no need to create a new migration. Update the one existing one and then delete db and recreate it.
 
 tasks
-- possible to rename To do on some of them? e.g. have it be "Interview" for temple interviews?
-- better display in sunday meeting details
+- sort by percentage done of the task (and then by task type)
+- filter type selector too short (text wraps on multiple lines, should be on one line)
+- better display in sunday meeting details (currently too big)
+  - also when selecting next to each a button to select. instead of having checkboxes and then separate to add all those selected.
 - new task types
   - temple ordinance for living (endowment, sealing)
-- sort by percentage done of the task (and then by task type)
 
 member list
 - filters (tags/flags/labels, age range, birth year range - for ap/jd, gender)
