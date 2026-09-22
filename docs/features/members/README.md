@@ -100,3 +100,8 @@ membership is inferred from names, addresses, or age.
 Run `npm test` for grouping, AND/exclusion filters, tag lifecycle, ward isolation,
 returning-member tag clearing, and atomic bulk updates across batches.
 Browser checks cover selection, filters, and bulk editing on desktop/mobile.
+
+Authenticated client actions use the shared [session recovery flow](../login/README.md#session-recovery).
+Components bind guarded `actions.ts` functions through `useAppMutation`;
+authentication failures retain drafts for explicit retry after login. See the
+[shared action architecture](../login/actions.md).

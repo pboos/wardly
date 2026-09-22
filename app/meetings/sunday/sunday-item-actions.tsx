@@ -24,7 +24,11 @@ import {
   AGENDA_SECTIONS,
   type SundayAgendaMove,
 } from "@/lib/sunday-meetings/agenda";
-import { deleteSundayAgendaItem, moveSundayAgendaItem } from "./actions";
+import {
+  deleteSundayAgendaItem as deleteSundayAgendaItemAction,
+  moveSundayAgendaItem as moveSundayAgendaItemAction,
+} from "./actions";
+import { useAppMutation } from "@/lib/actions/use-app-mutation";
 import { SECTION_LABELS } from "./sunday-leading-labels";
 import type { SundayMutationRunner } from "./use-sunday-mutation";
 
@@ -43,6 +47,13 @@ export function SundayItemActions({
   pending: boolean;
   run: SundayMutationRunner;
 }) {
+  const { execute: deleteSundayAgendaItem } = useAppMutation(
+    deleteSundayAgendaItemAction,
+  );
+  const { execute: moveSundayAgendaItem } = useAppMutation(
+    moveSundayAgendaItemAction,
+  );
+
   function move(input: SundayAgendaMove) {
     run(
       () => moveSundayAgendaItem(item.id, input),

@@ -1,7 +1,8 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { getCurrentUser } from "@/lib/auth/dal";
+import { authenticatedAction } from "@/lib/auth/action";
+import type { SessionIdentity } from "@/lib/auth/action-result";
 import {
   addSundayItem,
   addSacramentPerson,
@@ -74,146 +75,188 @@ function assertOptionalMetadata(value: unknown): void {
 }
 
 export async function updateSundayMeetingType(
+  identity: SessionIdentity | null,
   meetingId: string,
   type: SundayMeetingType,
 ) {
-  const user = await getCurrentUser();
-  await changeMeetingType(user.ward_id, meetingId, type);
-  revalidateSundayMeetingRoutes();
+  return authenticatedAction(identity, async (user) => {
+    await changeMeetingType(user.ward_id, meetingId, type);
+    revalidateSundayMeetingRoutes();
+  });
 }
 
 export async function updateSundayMeetingInformation(
+  identity: SessionIdentity | null,
   meetingId: string,
   information: string | null,
 ) {
-  const user = await getCurrentUser();
-  await updateMeetingInformation(user.ward_id, meetingId, information);
-  revalidateSundayMeetingRoutes();
+  return authenticatedAction(identity, async (user) => {
+    await updateMeetingInformation(user.ward_id, meetingId, information);
+    revalidateSundayMeetingRoutes();
+  });
 }
 
 export async function addSundayAgendaItem(
+  identity: SessionIdentity | null,
   meetingId: string,
   input: AddSundayItemInput,
 ) {
-  assertPlainObject(input, "Agenda item input must be an object.");
-  assertOptionalText(input.content, "Agenda item content must be text.");
-  assertOptionalPerson(input.person);
-  assertOptionalMetadata(input.metadata);
-  assertOptionalText(input.afterItemId, "Agenda position must be an item id.");
-  const user = await getCurrentUser();
-  const id = await addSundayItem(user.ward_id, meetingId, input);
-  revalidateSundayMeetingRoutes();
-  return id;
+  return authenticatedAction(identity, async (user) => {
+    assertPlainObject(input, "Agenda item input must be an object.");
+    assertOptionalText(input.content, "Agenda item content must be text.");
+    assertOptionalPerson(input.person);
+    assertOptionalMetadata(input.metadata);
+    assertOptionalText(
+      input.afterItemId,
+      "Agenda position must be an item id.",
+    );
+    const id = await addSundayItem(user.ward_id, meetingId, input);
+    revalidateSundayMeetingRoutes();
+    return id;
+  });
 }
 
 export async function updateSundayAgendaItem(
+  identity: SessionIdentity | null,
   itemId: string,
   input: UpdateSundayItemInput,
 ) {
-  assertPlainObject(input, "Agenda item input must be an object.");
-  assertOptionalText(input.content, "Agenda item content must be text.");
-  assertOptionalPerson(input.person);
-  assertOptionalMetadata(input.metadata);
-  const user = await getCurrentUser();
-  await updateSundayItem(user.ward_id, itemId, input);
-  revalidateSundayMeetingRoutes();
+  return authenticatedAction(identity, async (user) => {
+    assertPlainObject(input, "Agenda item input must be an object.");
+    assertOptionalText(input.content, "Agenda item content must be text.");
+    assertOptionalPerson(input.person);
+    assertOptionalMetadata(input.metadata);
+    await updateSundayItem(user.ward_id, itemId, input);
+    revalidateSundayMeetingRoutes();
+  });
 }
 
-export async function deleteSundayAgendaItem(itemId: string) {
-  const user = await getCurrentUser();
-  await deleteSundayItem(user.ward_id, itemId);
-  revalidateSundayMeetingRoutes();
+export async function deleteSundayAgendaItem(
+  identity: SessionIdentity | null,
+  itemId: string,
+) {
+  return authenticatedAction(identity, async (user) => {
+    await deleteSundayItem(user.ward_id, itemId);
+    revalidateSundayMeetingRoutes();
+  });
 }
 
 /** Slot cells, leader, and presiding: find-first-by type+section, update or create. */
 export async function upsertSundaySlotItem(
+  identity: SessionIdentity | null,
   meetingId: string,
   input: UpsertSundayItemInput,
 ) {
-  assertPlainObject(input, "Slot item input must be an object.");
-  assertOptionalText(input.content, "Slot item content must be text.");
-  assertOptionalPerson(input.person);
-  assertOptionalMetadata(input.metadata);
-  const user = await getCurrentUser();
-  await upsertSundayItem(user.ward_id, meetingId, input);
-  revalidateSundayMeetingRoutes();
+  return authenticatedAction(identity, async (user) => {
+    assertPlainObject(input, "Slot item input must be an object.");
+    assertOptionalText(input.content, "Slot item content must be text.");
+    assertOptionalPerson(input.person);
+    assertOptionalMetadata(input.metadata);
+    await upsertSundayItem(user.ward_id, meetingId, input);
+    revalidateSundayMeetingRoutes();
+  });
 }
 
 /** Move one visible entry, or explicitly move an extra entry to another section. */
 export async function moveSundayAgendaItem(
+  identity: SessionIdentity | null,
   itemId: string,
   input: MoveSundayItemInput,
 ) {
-  assertPlainObject(input, "Agenda move input must be an object.");
-  const user = await getCurrentUser();
-  await moveSundayItem(user.ward_id, itemId, input);
-  revalidateSundayMeetingRoutes();
+  return authenticatedAction(identity, async (user) => {
+    assertPlainObject(input, "Agenda move input must be an object.");
+    await moveSundayItem(user.ward_id, itemId, input);
+    revalidateSundayMeetingRoutes();
+  });
 }
 
 export async function addSuggestedSundayTask(
+  identity: SessionIdentity | null,
   meetingId: string,
   taskId: string,
 ) {
-  const user = await getCurrentUser();
-  const id = await addSuggestedTaskToMeeting(user.ward_id, meetingId, taskId);
-  revalidateSundayMeetingRoutes();
-  return id;
+  return authenticatedAction(identity, async (user) => {
+    const id = await addSuggestedTaskToMeeting(user.ward_id, meetingId, taskId);
+    revalidateSundayMeetingRoutes();
+    return id;
+  });
 }
 
 export async function addSuggestedSundayTasks(
+  identity: SessionIdentity | null,
   meetingId: string,
   taskIds: string[],
 ) {
-  const user = await getCurrentUser();
-  const ids = await addSuggestedTasksToMeeting(
-    user.ward_id,
-    meetingId,
-    taskIds,
-  );
-  revalidateSundayMeetingRoutes();
-  return ids;
+  return authenticatedAction(identity, async (user) => {
+    const ids = await addSuggestedTasksToMeeting(
+      user.ward_id,
+      meetingId,
+      taskIds,
+    );
+    revalidateSundayMeetingRoutes();
+    return ids;
+  });
 }
 
-export async function carrySundayAgendaItemForward(itemId: string) {
-  const user = await getCurrentUser();
-  const result = await carryForwardItem(user.ward_id, itemId);
-  revalidateSundayMeetingRoutes();
-  return result;
+export async function carrySundayAgendaItemForward(
+  identity: SessionIdentity | null,
+  itemId: string,
+) {
+  return authenticatedAction(identity, async (user) => {
+    const result = await carryForwardItem(user.ward_id, itemId);
+    revalidateSundayMeetingRoutes();
+    return result;
+  });
 }
 
-export async function updateSundayMeetingWardSettings(input: {
-  contentLocale: string;
-  timeZone: string;
-}) {
-  const user = await getCurrentUser();
-  await updateSundayMeetingSettings(user.ward_id, input);
-  revalidateSundayMeetingRoutes();
+export async function updateSundayMeetingWardSettings(
+  identity: SessionIdentity | null,
+  input: {
+    contentLocale: string;
+    timeZone: string;
+  },
+) {
+  return authenticatedAction(identity, async (user) => {
+    await updateSundayMeetingSettings(user.ward_id, input);
+    revalidateSundayMeetingRoutes();
+  });
 }
 
-export async function addSundayMeetingBeforeEarliest() {
-  const user = await getCurrentUser();
-  await createSundayMeetingBeforeEarliest(user.ward_id);
-  revalidateSundayMeetingRoutes();
+export async function addSundayMeetingBeforeEarliest(
+  identity: SessionIdentity | null,
+) {
+  return authenticatedAction(identity, async (user) => {
+    await createSundayMeetingBeforeEarliest(user.ward_id);
+    revalidateSundayMeetingRoutes();
+  });
 }
 
-export async function addSundayMeetingAfterLatest() {
-  const user = await getCurrentUser();
-  await createSundayMeetingAfterLatest(user.ward_id);
-  revalidateSundayMeetingRoutes();
+export async function addSundayMeetingAfterLatest(
+  identity: SessionIdentity | null,
+) {
+  return authenticatedAction(identity, async (user) => {
+    await createSundayMeetingAfterLatest(user.ward_id);
+    revalidateSundayMeetingRoutes();
+  });
 }
 
-export async function bootstrapSundaySchedule() {
-  const user = await getCurrentUser();
-  await bootstrapSundayMeeting(user.ward_id);
-  revalidateSundayMeetingRoutes();
+export async function bootstrapSundaySchedule(
+  identity: SessionIdentity | null,
+) {
+  return authenticatedAction(identity, async (user) => {
+    await bootstrapSundayMeeting(user.ward_id);
+    revalidateSundayMeetingRoutes();
+  });
 }
 
 export async function addSundaySacramentPerson(
+  identity: SessionIdentity | null,
   itemId: string,
   person: SundayPersonInput,
 ) {
-  assertOptionalPerson(person);
-  const user = await getCurrentUser();
-  await addSacramentPerson(user.ward_id, itemId, person);
-  revalidateSundayMeetingRoutes();
+  return authenticatedAction(identity, async (user) => {
+    assertOptionalPerson(person);
+    await addSacramentPerson(user.ward_id, itemId, person);
+    revalidateSundayMeetingRoutes();
+  });
 }

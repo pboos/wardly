@@ -1,3 +1,4 @@
+import { bindActionsForTest } from "@/lib/actions/test-support.mjs";
 import assert from "node:assert/strict";
 import test from "node:test";
 import { registerHooks } from "node:module";
@@ -11,7 +12,7 @@ registerHooks({
     if (specifier === "@/lib/auth/dal")
       return {
         shortCircuit: true,
-        url: 'data:text/javascript,export async function getCurrentUser() { return { ward_id: "ward-a" }; }',
+        url: 'data:text/javascript,export async function getSessionUser() { return { id: "test-user", ward_id: "ward-a" }; }',
       };
     if (specifier === "next/cache")
       return {
@@ -37,8 +38,14 @@ test("tag actions isolate wards, share edits, avoid duplicates and cascade delet
   );
   db.close();
   const { prisma } = await import("../../lib/prisma.ts");
-  const { saveTag, deleteTag, setMemberTag } = await import("./actions.ts");
-  const { bulkUpdateMemberTags } = await import("./bulk-tag-actions.ts");
+  const { saveTag, deleteTag, setMemberTag } = bindActionsForTest(
+    await import("./actions.ts"),
+    { userId: "test-user", wardId: "ward-a" },
+  );
+  const { bulkUpdateMemberTags } = bindActionsForTest(
+    await import("./bulk-tag-actions.ts"),
+    { userId: "test-user", wardId: "ward-a" },
+  );
   try {
     for (const id of ["ward-a", "ward-b"])
       await prisma.ward.create({ data: { id, name: id } });

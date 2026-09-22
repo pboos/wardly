@@ -1,7 +1,8 @@
 "use client";
 import type { SundayMeetingMemberHistory } from "@/lib/sunday-meetings/types";
 import { SundayPeoplePicker } from "./sunday-people-picker";
-import { addSundayAgendaItem } from "./actions";
+import { addSundayAgendaItem as addSundayAgendaItemAction } from "./actions";
+import { useAppMutation } from "@/lib/actions/use-app-mutation";
 
 export function SundayAddSpeaker({
   meetingId,
@@ -10,6 +11,10 @@ export function SundayAddSpeaker({
   meetingId: string;
   members: SundayMeetingMemberHistory[];
 }) {
+  const { execute: addSundayAgendaItem } = useAppMutation(
+    addSundayAgendaItemAction,
+  );
+
   return (
     <SundayPeoplePicker
       label="Speaker"

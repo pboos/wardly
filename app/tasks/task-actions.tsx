@@ -19,7 +19,8 @@ import { IconDots, IconEdit, IconTrash } from "@tabler/icons-react";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { toast } from "sonner";
-import { deleteTask } from "./actions";
+import { deleteTask as deleteTaskAction } from "./actions";
+import { useAppMutation } from "@/lib/actions/use-app-mutation";
 export function TaskActions({
   task,
   past,
@@ -31,6 +32,8 @@ export function TaskActions({
   onEdit: () => void;
   onReopen: () => void;
 }) {
+  const { execute: deleteTask } = useAppMutation(deleteTaskAction);
+
   const router = useRouter();
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [, start] = useTransition();

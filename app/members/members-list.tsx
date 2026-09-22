@@ -3,7 +3,8 @@
 import { useEffect, useMemo, useState, useTransition } from "react";
 import { toast } from "sonner";
 import { BulkTagToolbar } from "./bulk-tag-toolbar";
-import { bulkUpdateMemberTags } from "./bulk-tag-actions";
+import { bulkUpdateMemberTags as bulkUpdateMemberTagsAction } from "./bulk-tag-actions";
+import { useAppMutation } from "@/lib/actions/use-app-mutation";
 import { MemberSelection } from "./member-selection";
 import { useMemberSelection } from "./use-member-selection";
 import { Input } from "@/components/ui/input";
@@ -56,6 +57,10 @@ export function MembersList({
   members: Member[];
   onShownCountChange?: (count: number) => void;
 }) {
+  const { execute: bulkUpdateMemberTags } = useAppMutation(
+    bulkUpdateMemberTagsAction,
+  );
+
   const [pending, startTransition] = useTransition();
   const [nameQuery, setNameQuery] = useState("");
   const [statusScope, setStatusScope] = useState<StatusScope>("current");

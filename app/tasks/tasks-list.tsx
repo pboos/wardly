@@ -14,13 +14,14 @@ import { useRouter } from "next/navigation";
 import { useMemo, useState, useTransition } from "react";
 import { toast } from "sonner";
 import {
-  changeTaskState,
-  reopenTask,
-  updateTaskAssignee,
-  updateTaskDescription,
-  updateTaskMember,
-  updateTaskTitle,
+  changeTaskState as changeTaskStateAction,
+  reopenTask as reopenTaskAction,
+  updateTaskAssignee as updateTaskAssigneeAction,
+  updateTaskDescription as updateTaskDescriptionAction,
+  updateTaskMember as updateTaskMemberAction,
+  updateTaskTitle as updateTaskTitleAction,
 } from "./actions";
+import { useAppMutation } from "@/lib/actions/use-app-mutation";
 import { AssigneeCell } from "./assignee-cell";
 import { EditTaskModal } from "./edit-task-modal";
 import { MemberTitleCell } from "./member-title-cell";
@@ -40,6 +41,17 @@ export function TasksList({
   taskTypes: TaskType[];
   past: boolean;
 }) {
+  const { execute: changeTaskState } = useAppMutation(changeTaskStateAction);
+  const { execute: reopenTask } = useAppMutation(reopenTaskAction);
+  const { execute: updateTaskAssignee } = useAppMutation(
+    updateTaskAssigneeAction,
+  );
+  const { execute: updateTaskDescription } = useAppMutation(
+    updateTaskDescriptionAction,
+  );
+  const { execute: updateTaskMember } = useAppMutation(updateTaskMemberAction);
+  const { execute: updateTaskTitle } = useAppMutation(updateTaskTitleAction);
+
   const router = useRouter();
   const [, start] = useTransition();
 

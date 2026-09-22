@@ -21,7 +21,8 @@ import {
 } from "@/components/ui/select";
 import { WardTimeZoneField } from "@/components/ward-time-zone-field";
 import { hymnLanguages } from "@/lib/hymns/locales";
-import { updateWardSettings } from "./actions";
+import { updateWardSettings as updateWardSettingsAction } from "./actions";
+import { useAppMutation } from "@/lib/actions/use-app-mutation";
 
 export function WardSettingsForm({
   ward,
@@ -35,6 +36,10 @@ export function WardSettingsForm({
   };
   timeZones: string[];
 }) {
+  const { execute: updateWardSettings } = useAppMutation(
+    updateWardSettingsAction,
+  );
+
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
 

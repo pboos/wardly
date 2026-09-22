@@ -1,200 +1,251 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { getCurrentUser } from "@/lib/auth/dal";
+import { authenticatedAction } from "@/lib/auth/action";
+import type { SessionIdentity } from "@/lib/auth/action-result";
 import { prisma } from "@/lib/prisma";
 import { loadTaskTypes } from "@/lib/tasks/loader";
-import { findTaskState, findTaskType, getPreviousState } from "@/lib/tasks/utils";
+import {
+  findTaskState,
+  findTaskType,
+  getPreviousState,
+} from "@/lib/tasks/utils";
 
-export async function createTask(input: {
-  type: string;
-  title?: string | null;
-  memberId?: string | null;
-  assignedUserId?: string | null;
-  description?: string | null;
-}) {
-  const user = await getCurrentUser();
-  const taskTypes = await loadTaskTypes(user.ward_id);
-  const typeDef = findTaskType(taskTypes, input.type);
-  if (!typeDef) throw new Error(`Unknown task type "${input.type}".`);
-  if (!typeDef.enabled) throw new Error(`Task type "${input.type}" is disabled.`);
-  const initialState = typeDef.states[0];
-  if (!initialState) throw new Error(`Task type "${input.type}" has no states.`);
+export async function createTask(
+  identity: SessionIdentity | null,
+  input: {
+    type: string;
+    title?: string | null;
+    memberId?: string | null;
+    assignedUserId?: string | null;
+    description?: string | null;
+  },
+) {
+  return authenticatedAction(identity, async (user) => {
+    const taskTypes = await loadTaskTypes(user.ward_id);
+    const typeDef = findTaskType(taskTypes, input.type);
+    if (!typeDef) throw new Error(`Unknown task type "${input.type}".`);
+    if (!typeDef.enabled)
+      throw new Error(`Task type "${input.type}" is disabled.`);
+    const initialState = typeDef.states[0];
+    if (!initialState)
+      throw new Error(`Task type "${input.type}" has no states.`);
 
-  const title = input.title?.trim() || null;
-  const memberId = input.memberId || null;
-  const assignedUserId = input.assignedUserId || null;
-  const description = input.description?.trim() || null;
+    const title = input.title?.trim() || null;
+    const memberId = input.memberId || null;
+    const assignedUserId = input.assignedUserId || null;
+    const description = input.description?.trim() || null;
 
-  if (!title && !memberId) {
-    throw new Error("A task requires either a title or a member.");
-  }
-
-  // Validate member + assignee belong to the ward when provided.
-  if (memberId) {
-    const member = await prisma.member.findUnique({
-      where: { id: memberId },
-      select: { ward_id: true },
-    });
-    if (!member || member.ward_id !== user.ward_id) {
-      throw new Error("Invalid member.");
+    if (!title && !memberId) {
+      throw new Error("A task requires either a title or a member.");
     }
-  }
-  if (assignedUserId) {
-    const assignee = await prisma.user.findUnique({
-      where: { id: assignedUserId },
-      select: { ward_id: true },
-    });
-    if (!assignee || assignee.ward_id !== user.ward_id) {
-      throw new Error("Invalid assignee.");
+
+    // Validate member + assignee belong to the ward when provided.
+    if (memberId) {
+      const member = await prisma.member.findUnique({
+        where: { id: memberId },
+        select: { ward_id: true },
+      });
+      if (!member || member.ward_id !== user.ward_id) {
+        throw new Error("Invalid member.");
+      }
     }
-  }
-
-  const durationMinutes = typeDef.configuration.durationMinutes ?? null;
-
-  await prisma.task.create({
-    data: {
-      ward_id: user.ward_id,
-      type: input.type,
-      state: initialState.state,
-      title,
-      description,
-      assigned_user_id: assignedUserId,
-      member_id: memberId,
-      duration_minutes: durationMinutes,
-      completed_at:
-        initialState.state_group === "closed" ? new Date().toISOString() : null,
-    },
-  });
-
-  revalidatePath("/tasks");
-}
-
-export async function changeTaskState(taskId: string, toState: string) {
-  const user = await getCurrentUser();
-
-  const task = await prisma.task.findFirst({
-    where: { id: taskId, ward_id: user.ward_id },
-    select: { id: true, type: true, state: true },
-  });
-  if (!task) throw new Error("Task not found.");
-
-  const taskTypes = await loadTaskTypes(user.ward_id);
-  const typeDef = findTaskType(taskTypes, task.type);
-  if (!typeDef) throw new Error("Task type not found.");
-
-  const targetState = findTaskState(typeDef, toState);
-  if (!targetState) throw new Error(`Unknown state "${toState}".`);
-
-  const assignToUserId = targetState.assign_to_user_id;
-
-  await prisma.task.update({
-    where: { id: task.id },
-    data: {
-      state: toState,
-      completed_at: targetState.state_group === "closed" ? new Date().toISOString() : null,
-      ...(assignToUserId !== null ? { assigned_user_id: assignToUserId } : {}),
-      updated_at: new Date(),
-    },
-  });
-
-  revalidatePath("/tasks");
-}
-
-export async function updateTaskAssignee(taskId: string, assignedUserId: string | null) {
-  const user = await getCurrentUser();
-
-  if (assignedUserId) {
-    const assignee = await prisma.user.findUnique({
-      where: { id: assignedUserId },
-      select: { ward_id: true },
-    });
-    if (!assignee || assignee.ward_id !== user.ward_id) {
-      throw new Error("Invalid assignee.");
+    if (assignedUserId) {
+      const assignee = await prisma.user.findUnique({
+        where: { id: assignedUserId },
+        select: { ward_id: true },
+      });
+      if (!assignee || assignee.ward_id !== user.ward_id) {
+        throw new Error("Invalid assignee.");
+      }
     }
-  }
 
-  await prisma.task.updateMany({
-    where: { id: taskId, ward_id: user.ward_id },
-    data: { assigned_user_id: assignedUserId, updated_at: new Date() },
-  });
+    const durationMinutes = typeDef.configuration.durationMinutes ?? null;
 
-  revalidatePath("/tasks");
-}
-
-export async function updateTaskMember(taskId: string, memberId: string | null) {
-  const user = await getCurrentUser();
-
-  if (memberId) {
-    const member = await prisma.member.findUnique({
-      where: { id: memberId },
-      select: { ward_id: true },
+    await prisma.task.create({
+      data: {
+        ward_id: user.ward_id,
+        type: input.type,
+        state: initialState.state,
+        title,
+        description,
+        assigned_user_id: assignedUserId,
+        member_id: memberId,
+        duration_minutes: durationMinutes,
+        completed_at:
+          initialState.state_group === "closed"
+            ? new Date().toISOString()
+            : null,
+      },
     });
-    if (!member || member.ward_id !== user.ward_id) {
-      throw new Error("Invalid member.");
+
+    revalidatePath("/tasks");
+  });
+}
+
+export async function changeTaskState(
+  identity: SessionIdentity | null,
+  taskId: string,
+  toState: string,
+) {
+  return authenticatedAction(identity, async (user) => {
+    const task = await prisma.task.findFirst({
+      where: { id: taskId, ward_id: user.ward_id },
+      select: { id: true, type: true, state: true },
+    });
+    if (!task) throw new Error("Task not found.");
+
+    const taskTypes = await loadTaskTypes(user.ward_id);
+    const typeDef = findTaskType(taskTypes, task.type);
+    if (!typeDef) throw new Error("Task type not found.");
+
+    const targetState = findTaskState(typeDef, toState);
+    if (!targetState) throw new Error(`Unknown state "${toState}".`);
+
+    const assignToUserId = targetState.assign_to_user_id;
+
+    await prisma.task.update({
+      where: { id: task.id },
+      data: {
+        state: toState,
+        completed_at:
+          targetState.state_group === "closed"
+            ? new Date().toISOString()
+            : null,
+        ...(assignToUserId !== null
+          ? { assigned_user_id: assignToUserId }
+          : {}),
+        updated_at: new Date(),
+      },
+    });
+
+    revalidatePath("/tasks");
+  });
+}
+
+export async function updateTaskAssignee(
+  identity: SessionIdentity | null,
+  taskId: string,
+  assignedUserId: string | null,
+) {
+  return authenticatedAction(identity, async (user) => {
+    if (assignedUserId) {
+      const assignee = await prisma.user.findUnique({
+        where: { id: assignedUserId },
+        select: { ward_id: true },
+      });
+      if (!assignee || assignee.ward_id !== user.ward_id) {
+        throw new Error("Invalid assignee.");
+      }
     }
-  }
 
-  await prisma.task.updateMany({
-    where: { id: taskId, ward_id: user.ward_id },
-    data: { member_id: memberId, updated_at: new Date() },
+    await prisma.task.updateMany({
+      where: { id: taskId, ward_id: user.ward_id },
+      data: { assigned_user_id: assignedUserId, updated_at: new Date() },
+    });
+
+    revalidatePath("/tasks");
   });
-
-  revalidatePath("/tasks");
 }
 
-export async function updateTaskTitle(taskId: string, title: string | null) {
-  const user = await getCurrentUser();
-  await prisma.task.updateMany({
-    where: { id: taskId, ward_id: user.ward_id },
-    data: { title: title?.trim() || null, updated_at: new Date() },
+export async function updateTaskMember(
+  identity: SessionIdentity | null,
+  taskId: string,
+  memberId: string | null,
+) {
+  return authenticatedAction(identity, async (user) => {
+    if (memberId) {
+      const member = await prisma.member.findUnique({
+        where: { id: memberId },
+        select: { ward_id: true },
+      });
+      if (!member || member.ward_id !== user.ward_id) {
+        throw new Error("Invalid member.");
+      }
+    }
+
+    await prisma.task.updateMany({
+      where: { id: taskId, ward_id: user.ward_id },
+      data: { member_id: memberId, updated_at: new Date() },
+    });
+
+    revalidatePath("/tasks");
   });
-  revalidatePath("/tasks");
 }
 
-export async function updateTaskDescription(taskId: string, description: string | null) {
-  const user = await getCurrentUser();
-  await prisma.task.updateMany({
-    where: { id: taskId, ward_id: user.ward_id },
-    data: { description: description?.trim() || null, updated_at: new Date() },
+export async function updateTaskTitle(
+  identity: SessionIdentity | null,
+  taskId: string,
+  title: string | null,
+) {
+  return authenticatedAction(identity, async (user) => {
+    await prisma.task.updateMany({
+      where: { id: taskId, ward_id: user.ward_id },
+      data: { title: title?.trim() || null, updated_at: new Date() },
+    });
+    revalidatePath("/tasks");
   });
-  revalidatePath("/tasks");
 }
 
-export async function deleteTask(taskId: string) {
-  const user = await getCurrentUser();
-  await prisma.task.deleteMany({
-    where: { id: taskId, ward_id: user.ward_id },
+export async function updateTaskDescription(
+  identity: SessionIdentity | null,
+  taskId: string,
+  description: string | null,
+) {
+  return authenticatedAction(identity, async (user) => {
+    await prisma.task.updateMany({
+      where: { id: taskId, ward_id: user.ward_id },
+      data: {
+        description: description?.trim() || null,
+        updated_at: new Date(),
+      },
+    });
+    revalidatePath("/tasks");
   });
-  revalidatePath("/tasks");
 }
 
-export async function reopenTask(taskId: string) {
-  const user = await getCurrentUser();
-
-  const task = await prisma.task.findFirst({
-    where: { id: taskId, ward_id: user.ward_id },
-    select: { id: true, type: true, state: true },
+export async function deleteTask(
+  identity: SessionIdentity | null,
+  taskId: string,
+) {
+  return authenticatedAction(identity, async (user) => {
+    await prisma.task.deleteMany({
+      where: { id: taskId, ward_id: user.ward_id },
+    });
+    revalidatePath("/tasks");
   });
-  if (!task) throw new Error("Task not found.");
+}
 
-  const taskTypes = await loadTaskTypes(user.ward_id);
-  const typeDef = findTaskType(taskTypes, task.type);
-  if (!typeDef) throw new Error("Task type not found.");
+export async function reopenTask(
+  identity: SessionIdentity | null,
+  taskId: string,
+) {
+  return authenticatedAction(identity, async (user) => {
+    const task = await prisma.task.findFirst({
+      where: { id: taskId, ward_id: user.ward_id },
+      select: { id: true, type: true, state: true },
+    });
+    if (!task) throw new Error("Task not found.");
 
-  const current = findTaskState(typeDef, task.state);
-  const newState = current?.state_group === "closed"
-    ? (getPreviousState(typeDef, task.state)?.state ?? task.state)
-    : task.state;
+    const taskTypes = await loadTaskTypes(user.ward_id);
+    const typeDef = findTaskType(taskTypes, task.type);
+    if (!typeDef) throw new Error("Task type not found.");
 
-  await prisma.task.update({
-    where: { id: task.id },
-    data: {
-      completed_at: null,
-      state: newState,
-      updated_at: new Date(),
-    },
+    const current = findTaskState(typeDef, task.state);
+    const newState =
+      current?.state_group === "closed"
+        ? (getPreviousState(typeDef, task.state)?.state ?? task.state)
+        : task.state;
+
+    await prisma.task.update({
+      where: { id: task.id },
+      data: {
+        completed_at: null,
+        state: newState,
+        updated_at: new Date(),
+      },
+    });
+
+    revalidatePath("/tasks");
   });
-
-  revalidatePath("/tasks");
 }

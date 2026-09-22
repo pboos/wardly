@@ -11,15 +11,6 @@ Propose plan on the feature and implementation (concise, but also include techni
 Present plan before implementation.
 For db changes no need to create a new migration. Update the one existing one and then delete db and recreate it.
 
-login
-- code input
-  - have it look nicer. for each letter/number a box. but it should work still with backspace to delete a single one and to enter one by one instead of pasting.
-  - nicer on paste of all automatically submit
-- login screen auto focus email input
-
-auth
-- if a request fails with 403/401 -> redirect to login? or show a popup showing to log in (and they can do it in a different tab?)
-
 tasks
 - better display in sunday meeting details (currently too big)
   - also when selecting next to each a button to select. instead of having checkboxes and then separate to add all those selected.

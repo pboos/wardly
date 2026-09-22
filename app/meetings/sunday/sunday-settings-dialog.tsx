@@ -14,7 +14,8 @@ import {
 } from "@/components/ui/dialog";
 import { Field, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
-import { updateSundayMeetingWardSettings } from "./actions";
+import { updateSundayMeetingWardSettings as updateSundayMeetingWardSettingsAction } from "./actions";
+import { useAppMutation } from "@/lib/actions/use-app-mutation";
 
 /** Ward-level Sunday meeting settings: content locale and time zone. */
 export function SundaySettingsDialog({
@@ -24,6 +25,10 @@ export function SundaySettingsDialog({
   contentLocale: string;
   timeZone: string;
 }) {
+  const { execute: updateSundayMeetingWardSettings } = useAppMutation(
+    updateSundayMeetingWardSettingsAction,
+  );
+
   const router = useRouter();
   const [, startTransition] = useTransition();
   const [open, setOpen] = useState(false);
@@ -33,18 +38,30 @@ export function SundaySettingsDialog({
   function save() {
     startTransition(async () => {
       try {
-        await updateSundayMeetingWardSettings({ contentLocale: locale, timeZone: zone });
+        await updateSundayMeetingWardSettings({
+          contentLocale: locale,
+          timeZone: zone,
+        });
         setOpen(false);
         router.refresh();
       } catch (error) {
-        toast.error(error instanceof Error ? error.message : "Could not update ward settings.");
+        toast.error(
+          error instanceof Error
+            ? error.message
+            : "Could not update ward settings.",
+        );
       }
     });
   }
 
   return (
     <>
-      <Button type="button" variant="outline" size="sm" onClick={() => setOpen(true)}>
+      <Button
+        type="button"
+        variant="outline"
+        size="sm"
+        onClick={() => setOpen(true)}
+      >
         <IconSettings data-icon="inline-start" />
         Settings
       </Button>
@@ -55,7 +72,9 @@ export function SundaySettingsDialog({
           </DialogHeader>
           <FieldGroup>
             <Field>
-              <FieldLabel htmlFor="sunday-content-locale">Ward content locale</FieldLabel>
+              <FieldLabel htmlFor="sunday-content-locale">
+                Ward content locale
+              </FieldLabel>
               <Input
                 id="sunday-content-locale"
                 value={locale}
@@ -74,10 +93,16 @@ export function SundaySettingsDialog({
             </Field>
           </FieldGroup>
           <DialogFooter>
-            <Button type="button" variant="outline" onClick={() => setOpen(false)}>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setOpen(false)}
+            >
               Cancel
             </Button>
-            <Button type="button" onClick={save}>Save</Button>
+            <Button type="button" onClick={save}>
+              Save
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

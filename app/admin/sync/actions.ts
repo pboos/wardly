@@ -1,7 +1,8 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { getCurrentUser } from "@/lib/auth/dal";
+import { authenticatedAction } from "@/lib/auth/action";
+import type { SessionIdentity } from "@/lib/auth/action-result";
 import { prisma } from "@/lib/prisma";
 import {
   matchMembers,
@@ -19,104 +20,121 @@ export type {
 } from "./sync-model";
 
 export async function parseSync(
+  identity: SessionIdentity | null,
   rawText: string,
-): Promise<SyncDiff | { error: string }> {
-  const user = await getCurrentUser();
-  let incoming;
-  try {
-    incoming = parseIncoming(rawText);
-  } catch (error) {
-    return {
-      error: error instanceof Error ? error.message : "Invalid member list.",
-    };
-  }
-  const members = await prisma.member.findMany({
-    where: { ward_id: user.ward_id },
-  });
-  return matchMembers(incoming, members);
+) {
+  return authenticatedAction(
+    identity,
+    async (user): Promise<SyncDiff | { error: string }> => {
+      let incoming;
+      try {
+        incoming = parseIncoming(rawText);
+      } catch (error) {
+        return {
+          error:
+            error instanceof Error ? error.message : "Invalid member list.",
+        };
+      }
+      const members = await prisma.member.findMany({
+        where: { ward_id: user.ward_id },
+      });
+      return matchMembers(incoming, members);
+    },
+  );
 }
 
 export async function commitSync(
+  identity: SessionIdentity | null,
   plan: ResolvedPlan,
-): Promise<{ added: number; moved: number; updated: number }> {
-  const user = await getCurrentUser();
-  if (
-    !plan ||
-    !Array.isArray(plan.inserts) ||
-    !Array.isArray(plan.updates) ||
-    !Array.isArray(plan.moves)
-  )
-    throw new Error("Invalid sync plan.");
-  // Validate again at the server boundary, including uniqueness across all writes.
-  const rows = [...plan.inserts, ...plan.updates];
-  const normalized = rows.length ? parseIncoming(JSON.stringify(rows)) : [];
-  const updateIds = plan.updates.map((row) => row.id);
-  const ids = [...plan.moves, ...updateIds];
-  if (
-    ids.some((id) => typeof id !== "string" || !id) ||
-    new Set(ids).size !== ids.length
-  )
-    throw new Error("Invalid or duplicate member IDs in sync plan.");
-  const summary = await prisma.$transaction(async (tx) => {
-    let moved = 0;
-    for (const incoming of normalized.slice(0, plan.inserts.length)) {
-      await tx.member.create({
-        data: {
-          ...memberData(incoming),
-          ward_id: user.ward_id,
-          is_baptized: incoming.isBaptized ?? false,
-          is_moved_out: false,
-        },
+) {
+  return authenticatedAction(
+    identity,
+    async (
+      user,
+    ): Promise<{ added: number; moved: number; updated: number }> => {
+      if (
+        !plan ||
+        !Array.isArray(plan.inserts) ||
+        !Array.isArray(plan.updates) ||
+        !Array.isArray(plan.moves)
+      )
+        throw new Error("Invalid sync plan.");
+      // Validate again at the server boundary, including uniqueness across all writes.
+      const rows = [...plan.inserts, ...plan.updates];
+      const normalized = rows.length ? parseIncoming(JSON.stringify(rows)) : [];
+      const updateIds = plan.updates.map((row) => row.id);
+      const ids = [...plan.moves, ...updateIds];
+      if (
+        ids.some((id) => typeof id !== "string" || !id) ||
+        new Set(ids).size !== ids.length
+      )
+        throw new Error("Invalid or duplicate member IDs in sync plan.");
+      const summary = await prisma.$transaction(async (tx) => {
+        let moved = 0;
+        for (const incoming of normalized.slice(0, plan.inserts.length)) {
+          await tx.member.create({
+            data: {
+              ...memberData(incoming),
+              ward_id: user.ward_id,
+              is_baptized: incoming.isBaptized ?? false,
+              is_moved_out: false,
+            },
+          });
+        }
+        for (const id of plan.moves) {
+          const result = await tx.member.updateMany({
+            where: { id, ward_id: user.ward_id, external_uuid: { not: null } },
+            data: { is_moved_out: true, updated_at: new Date() },
+          });
+          if (result.count !== 1)
+            throw new Error(
+              "Member changed or is unavailable. Preview the sync again.",
+            );
+          moved += result.count;
+        }
+        for (const [index, update] of plan.updates.entries()) {
+          const incoming = normalized[plan.inserts.length + index];
+          const current = await tx.member.findFirst({
+            where: {
+              id: update.id,
+              ward_id: user.ward_id,
+              external_uuid: incoming.externalUuid,
+            },
+          });
+          if (!current)
+            throw new Error(
+              "Member identity changed or is unavailable. Preview the sync again.",
+            );
+          if (current.is_moved_out) {
+            await tx.member_tag_assignment.deleteMany({
+              where: { member_id: current.id },
+            });
+          }
+          const result = await tx.member.updateMany({
+            where: {
+              id: update.id,
+              ward_id: user.ward_id,
+              external_uuid: incoming.externalUuid,
+            },
+            data: {
+              ...memberData(incoming),
+              is_moved_out: false,
+              updated_at: new Date(),
+            },
+          });
+          if (result.count !== 1)
+            throw new Error(
+              "Member identity changed or is unavailable. Preview the sync again.",
+            );
+        }
+        return {
+          added: plan.inserts.length,
+          moved,
+          updated: plan.updates.length,
+        };
       });
-    }
-    for (const id of plan.moves) {
-      const result = await tx.member.updateMany({
-        where: { id, ward_id: user.ward_id, external_uuid: { not: null } },
-        data: { is_moved_out: true, updated_at: new Date() },
-      });
-      if (result.count !== 1)
-        throw new Error(
-          "Member changed or is unavailable. Preview the sync again.",
-        );
-      moved += result.count;
-    }
-    for (const [index, update] of plan.updates.entries()) {
-      const incoming = normalized[plan.inserts.length + index];
-      const current = await tx.member.findFirst({
-        where: {
-          id: update.id,
-          ward_id: user.ward_id,
-          external_uuid: incoming.externalUuid,
-        },
-      });
-      if (!current)
-        throw new Error(
-          "Member identity changed or is unavailable. Preview the sync again.",
-        );
-      if (current.is_moved_out) {
-        await tx.member_tag_assignment.deleteMany({
-          where: { member_id: current.id },
-        });
-      }
-      const result = await tx.member.updateMany({
-        where: {
-          id: update.id,
-          ward_id: user.ward_id,
-          external_uuid: incoming.externalUuid,
-        },
-        data: {
-          ...memberData(incoming),
-          is_moved_out: false,
-          updated_at: new Date(),
-        },
-      });
-      if (result.count !== 1)
-        throw new Error(
-          "Member identity changed or is unavailable. Preview the sync again.",
-        );
-    }
-    return { added: plan.inserts.length, moved, updated: plan.updates.length };
-  });
-  revalidatePath("/members");
-  return summary;
+      revalidatePath("/members");
+      return summary;
+    },
+  );
 }

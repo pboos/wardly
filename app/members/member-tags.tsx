@@ -6,7 +6,8 @@ import { Badge } from "@/components/ui/badge";
 import { IconDoorExit } from "@tabler/icons-react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
-import { setMemberTag } from "./actions";
+import { setMemberTag as setMemberTagAction } from "./actions";
+import { useAppMutation } from "@/lib/actions/use-app-mutation";
 import { TagBadge } from "./tag-badge";
 import { TagPicker } from "./tag-picker";
 import type { MemberTag } from "./tags";
@@ -28,6 +29,8 @@ export function MemberTags({
   compact?: boolean;
   disabled?: boolean;
 }) {
+  const { execute: setMemberTag } = useAppMutation(setMemberTagAction);
+
   const [pending, startTransition] = useTransition();
   const [selected, update] = useOptimistic(
     tagIds,

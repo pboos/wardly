@@ -105,3 +105,8 @@ Missing email addresses cannot be recovered from this payload.
 
 Run `npm test`. Synthetic browser tests verify extraction and failure cases;
 live LCR still requires verification in the signed-in browser.
+
+Authenticated client actions use the shared [session recovery flow](../login/README.md#session-recovery).
+Components bind guarded `actions.ts` functions through `useAppMutation`;
+authentication failures retain drafts for explicit retry after login. See the
+[shared action architecture](../login/actions.md).

@@ -7,11 +7,12 @@ import { participantsByType } from "@/lib/sunday-meetings/slots";
 import { SundayPeoplePicker } from "./sunday-people-picker";
 import { SundayParticipantRoles } from "./sunday-participant-roles";
 import {
-  addSundayAgendaItem,
-  deleteSundayAgendaItem,
-  updateSundayAgendaItem,
-  upsertSundaySlotItem,
+  addSundayAgendaItem as addSundayAgendaItemAction,
+  deleteSundayAgendaItem as deleteSundayAgendaItemAction,
+  updateSundayAgendaItem as updateSundayAgendaItemAction,
+  upsertSundaySlotItem as upsertSundaySlotItemAction,
 } from "./actions";
+import { useAppMutation } from "@/lib/actions/use-app-mutation";
 
 type ParticipantType =
   "leader" | "presiding" | "organist" | "music_conductor" | "visitor";
@@ -27,6 +28,19 @@ export function SundayContextPeople({
   type: ParticipantType;
   label: string;
 }) {
+  const { execute: addSundayAgendaItem } = useAppMutation(
+    addSundayAgendaItemAction,
+  );
+  const { execute: deleteSundayAgendaItem } = useAppMutation(
+    deleteSundayAgendaItemAction,
+  );
+  const { execute: updateSundayAgendaItem } = useAppMutation(
+    updateSundayAgendaItemAction,
+  );
+  const { execute: upsertSundaySlotItem } = useAppMutation(
+    upsertSundaySlotItemAction,
+  );
+
   const items = participantsByType(meeting.items, type);
   const unassigned = items.find((item) => !item.personNameResolved);
   const single = type === "leader" || type === "presiding";

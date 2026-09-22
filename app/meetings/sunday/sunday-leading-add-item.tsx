@@ -30,7 +30,8 @@ import type {
   SundayMeetingSection,
 } from "@/lib/sunday-meetings/types";
 import { addableAgendaItemTypes } from "@/lib/sunday-meetings/add-item-rules";
-import { addSundayAgendaItem } from "./actions";
+import { addSundayAgendaItem as addSundayAgendaItemAction } from "./actions";
+import { useAppMutation } from "@/lib/actions/use-app-mutation";
 import { ITEM_LABELS, SECTION_LABELS } from "./sunday-leading-labels";
 
 /** Adds an extra item to the section that opened the dialog. */
@@ -43,6 +44,10 @@ export function AddAgendaItemDialog({
   section: Exclude<SundayMeetingSection, "participants">;
   disabled?: boolean;
 }) {
+  const { execute: addSundayAgendaItem } = useAppMutation(
+    addSundayAgendaItemAction,
+  );
+
   const id = useId();
   const itemTypes = addableAgendaItemTypes(section);
   const router = useRouter();

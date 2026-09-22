@@ -13,7 +13,8 @@ import { Input } from "@/components/ui/input";
 import type { TaskType, WardMember, WardUser } from "@/lib/tasks/types";
 import { useRef, useState } from "react";
 import { toast } from "sonner";
-import { createTask } from "./actions";
+import { createTask as createTaskAction } from "./actions";
+import { useAppMutation } from "@/lib/actions/use-app-mutation";
 import { TaskChoiceStep } from "./task-choice-step";
 import { TaskTypeIcon } from "./task-type-icon";
 
@@ -32,6 +33,8 @@ export function NewTaskDialog({
   onCreated: () => void;
   onPendingChange: (pending: boolean) => void;
 }) {
+  const { execute: createTask } = useAppMutation(createTaskAction);
+
   const [step, setStep] = useState<Step>("type");
   const [type, setType] = useState<TaskType | null>(null);
   const [memberId, setMemberId] = useState<string | null>(null);

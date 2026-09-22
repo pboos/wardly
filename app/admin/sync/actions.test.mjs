@@ -1,3 +1,4 @@
+import { bindActionsForTest } from "@/lib/actions/test-support.mjs";
 import assert from "node:assert/strict";
 import test from "node:test";
 import { registerHooks } from "node:module";
@@ -17,7 +18,7 @@ registerHooks({
     if (specifier === "@/lib/auth/dal") {
       return {
         shortCircuit: true,
-        url: 'data:text/javascript,export async function getCurrentUser() { return { ward_id: "sync-test-ward" }; }',
+        url: 'data:text/javascript,export async function getSessionUser() { return { id: "test-user", ward_id: "sync-test-ward" }; }',
       };
     }
     return nextResolve(specifier, context);
@@ -39,7 +40,10 @@ test("sync matches UUIDs, persists households, isolates wards, and preserves unk
   );
   db.close();
   const { prisma } = await import("../../../lib/prisma.ts");
-  const { parseSync, commitSync } = await import("./actions.ts");
+  const { parseSync, commitSync } = bindActionsForTest(
+    await import("./actions.ts"),
+    { userId: "test-user", wardId: "sync-test-ward" },
+  );
   const incoming = {
     externalUuid: "member-alex",
     firstName: "Alex",

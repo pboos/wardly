@@ -1,6 +1,7 @@
 "use client";
 import type { SundayMeetingItem } from "@/lib/sunday-meetings/types";
-import { updateSundayAgendaItem } from "./actions";
+import { updateSundayAgendaItem as updateSundayAgendaItemAction } from "./actions";
+import { useAppMutation } from "@/lib/actions/use-app-mutation";
 import { SundayHymnPicker } from "./sunday-hymn-picker";
 import { ItemContentDialog } from "./sunday-item-content-dialog";
 import { contentLabel } from "./sunday-item-editors";
@@ -12,6 +13,10 @@ export function SundayItemContentEditor({
   item: SundayMeetingItem;
   inline?: boolean;
 }) {
+  const { execute: updateSundayAgendaItem } = useAppMutation(
+    updateSundayAgendaItemAction,
+  );
+
   if (item.type === "hymn" || item.type === "musical_number") {
     return (
       <SundayHymnPicker

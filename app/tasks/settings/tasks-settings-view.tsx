@@ -4,7 +4,11 @@ import { useRouter } from "next/navigation";
 import { useMemo, useTransition } from "react";
 import { toast } from "sonner";
 import { TaskTypeIcon } from "../task-type-icon";
-import { updateStateAssignee, updateTaskType } from "./actions";
+import {
+  updateStateAssignee as updateStateAssigneeAction,
+  updateTaskType as updateTaskTypeAction,
+} from "./actions";
+import { useAppMutation } from "@/lib/actions/use-app-mutation";
 import { StatesCard } from "./states-card";
 import { TaskTypeEditorRow } from "./task-type-editor-row";
 
@@ -15,6 +19,11 @@ export function TasksSettingsView({
   users: WardUser[];
   taskTypes: TaskType[];
 }) {
+  const { execute: updateStateAssignee } = useAppMutation(
+    updateStateAssigneeAction,
+  );
+  const { execute: updateTaskType } = useAppMutation(updateTaskTypeAction);
+
   const router = useRouter();
   const [, start] = useTransition();
 

@@ -6,7 +6,11 @@ import type {
 } from "@/lib/sunday-meetings/types";
 import { participantsByType } from "@/lib/sunday-meetings/slots";
 import { SundayPeoplePicker } from "./sunday-people-picker";
-import { addSundayAgendaItem, deleteSundayAgendaItem } from "./actions";
+import {
+  addSundayAgendaItem as addSundayAgendaItemAction,
+  deleteSundayAgendaItem as deleteSundayAgendaItemAction,
+} from "./actions";
+import { useAppMutation } from "@/lib/actions/use-app-mutation";
 type ParticipantType = "organist" | "music_conductor";
 
 export function MeetingPeopleCell({
@@ -18,6 +22,13 @@ export function MeetingPeopleCell({
   role: ParticipantType;
   members: SundayMeetingMemberHistory[];
 }) {
+  const { execute: addSundayAgendaItem } = useAppMutation(
+    addSundayAgendaItemAction,
+  );
+  const { execute: deleteSundayAgendaItem } = useAppMutation(
+    deleteSundayAgendaItemAction,
+  );
+
   const label = role === "organist" ? "Organist" : "Music conductor";
 
   return (

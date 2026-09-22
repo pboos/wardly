@@ -107,3 +107,8 @@ step, hidden-title types, skipped optional fields, empty/no-match lists, Back,
 Escape/focus restoration, failed-save retry, duplicate submission, IME/repeat
 keys, disabled types, and shortcut isolation. Check dialog scrolling and filter
 wrapping at narrow viewport sizes.
+
+Authenticated client actions use the shared [session recovery flow](../login/README.md#session-recovery).
+Components bind guarded `actions.ts` functions through `useAppMutation`;
+authentication failures retain drafts for explicit retry after login. See the
+[shared action architecture](../login/actions.md).

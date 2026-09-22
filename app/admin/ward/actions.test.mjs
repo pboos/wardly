@@ -1,3 +1,4 @@
+import { bindActionsForTest } from "@/lib/actions/test-support.mjs";
 import assert from "node:assert/strict";
 import test from "node:test";
 import { registerHooks } from "node:module";
@@ -16,7 +17,7 @@ registerHooks({
     if (specifier === "@/lib/auth/dal")
       return {
         shortCircuit: true,
-        url: 'data:text/javascript,export async function getCurrentUser() { if (globalThis.wardSettingsUnauthenticated) throw new Error("unauthenticated"); return { ward_id: "settings-ward" }; }',
+        url: 'data:text/javascript,export async function getSessionUser() { if (globalThis.wardSettingsUnauthenticated) throw new Error("unauthenticated"); return { id: "test-user", ward_id: "settings-ward" }; }',
       };
     return nextResolve(specifier, context);
   },
@@ -37,7 +38,10 @@ test("ward settings validate input, require authentication, and preserve other w
   );
   db.close();
   const { prisma } = await import("../../../lib/prisma.ts");
-  const { updateWardSettings } = await import("./actions.ts");
+  const { updateWardSettings } = bindActionsForTest(
+    await import("./actions.ts"),
+    { userId: "test-user", wardId: "settings-ward" },
+  );
   const form = () => {
     const data = new FormData();
     data.set("wardName", "  Updated ward  ");

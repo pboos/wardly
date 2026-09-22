@@ -16,12 +16,18 @@ export const verifySession = cache(async () => {
   return { isAuth: true, payload };
 });
 
-export const getCurrentUser = cache(async () => {
-  const { payload } = await verifySession();
-  const user = await prisma.user.findUnique({
+export const getSessionUser = cache(async () => {
+  const token = (await cookies()).get(SESSION_COOKIE_NAME)?.value;
+  const payload = await verifyJwt(token);
+  if (!payload) return null;
+  return prisma.user.findUnique({
     where: { id: payload[CLAIM_USER_ID] },
     select: { id: true, email: true, name: true, ward_id: true },
   });
+});
+
+export const getCurrentUser = cache(async () => {
+  const user = await getSessionUser();
   if (!user) redirect("/login");
   return user;
 });

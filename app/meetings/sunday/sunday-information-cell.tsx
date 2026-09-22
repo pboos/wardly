@@ -2,9 +2,14 @@
 
 import type { SundayMeeting } from "@/lib/sunday-meetings/types";
 import { TextDialog } from "./sunday-text-dialog";
-import { updateSundayMeetingInformation } from "./actions";
+import { updateSundayMeetingInformation as updateSundayMeetingInformationAction } from "./actions";
+import { useAppMutation } from "@/lib/actions/use-app-mutation";
 
 export function InformationCell({ meeting }: { meeting: SundayMeeting }) {
+  const { execute: updateSundayMeetingInformation } = useAppMutation(
+    updateSundayMeetingInformationAction,
+  );
+
   return (
     <TextDialog
       title="Meeting information"

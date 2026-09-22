@@ -34,7 +34,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { addUser, removeUser, type WardUser } from "./actions";
+import {
+  addUser as addUserAction,
+  removeUser as removeUserAction,
+  type WardUser,
+} from "./actions";
+import { useAppMutation } from "@/lib/actions/use-app-mutation";
 
 export function UsersView({
   users,
@@ -57,10 +62,7 @@ export function UsersView({
       </header>
 
       <div className="flex justify-end">
-        <AddUserDialog
-          open={addOpen}
-          onOpenChange={setAddOpen}
-        />
+        <AddUserDialog open={addOpen} onOpenChange={setAddOpen} />
       </div>
 
       {users.length === 0 ? (
@@ -85,14 +87,16 @@ export function UsersView({
                     <TableCell className="font-medium">
                       <span className="flex items-center gap-2">
                         {u.name}
-                        {u.is_self && (
-                          <Badge variant="secondary">you</Badge>
-                        )}
+                        {u.is_self && <Badge variant="secondary">you</Badge>}
                       </span>
                     </TableCell>
                     <TableCell>{u.email}</TableCell>
                     <TableCell>
-                      <RemoveUserButton user={u} users={users} currentUserId={currentUserId} />
+                      <RemoveUserButton
+                        user={u}
+                        users={users}
+                        currentUserId={currentUserId}
+                      />
                     </TableCell>
                   </TableRow>
                 ))}
@@ -103,18 +107,17 @@ export function UsersView({
           {/* Mobile: list */}
           <ul className="flex flex-col divide-y divide-border sm:hidden">
             {users.map((u) => (
-              <li
-                key={u.id}
-                className="flex flex-col gap-1 py-3"
-              >
+              <li key={u.id} className="flex flex-col gap-1 py-3">
                 <div className="flex items-center justify-between gap-2">
                   <span className="flex items-center gap-2 text-sm font-medium">
                     {u.name}
-                    {u.is_self && (
-                      <Badge variant="secondary">you</Badge>
-                    )}
+                    {u.is_self && <Badge variant="secondary">you</Badge>}
                   </span>
-                  <RemoveUserButton user={u} users={users} currentUserId={currentUserId} />
+                  <RemoveUserButton
+                    user={u}
+                    users={users}
+                    currentUserId={currentUserId}
+                  />
                 </div>
                 <span className="text-sm text-muted-foreground">{u.email}</span>
               </li>
@@ -133,6 +136,8 @@ function AddUserDialog({
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }) {
+  const { execute: addUser } = useAppMutation(addUserAction);
+
   const [email, setEmail] = useState("");
   const [name, setName] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -154,14 +159,20 @@ function AddUserDialog({
     e.preventDefault();
     setError(null);
     startTransition(async () => {
-      const result = await addUser(email, name);
-      if (!result.ok) {
-        setError(result.error);
-        return;
+      try {
+        const result = await addUser(email, name);
+        if (!result.ok) {
+          setError(result.error);
+          return;
+        }
+        toast.success("User added.");
+        handleOpenChange(false);
+        router.refresh();
+      } catch (error) {
+        setError(
+          error instanceof Error ? error.message : "Could not save changes.",
+        );
       }
-      toast.success("User added.");
-      handleOpenChange(false);
-      router.refresh();
     });
   }
 
@@ -177,8 +188,8 @@ function AddUserDialog({
         <DialogHeader>
           <DialogTitle>Add user</DialogTitle>
           <DialogDescription>
-            Add a new user to your ward. They will be able to log in with a
-            code sent to their email.
+            Add a new user to your ward. They will be able to log in with a code
+            sent to their email.
           </DialogDescription>
         </DialogHeader>
 
@@ -238,6 +249,8 @@ function RemoveUserButton({
   users: WardUser[];
   currentUserId: string;
 }) {
+  const { execute: removeUser } = useAppMutation(removeUserAction);
+
   const [open, setOpen] = useState(false);
   const [reassignTo, setReassignTo] = useState<string>("");
   const [error, setError] = useState<string | null>(null);
@@ -262,14 +275,20 @@ function RemoveUserButton({
       return;
     }
     startTransition(async () => {
-      const result = await removeUser(user.id, reassignTo);
-      if (!result.ok) {
-        setError(result.error);
-        return;
+      try {
+        const result = await removeUser(user.id, reassignTo);
+        if (!result.ok) {
+          setError(result.error);
+          return;
+        }
+        toast.success(`${user.name} removed.`);
+        handleOpenChange(false);
+        router.refresh();
+      } catch (error) {
+        setError(
+          error instanceof Error ? error.message : "Could not save changes.",
+        );
       }
-      toast.success(`${user.name} removed.`);
-      handleOpenChange(false);
-      router.refresh();
     });
   }
 

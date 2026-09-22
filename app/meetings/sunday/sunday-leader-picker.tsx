@@ -6,7 +6,11 @@ import type {
 } from "@/lib/sunday-meetings/types";
 import { leaderOfMeeting } from "@/lib/sunday-meetings/slots";
 import { SundayPeoplePicker } from "./sunday-people-picker";
-import { upsertSundaySlotItem, updateSundayAgendaItem } from "./actions";
+import {
+  upsertSundaySlotItem as upsertSundaySlotItemAction,
+  updateSundayAgendaItem as updateSundayAgendaItemAction,
+} from "./actions";
+import { useAppMutation } from "@/lib/actions/use-app-mutation";
 
 export function LeaderPicker({
   meeting,
@@ -15,6 +19,13 @@ export function LeaderPicker({
   meeting: SundayMeeting;
   members: SundayMeetingMemberHistory[];
 }) {
+  const { execute: upsertSundaySlotItem } = useAppMutation(
+    upsertSundaySlotItemAction,
+  );
+  const { execute: updateSundayAgendaItem } = useAppMutation(
+    updateSundayAgendaItemAction,
+  );
+
   const leader = leaderOfMeeting(meeting.items);
   return (
     <SundayPeoplePicker

@@ -13,7 +13,8 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import type { SundayMeetingItem } from "@/lib/sunday-meetings/types";
-import { carrySundayAgendaItemForward } from "./actions";
+import { carrySundayAgendaItemForward as carrySundayAgendaItemForwardAction } from "./actions";
+import { useAppMutation } from "@/lib/actions/use-app-mutation";
 
 export function CarryForwardButton({
   item,
@@ -22,6 +23,10 @@ export function CarryForwardButton({
   item: SundayMeetingItem;
   disabled?: boolean;
 }) {
+  const { execute: carrySundayAgendaItemForward } = useAppMutation(
+    carrySundayAgendaItemForwardAction,
+  );
+
   const router = useRouter();
   const [pending, startTransition] = useTransition();
   const [open, setOpen] = useState(false);

@@ -32,3 +32,8 @@ No schema change or database reset is required.
   cover validation, authentication, ward isolation, and unchanged dates/hymn rows
   against temporary SQLite. Check the browser at desktop and mobile widths,
   including search, saved-zone precedence, persistence, and failed-save retry.
+
+Authenticated client actions use the shared [session recovery flow](../login/README.md#session-recovery).
+Components bind guarded `actions.ts` functions through `useAppMutation`;
+authentication failures retain drafts for explicit retry after login. See the
+[shared action architecture](../login/actions.md).

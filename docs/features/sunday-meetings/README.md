@@ -58,3 +58,8 @@ isolated temporary SQLite database created from the initial migration.
 For code changes, also run `bunx tsc --noEmit` and
 `bunx eslint app/meetings/sunday lib/sunday-meetings`. Topic files identify
 the relevant regression scenarios; check both desktop and mobile for UI changes.
+
+Authenticated client actions use the shared [session recovery flow](../login/README.md#session-recovery).
+Components bind guarded `actions.ts` functions through `useAppMutation`;
+authentication failures retain drafts for explicit retry after login. See the
+[shared action architecture](../login/actions.md).

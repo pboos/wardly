@@ -19,7 +19,8 @@ import {
 } from "@/lib/sunday-meetings/types";
 import { getSundayScheduleDisplayState } from "@/lib/sunday-meetings/schedule";
 import { cn } from "@/lib/utils";
-import { updateSundayMeetingType } from "./actions";
+import { updateSundayMeetingType as updateSundayMeetingTypeAction } from "./actions";
+import { useAppMutation } from "@/lib/actions/use-app-mutation";
 import { HymnCell } from "./sunday-hymn-cell";
 import { InformationCell } from "./sunday-information-cell";
 import { LeaderPicker } from "./sunday-leader-picker";
@@ -42,6 +43,10 @@ export function ScheduleMobileCard({
   run: (action: () => Promise<unknown>, errorMessage: string) => void;
   currentSunday: string;
 }) {
+  const { execute: updateSundayMeetingType } = useAppMutation(
+    updateSundayMeetingTypeAction,
+  );
+
   const local = isLocalMeetingType(meeting.type);
   const displayState = getSundayScheduleDisplayState(
     meeting.type,

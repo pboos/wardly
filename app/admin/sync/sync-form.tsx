@@ -14,11 +14,12 @@ import { Textarea } from "@/components/ui/textarea";
 import { Field, FieldLabel } from "@/components/ui/field";
 import { LCR_SCRIPT } from "./lcr-script";
 import {
-  parseSync,
-  commitSync,
+  parseSync as parseSyncAction,
+  commitSync as commitSyncAction,
   type SyncDiff,
   type ResolvedPlan,
 } from "./actions";
+import { useAppMutation } from "@/lib/actions/use-app-mutation";
 
 type Plan =
   | { step: "idle" }
@@ -29,6 +30,9 @@ type Plan =
     };
 
 export function SyncForm() {
+  const { execute: parseSync } = useAppMutation(parseSyncAction);
+  const { execute: commitSync } = useAppMutation(commitSyncAction);
+
   const [plan, setPlan] = useState<Plan>({ step: "idle" });
   const [rawText, setRawText] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -37,12 +41,18 @@ export function SyncForm() {
   function handleSync() {
     setError(null);
     startTransition(async () => {
-      const result = await parseSync(rawText);
-      if ("error" in result) {
-        setError(result.error);
-        return;
+      try {
+        const result = await parseSync(rawText);
+        if ("error" in result) {
+          setError(result.error);
+          return;
+        }
+        setPlan({ step: "preview", diff: result });
+      } catch (error) {
+        setError(
+          error instanceof Error ? error.message : "Could not preview sync.",
+        );
       }
-      setPlan({ step: "preview", diff: result });
     });
   }
 

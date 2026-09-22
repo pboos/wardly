@@ -5,7 +5,11 @@ import { standardAgendaForMeeting } from "@/lib/sunday-meetings/templates";
 import { findSlotItem } from "@/lib/sunday-meetings/slots";
 import { SundayHymnPicker } from "./sunday-hymn-picker";
 import { EmptyCell } from "./sunday-empty-cell";
-import { updateSundayAgendaItem, upsertSundaySlotItem } from "./actions";
+import {
+  updateSundayAgendaItem as updateSundayAgendaItemAction,
+  upsertSundaySlotItem as upsertSundaySlotItemAction,
+} from "./actions";
+import { useAppMutation } from "@/lib/actions/use-app-mutation";
 type HymnSlot =
   "opening_hymn" | "sacrament_hymn" | "interlude" | "closing_hymn";
 
@@ -16,6 +20,13 @@ export function HymnCell({
   meeting: SundayMeeting;
   slot: HymnSlot;
 }) {
+  const { execute: updateSundayAgendaItem } = useAppMutation(
+    updateSundayAgendaItemAction,
+  );
+  const { execute: upsertSundaySlotItem } = useAppMutation(
+    upsertSundaySlotItemAction,
+  );
+
   const entry = standardAgendaForMeeting(meeting.type).find(
     (candidate) => candidate.slot === slot,
   );

@@ -19,7 +19,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { saveTag } from "./actions";
+import { saveTag as saveTagAction } from "./actions";
+import { useAppMutation } from "@/lib/actions/use-app-mutation";
 import { TAG_COLORS, type MemberTag } from "./tags";
 import { TagBadge } from "./tag-badge";
 
@@ -30,6 +31,8 @@ export function TagEditor({
   tag?: MemberTag;
   onDone: () => void;
 }) {
+  const { execute: saveTag } = useAppMutation(saveTagAction);
+
   const id = useId();
   const [name, setName] = useState(tag?.name ?? "");
   const [isDefaultExcluded, setIsDefaultExcluded] = useState(

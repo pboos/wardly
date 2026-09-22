@@ -7,7 +7,11 @@ import type {
 import { speakersOfMeeting } from "@/lib/sunday-meetings/slots";
 import { SundayPeoplePicker } from "./sunday-people-picker";
 import { EmptyCell } from "./sunday-empty-cell";
-import { updateSundayAgendaItem, addSundayAgendaItem } from "./actions";
+import {
+  updateSundayAgendaItem as updateSundayAgendaItemAction,
+  addSundayAgendaItem as addSundayAgendaItemAction,
+} from "./actions";
+import { useAppMutation } from "@/lib/actions/use-app-mutation";
 
 export function SpeakerCell({
   meeting,
@@ -20,6 +24,13 @@ export function SpeakerCell({
   local: boolean;
   members: SundayMeetingMemberHistory[];
 }) {
+  const { execute: updateSundayAgendaItem } = useAppMutation(
+    updateSundayAgendaItemAction,
+  );
+  const { execute: addSundayAgendaItem } = useAppMutation(
+    addSundayAgendaItemAction,
+  );
+
   if (!local || meeting.type === "childrens_sacrament_presentation") {
     return <EmptyCell />;
   }

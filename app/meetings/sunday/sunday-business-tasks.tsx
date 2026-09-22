@@ -14,7 +14,8 @@ import {
   FieldSet,
 } from "@/components/ui/field";
 import type { SundayMeetingTaskCandidateGroup } from "@/lib/sunday-meetings/types";
-import { addSuggestedSundayTasks } from "./actions";
+import { addSuggestedSundayTasks as addSuggestedSundayTasksAction } from "./actions";
+import { useAppMutation } from "@/lib/actions/use-app-mutation";
 import { ITEM_LABELS } from "./sunday-leading-labels";
 import type { SundayMutationRunner } from "./use-sunday-mutation";
 
@@ -29,6 +30,10 @@ export function SundayBusinessTasks({
   pending: boolean;
   run: SundayMutationRunner;
 }) {
+  const { execute: addSuggestedSundayTasks } = useAppMutation(
+    addSuggestedSundayTasksAction,
+  );
+
   const [expanded, setExpanded] = useState(true);
   const [selected, setSelected] = useState<string[]>([]);
   const contentId = useId();

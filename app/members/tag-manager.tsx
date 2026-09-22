@@ -11,7 +11,8 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { deleteTag } from "./actions";
+import { deleteTag as deleteTagAction } from "./actions";
+import { useAppMutation } from "@/lib/actions/use-app-mutation";
 import { TagBadge } from "./tag-badge";
 import { TagEditor } from "./tag-editor";
 import type { MemberTag } from "./tags";
@@ -23,6 +24,8 @@ export function TagManager({
   tags: MemberTag[];
   disabled?: boolean;
 }) {
+  const { execute: deleteTag } = useAppMutation(deleteTagAction);
+
   const [editing, setEditing] = useState<MemberTag | "new" | null>(null);
   const [deleting, setDeleting] = useState<MemberTag | null>(null);
   const [pending, startTransition] = useTransition();

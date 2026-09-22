@@ -29,10 +29,11 @@ import type {
   SundayMeetingMemberHistory,
 } from "@/lib/sunday-meetings/types";
 import {
-  addSundayMeetingAfterLatest,
-  addSundayMeetingBeforeEarliest,
-  bootstrapSundaySchedule,
+  addSundayMeetingAfterLatest as addSundayMeetingAfterLatestAction,
+  addSundayMeetingBeforeEarliest as addSundayMeetingBeforeEarliestAction,
+  bootstrapSundaySchedule as bootstrapSundayScheduleAction,
 } from "./actions";
+import { useAppMutation } from "@/lib/actions/use-app-mutation";
 import { formatDate } from "./sunday-schedule-format";
 import { speakerCount } from "./sunday-schedule-format";
 import { ScheduleMobileCard } from "./sunday-schedule-mobile-card";
@@ -61,6 +62,16 @@ export function SundayScheduleView({
   schedule: ScheduleData;
   members: SundayMeetingMemberHistory[];
 }) {
+  const { execute: addSundayMeetingAfterLatest } = useAppMutation(
+    addSundayMeetingAfterLatestAction,
+  );
+  const { execute: addSundayMeetingBeforeEarliest } = useAppMutation(
+    addSundayMeetingBeforeEarliestAction,
+  );
+  const { execute: bootstrapSundaySchedule } = useAppMutation(
+    bootstrapSundayScheduleAction,
+  );
+
   const { run } = useSundayMutation();
   const speakerColumns = Math.max(3, ...schedule.rows.map(speakerCount));
 
