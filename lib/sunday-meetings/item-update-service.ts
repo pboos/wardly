@@ -4,7 +4,7 @@ import {
   isLocalMeetingType,
   isSundayMeetingItemType,
   isSundayMeetingSection,
-  isSundayMeetingTaskItemType,
+  isTaskExclusiveSundayMeetingItemType,
   parseItemMetadata,
   type SundayItemMetadata,
   type SundayMeetingItemType,
@@ -69,7 +69,7 @@ export async function updateSundayItemInTransaction(
   ) {
     fail("Invalid agenda item.");
   }
-  if (isSundayMeetingTaskItemType(targetType) && !item.task_id) {
+  if (isTaskExclusiveSundayMeetingItemType(targetType) && !item.task_id) {
     fail("Task presentation items must be added from a suggested task.");
   }
   if (item.task_id && targetType !== currentType) {

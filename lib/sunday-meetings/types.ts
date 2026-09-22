@@ -57,10 +57,22 @@ export type SundayMeetingItemType = (typeof SUNDAY_MEETING_ITEM_TYPES)[number];
 
 export type SundayMeetingTaskItemType = Extract<
   SundayMeetingItemType,
-  "calling_sustain" | "calling_release" | "priesthood_aaronic_inform"
+  | "calling_sustain"
+  | "calling_release"
+  | "priesthood_aaronic_inform"
+  | "child_naming_blessing"
+  | "member_welcome"
 >;
 
 export const SUNDAY_MEETING_TASK_ITEM_TYPES = [
+  "calling_sustain",
+  "calling_release",
+  "priesthood_aaronic_inform",
+  "child_naming_blessing",
+  "member_welcome",
+] as const satisfies readonly SundayMeetingTaskItemType[];
+
+const TASK_EXCLUSIVE_SUNDAY_MEETING_ITEM_TYPES = [
   "calling_sustain",
   "calling_release",
   "priesthood_aaronic_inform",
@@ -185,6 +197,18 @@ export function isSundayMeetingTaskItemType(
   return (
     typeof value === "string" &&
     (SUNDAY_MEETING_TASK_ITEM_TYPES as readonly string[]).includes(value)
+  );
+}
+
+/** Presentation types that cannot also be created as ordinary agenda items. */
+export function isTaskExclusiveSundayMeetingItemType(
+  value: unknown,
+): value is (typeof TASK_EXCLUSIVE_SUNDAY_MEETING_ITEM_TYPES)[number] {
+  return (
+    typeof value === "string" &&
+    (TASK_EXCLUSIVE_SUNDAY_MEETING_ITEM_TYPES as readonly string[]).includes(
+      value,
+    )
   );
 }
 

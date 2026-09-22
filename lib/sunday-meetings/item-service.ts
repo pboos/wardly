@@ -6,7 +6,7 @@ import {
   isLocalMeetingType,
   isSundayMeetingItemType,
   isSundayMeetingSection,
-  isSundayMeetingTaskItemType,
+  isTaskExclusiveSundayMeetingItemType,
   type SundayItemMetadata,
   type SundayMeetingItemType,
   type SundayMeetingSection,
@@ -70,7 +70,7 @@ async function createItem(
     !isSundayMeetingSection(input.section)
   )
     fail("Invalid agenda item.");
-  if (isSundayMeetingTaskItemType(input.type))
+  if (isTaskExclusiveSundayMeetingItemType(input.type))
     fail("Task presentation items must be added from a suggested task.");
   const participant = [
     "leader",

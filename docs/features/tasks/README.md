@@ -56,6 +56,25 @@ and steps. Older databases with priesthood tasks or state assignments using the
 removed `interview` key need those mapped to `todo` before using the new default
 lifecycle (or a development database reset).
 
+## Automatic ordinance and recommendation workflows
+
+The automatic task catalog also includes these member-oriented workflows:
+
+| Type key                         | Display name                   | Lifecycle                                                                                                        |
+| -------------------------------- | ------------------------------ | ---------------------------------------------------------------------------------------------------------------- |
+| `temple_endowment_living`        | Temple endowment (living)      | Bishop interview → Submit to stake → Stake interview → Submitted to temple → Done                                |
+| `temple_sealing_living`          | Temple sealing (living)        | Bishop interview → Submit to stake → Stake interview → Submitted to temple → Done                                |
+| `patriarchal_blessing_recommend` | Patriarchal blessing recommend | Bishop interview → Submit in system → Patriarchal blessing → Done                                                |
+| `child_baptism`                  | Child baptism                  | Interview → Baptism & confirmation → In front of ward → Record in LCR → Certificate → Done                       |
+| `child_naming_blessing`          | Naming and blessing a child    | Prepare child record form → Blessing → Create membership record → Done                                           |
+| `missionary_recommendation`      | Missionary recommendation      | Candidate preparation → Bishop interview → Submit to stake → Stake interview → Confirm submitted by stake → Done |
+
+All require a member. Living sealing also shows a task title so the sealing case
+can be identified. The child-baptism **In front of ward** state is available to
+the Sunday agenda as a member welcome. The child-blessing **Blessing** state is
+available as the existing naming-and-blessing agenda item. Adding either item to
+an agenda does not advance its task state.
+
 ## Type symbols
 
 [TaskTypeIcon](../../../app/tasks/task-type-icon.tsx) maps stable type keys to
@@ -69,8 +88,11 @@ The custom shapes live in [CallingIcon](../../../app/tasks/calling-icon.tsx),
 [TempleRecommendIcon](../../../app/tasks/temple-recommend-icon.tsx), and
 [YouthInterviewIcon](../../../app/tasks/youth-interview-icon.tsx).
 Task keeps its clipboard, priesthood types keep books with adjacent AP/MP
-markers, and check-in keeps two speech bubbles. Custom/unknown keys fall back
-to a tag. Corner markers have gaps around them and need no background fill.
+markers, and check-in keeps two speech bubbles. Living temple ordinances use a
+church building; patriarchal blessing recommends use a certificate, child
+baptisms use a water drop, child blessings use a baby carriage, and missionary
+recommendations use a globe. Custom/unknown keys fall back to a tag. Corner
+markers have gaps around them and need no background fill.
 
 Symbols appear in active/past type badges, task details, the creation picker,
 the type filter, and settings. Compact badges expose the full name to assistive

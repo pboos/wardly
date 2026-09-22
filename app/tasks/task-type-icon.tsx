@@ -1,8 +1,13 @@
 import {
+  IconBabyCarriage,
   IconBook,
+  IconBuildingChurch,
   IconClipboardList,
+  IconDroplet,
+  IconFileCertificate,
   IconMessages,
   IconTag,
+  IconWorld,
 } from "@tabler/icons-react";
 import { CallingIcon } from "./calling-icon";
 import { TempleRecommendIcon } from "./temple-recommend-icon";
@@ -13,6 +18,12 @@ const icons = {
   priesthood_aaronic: IconBook,
   priesthood_melchizedek: IconBook,
   check_in: IconMessages,
+  temple_endowment_living: IconBuildingChurch,
+  temple_sealing_living: IconBuildingChurch,
+  patriarchal_blessing_recommend: IconFileCertificate,
+  child_baptism: IconDroplet,
+  child_naming_blessing: IconBabyCarriage,
+  missionary_recommendation: IconWorld,
 };
 const markers: Record<string, string> = {
   priesthood_aaronic: "AP",

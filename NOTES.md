@@ -12,10 +12,11 @@ Present plan before implementation.
 For db changes no need to create a new migration. Update the one existing one and then delete db and recreate it.
 
 tasks
-- better display in sunday meeting details (currently too big)
-  - also when selecting next to each a button to select. instead of having checkboxes and then separate to add all those selected.
 - new task types
   - temple ordinance for living (endowment, sealing)
+  - check in handbook of church of jesus christ of latter day saints if there are other tasks that might be good to add. suggest them with their name and states
+- better display in sunday meeting details (currently too big)
+  - also when selecting next to each a button to select. instead of having checkboxes and then separate to add all those selected.
 
 member list
 - filters (tags/flags/labels, age range, birth year range - for ap/jd, gender)

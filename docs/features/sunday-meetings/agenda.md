@@ -62,16 +62,16 @@ Read the [overview](README.md) first; schedule-specific editing is in [schedule]
 The dialog and server share creation rules in
 [add-item-rules.ts](../../../lib/sunday-meetings/add-item-rules.ts).
 
-| Item type | Allowed sections when adding |
-| --- | --- |
-| Member welcome, naming and blessing a child, convert confirmation, ward business | Ward business |
-| Prayer | Opening, Closing |
-| Musical number | Opening, Program, Closing |
-| Hymn | Opening, Sacrament, Program, Closing |
-| Blessing or passing the sacrament | Sacrament |
-| Talk, primary presentation, custom program item, transition | Program |
-| Announcement | Opening |
-| Conductor text | All five agenda sections |
+| Item type                                                                        | Allowed sections when adding         |
+| -------------------------------------------------------------------------------- | ------------------------------------ |
+| Member welcome, naming and blessing a child, convert confirmation, ward business | Ward business                        |
+| Prayer                                                                           | Opening, Closing                     |
+| Musical number                                                                   | Opening, Program, Closing            |
+| Hymn                                                                             | Opening, Sacrament, Program, Closing |
+| Blessing or passing the sacrament                                                | Sacrament                            |
+| Talk, primary presentation, custom program item, transition                      | Program                              |
+| Announcement                                                                     | Opening                              |
+| Conductor text                                                                   | All five agenda sections             |
 
 These rules apply only to new extras. Existing items are preserved and extra
 items can still move to any agenda section, regardless of type. Participant
@@ -79,13 +79,13 @@ controls, task suggestions, and standard-slot movement rules are unchanged.
 
 ## Standard entries and lifecycle
 
-| Section | Standard slots created for local meetings |
-| --- | --- |
-| Opening | `opening_hymn`, `opening_prayer` |
-| Business | None |
-| Sacrament | `sacrament_hymn`, `sacrament_blessing`, `sacrament_passing` |
-| Program | `interlude` for sacrament/ward conference; `primary_presentation` for children's presentation; none for fast/testimony |
-| Closing | `closing_hymn`, `closing_prayer` |
+| Section   | Standard slots created for local meetings                                                                              |
+| --------- | ---------------------------------------------------------------------------------------------------------------------- |
+| Opening   | `opening_hymn`, `opening_prayer`                                                                                       |
+| Business  | None                                                                                                                   |
+| Sacrament | `sacrament_hymn`, `sacrament_blessing`, `sacrament_passing`                                                            |
+| Program   | `interlude` for sacrament/ward conference; `primary_presentation` for children's presentation; none for fast/testimony |
+| Closing   | `closing_hymn`, `closing_prayer`                                                                                       |
 
 - Every displayed agenda row is saved, including empty standard entries. A
   non-null `slot` is unique per meeting; lookup never infers identity from position.
@@ -128,8 +128,11 @@ controls, task suggestions, and standard-slot movement rules are unchanged.
 - Ward business contains an expanded-by-default “Available tasks” list with a
   collapsible heading, checkboxes, and “Add selected”. Candidates are derived
   from resolved task state configuration (`sunday_meeting_item_type`), including
-  code defaults when the ward has no database lifecycle override. Only
-  `calling_sustain`, `calling_release`, and `priesthood_aaronic_inform` are supported.
+  code defaults when the ward has no database lifecycle override. Supported
+  types are `calling_sustain`, `calling_release`, `priesthood_aaronic_inform`,
+  `child_naming_blessing`, and `member_welcome`. The automatic child-blessing
+  workflow maps its Blessing state to `child_naming_blessing`; the child-baptism
+  workflow maps its In front of ward state to `member_welcome`.
 - Unselected candidates have no agenda row. Tasks already in this meeting are
   excluded; tasks on other Sundays show “Moves from [date]”. Selected tasks save
   atomically as separate business entries with the mapped type, task member/title,
@@ -151,13 +154,13 @@ controls, task suggestions, and standard-slot movement rules are unchanged.
 
 ## Implementation map
 
-| Responsibility | Entry point |
-| --- | --- |
-| Leading view, sections, row actions | [leading view](../../../app/meetings/sunday/sunday-leading-view.tsx), [agenda component](../../../app/meetings/sunday/sunday-leading-agenda.tsx), [item actions](../../../app/meetings/sunday/sunday-item-actions.tsx) |
-| Sacrament grouping and capacity | [grouping](../../../lib/sunday-meetings/sacrament.ts), [capacity](../../../lib/sunday-meetings/sacrament-rules.ts), [person picker](../../../app/meetings/sunday/sunday-item-person-editor.tsx) |
-| Shared ordering and rendered rows | [order.ts](../../../lib/sunday-meetings/order.ts), [agenda.ts](../../../lib/sunday-meetings/agenda.ts), [order-service.ts](../../../lib/sunday-meetings/order-service.ts) |
-| Templates, reconciliation, stable lookup | [templates.ts](../../../lib/sunday-meetings/templates.ts), [standard-items-service.ts](../../../lib/sunday-meetings/standard-items-service.ts), [slots.ts](../../../lib/sunday-meetings/slots.ts) |
-| Create/update/delete and type changes | [item-service.ts](../../../lib/sunday-meetings/item-service.ts), [item-update-service.ts](../../../lib/sunday-meetings/item-update-service.ts), [meeting-service.ts](../../../lib/sunday-meetings/meeting-service.ts) |
+| Responsibility                                     | Entry point                                                                                                                                                                                                                                                      |
+| -------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Leading view, sections, row actions                | [leading view](../../../app/meetings/sunday/sunday-leading-view.tsx), [agenda component](../../../app/meetings/sunday/sunday-leading-agenda.tsx), [item actions](../../../app/meetings/sunday/sunday-item-actions.tsx)                                           |
+| Sacrament grouping and capacity                    | [grouping](../../../lib/sunday-meetings/sacrament.ts), [capacity](../../../lib/sunday-meetings/sacrament-rules.ts), [person picker](../../../app/meetings/sunday/sunday-item-person-editor.tsx)                                                                  |
+| Shared ordering and rendered rows                  | [order.ts](../../../lib/sunday-meetings/order.ts), [agenda.ts](../../../lib/sunday-meetings/agenda.ts), [order-service.ts](../../../lib/sunday-meetings/order-service.ts)                                                                                        |
+| Templates, reconciliation, stable lookup           | [templates.ts](../../../lib/sunday-meetings/templates.ts), [standard-items-service.ts](../../../lib/sunday-meetings/standard-items-service.ts), [slots.ts](../../../lib/sunday-meetings/slots.ts)                                                                |
+| Create/update/delete and type changes              | [item-service.ts](../../../lib/sunday-meetings/item-service.ts), [item-update-service.ts](../../../lib/sunday-meetings/item-update-service.ts), [meeting-service.ts](../../../lib/sunday-meetings/meeting-service.ts)                                            |
 | Suggestions, task selection, and generated wording | [tasks.ts](../../../lib/sunday-meetings/tasks.ts), [task item service](../../../lib/sunday-meetings/task-item-service.ts), [Ward business picker](../../../app/meetings/sunday/sunday-business-tasks.tsx), [support.ts](../../../lib/sunday-meetings/support.ts) |
 
 ## Verification
