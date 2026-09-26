@@ -1,7 +1,8 @@
 "use client";
 
-import { useActionState, useRef } from "react";
+import { useActionState, useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Card,
   CardContent,
@@ -19,6 +20,17 @@ import { Input } from "@/components/ui/input";
 import { LoginCodeInput } from "./login-code-input";
 import { requestLogin, verifyCode, type LoginState } from "./actions";
 
+const REMEMBERED_EMAIL_KEY = "wardly:remembered-email";
+
+function saveRememberedEmail(email: string, remember: boolean) {
+  try {
+    if (remember) localStorage.setItem(REMEMBERED_EMAIL_KEY, email);
+    else localStorage.removeItem(REMEMBERED_EMAIL_KEY);
+  } catch {
+    // Storage may be unavailable; remembering an email must not block login.
+  }
+}
+
 export function LoginForm({
   redirect,
   localCode,
@@ -26,6 +38,23 @@ export function LoginForm({
   redirect: string;
   localCode?: string;
 }) {
+  const [{ email, rememberEmail }, setEmailPreference] = useState({
+    email: "",
+    rememberEmail: false,
+  });
+  useEffect(() => {
+    try {
+      const savedEmail = localStorage.getItem(REMEMBERED_EMAIL_KEY);
+      if (savedEmail !== null) {
+        // Restore browser-only preferences after hydration.
+        // eslint-disable-next-line react-hooks/set-state-in-effect
+        setEmailPreference({ email: savedEmail, rememberEmail: true });
+      }
+    } catch {
+      // Keep the form usable when browser storage is blocked.
+    }
+  }, []);
+
   const submitting = useRef(false);
   const [state, dispatch, pending] = useActionState<LoginState, FormData>(
     async (prev, fd) => {
@@ -58,10 +87,21 @@ export function LoginForm({
         <form
           action={dispatch}
           className="w-full"
+          onResetCapture={(event) => {
+            // React resets action forms; keep the controlled browser preference.
+            event.preventDefault();
+            event.stopPropagation();
+          }}
           onSubmit={(event) => {
             if (submitting.current || pending) {
               event.preventDefault();
               return;
+            }
+            if (!showCode) {
+              const submittedEmail = new FormData(event.currentTarget).get("email");
+              if (typeof submittedEmail === "string") {
+                saveRememberedEmail(submittedEmail, rememberEmail);
+              }
             }
             submitting.current = true;
           }}
@@ -75,6 +115,12 @@ export function LoginForm({
                   id="email"
                   type="email"
                   name="email"
+                  value={email}
+                  onChange={(event) => {
+                    const email = event.target.value;
+                    setEmailPreference({ email, rememberEmail });
+                    if (rememberEmail) saveRememberedEmail(email, true);
+                  }}
                   required
                   autoFocus
                   autoComplete="email"
@@ -82,6 +128,21 @@ export function LoginForm({
                   aria-invalid={!!errorMessage}
                 />
                 {errorMessage && <FieldError>{errorMessage}</FieldError>}
+              </Field>
+            )}
+
+            {!showCode && (
+              <Field orientation="horizontal">
+                <Checkbox
+                  id="remember-email"
+                  checked={rememberEmail}
+                  onCheckedChange={(checked) => {
+                    const rememberEmail = checked === true;
+                    setEmailPreference({ email, rememberEmail });
+                    saveRememberedEmail(email, rememberEmail);
+                  }}
+                />
+                <FieldLabel htmlFor="remember-email">Remember email</FieldLabel>
               </Field>
             )}
 

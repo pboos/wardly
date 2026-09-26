@@ -5,6 +5,12 @@ or lets the user follow the existing email link.
 
 - Email receives focus when the login screen opens; code receives focus after
   requesting an email.
+- **Remember email** is unchecked by default. Checking it immediately saves the
+  email in this browser's `localStorage` (`wardly:remembered-email`); edits update
+  the saved value. Returning to login restores the email and checked state.
+  Unchecking removes the saved value without clearing the current input. Only
+  the email is remembered; login still requires a code. If storage is unavailable,
+  login remains usable but the preference cannot persist.
 - The code uses six separate visual boxes backed by one accessible input.
   Letters and numbers are accepted and displayed in uppercase. Native typing,
   selection, Backspace, partial paste, and one-time-code autofill are supported.
