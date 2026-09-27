@@ -14,6 +14,6 @@ export const MAX_LOGIN_ATTEMPTS = 3;
 export const LOCAL_LOGIN_CODE = "123456";
 
 // --- JWT session lifetime + refresh window ---
-export const JWT_LIFETIME = "4h"; // jose setExpirationTime string
-export const JWT_REFRESH_THRESHOLD_MS = 1 * 60 * 60 * 1000; // refresh if <1h left
-export const SESSION_COOKIE_MAX_AGE_S = 4 * 60 * 60; // 4h, matches JWT_LIFETIME
+export const JWT_LIFETIME = "24h"; // jose setExpirationTime string
+export const JWT_REFRESH_THRESHOLD_MS = 12 * 60 * 60 * 1000; // refresh if <12h left
+export const SESSION_COOKIE_MAX_AGE_S = 24 * 60 * 60; // 24h, matches JWT_LIFETIME
