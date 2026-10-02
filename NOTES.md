@@ -12,17 +12,12 @@ Present plan before implementation.
 For db changes no need to create a new migration. Update the one existing one and then delete db and recreate it.
 
 tasks
-<!--- better display in sunday meeting details (currently too big)
-  - should be one line for each with just the task type, the status, the name & text (if needed)
-  - also when selecting next to each a button to select. instead of having checkboxes and then separate to add all those selected.
-  - when one is added, allow removing or moving to next sunday easily.-->
 - email with tasks: better design & sorting
 
 sunday
-- items have a strange space at bottom
 - mobile: the list view takes too much space, maye also same as the other?
 - navigation a bit strange, make this better and more intuitive
-- start on leading text view?
+- start working on leading text view? -> first think what we should have. give my text from a previous sunday to havae codex to figure it out?
 
 member list
 - filters (tags/flags/labels, age range, birth year range - for ap/jd, gender)

@@ -8,6 +8,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
+import { cn } from "@/lib/utils";
 import {
   type SundayMeetingItem,
   type SundayMeetingMemberHistory,
@@ -147,7 +148,10 @@ export function SundayLeadingItemRow({
         ))}
       <Card size="sm" className="gap-2 py-2">
         <CardHeader className="gap-2">
-          <CardAction>{actions}</CardAction>
+          {/* Compact headers have one row; spanning two adds an empty row gap. */}
+          <CardAction className={cn(compact && "row-span-1")}>
+            {actions}
+          </CardAction>
           {compact ? (
             <div className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1">
               {title}

@@ -18,7 +18,9 @@ Read the [overview](README.md) first; schedule-specific editing is in [schedule]
 - Agenda cards use compact spacing and top-right reorder arrows. Extra entries
   keep section movement and deletion in the adjacent “More agenda item actions” menu.
   Hymns (🎵), musical numbers (🎶), prayers (🙏), talks (🎤), and sacrament
-  blessing/passing use a single inline row; long content wraps on narrow screens.
+  blessing/passing use a single inline row with equal top/bottom card padding;
+  their actions span only that row to avoid an empty trailing grid row.
+  Long content wraps on narrow screens.
   Person assignments use an accessible + control when empty. Talk topics are
   clickable text; empty topics show an add prompt. Sacrament blessing/passing
   offer person assignments only, with no details field when adding or editing;
