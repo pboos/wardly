@@ -8,7 +8,14 @@ prisma/dev.db
 prisma/dev.db-journal
 generated
 .local-demo
+*.db
+*.db-journal
+*.db-shm
+*.db-wal
+*.tar
+*.tar.gz
 *.tsbuildinfo
+.github
 
 # Docker / CI files — not needed inside the build context
 Dockerfile
