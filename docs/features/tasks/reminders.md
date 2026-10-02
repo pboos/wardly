@@ -17,13 +17,43 @@ Conference Sundays send normally; no saved Sunday meeting is required.
   Signed-in ward users can change these settings under
   [Admin → Ward settings](../ward-settings/README.md). Changes are read on
   subsequent scheduler passes.
-- Emails include type/state labels, title, member name, description, priority,
-  and due date. HTML values are escaped; a plain-text version is also sent.
+- Emails include type/state labels, title, member name, description,
+  and due date. Priority is currently omitted. HTML values are escaped; a plain-text version is also sent.
   Email wording is currently English regardless of ward content language.
 - “View my tasks” opens `/tasks?filter=mine`, using `APP_URL` as the public origin.
   Normal authentication applies and preserves that destination through login.
   Mine filters active and displayed past tasks; past tasks still come from the
   latest 50 ward-wide completed records, so older personal history can be absent.
+
+## Email layout and ordering
+
+HTML reminders use a responsive single-column layout with one card per nonempty
+family, in this fixed order:
+
+| Group                        | Types                                                                            |
+| ---------------------------- | -------------------------------------------------------------------------------- |
+| Temple                       | Full/limited recommends, living endowment and living sealing                     |
+| Priesthood                   | Aaronic and Melchizedek Priesthood                                               |
+| Callings                     | Callings and releases                                                            |
+| Interviews & recommendations | Youth interviews, check-ins, patriarchal blessing and missionary recommendations |
+| Children & ordinances        | Child baptism, naming and blessing                                               |
+| Other tasks                  | General, custom and unknown types                                                |
+
+Grouping uses stable type keys, so renamed ward defaults retain their family.
+Within each family, tasks sort by resolved lifecycle progress descending, then
+by type display name A–Z; equal ties retain newest-created-first order. Unknown
+states have 0% progress. Completion filtering still uses `completed_at`, so an
+unfinished task at a 100% state can appear first. Empty families are omitted.
+
+Compact rows emphasize member/title, with equally sized type and status badges
+together beneath the heading. Status includes a colored marker, label and
+percentage; there is no progress bar. Descriptions and due dates appear only
+when present. Colors and labels come from resolved ward definitions;
+unsupported/non-hex colors use a neutral fallback. The email uses inline styles,
+sRGB surface colors and presentation tables rather than shadcn/Tailwind or SVG,
+for email-client compatibility. Website type SVGs are represented by colored
+markers and visible labels. Plain text uses the same groups and ordering.
+Browser previews do not establish rendering in Gmail, Outlook or Apple Mail.
 
 ## Scheduling and operation
 
@@ -71,7 +101,7 @@ cleanup is implemented. All workers must share the same database for coordinatio
 - [Service](../../../lib/tasks/reminder-service.ts): recipient selection, fresh
   task loading, claims, SMTP handoff, retries and finalization.
 - [Scheduler](../../../lib/tasks/reminder-scheduler.ts): process lifecycle and logs.
-- [Email](../../../lib/tasks/reminder-email.ts), [SMTP](../../../lib/email.ts).
+- [Email](../../../lib/tasks/reminder-email.ts), [grouping](../../../lib/tasks/reminder-groups.ts), [SMTP](../../../lib/email.ts).
 
 `npm test` covers time windows, DST changes, midnight/fractional offsets, escaped
 email content, setup validation, weekly deduplication, conference Sundays,

@@ -63,7 +63,7 @@ export async function sendDueTaskDigests(options: {
           include: {
             member: { select: { first_name: true, last_name: true } },
           },
-          orderBy: [{ created_at: "asc" }, { id: "asc" }],
+          orderBy: [{ created_at: "desc" }, { id: "asc" }],
         });
         if (
           !tasks.length ||
@@ -89,12 +89,17 @@ export async function sendDueTaskDigests(options: {
           tasksUrl: url.href,
           tasks: tasks.map((task) => {
             const type = taskTypes.find((type) => type.type === task.type);
+            const state = type?.states.find(
+              (state) => state.state === task.state,
+            );
             return {
               ...task,
+              typeKey: task.type,
+              typeColor: type?.color ?? "#71717a",
+              stateColor: state?.color ?? "#71717a",
+              progress: state?.progress_percentage ?? 0,
               type: type?.name ?? task.type,
-              state:
-                type?.states.find((state) => state.state === task.state)
-                  ?.label ?? task.state,
+              state: state?.label ?? task.state,
             };
           }),
         });

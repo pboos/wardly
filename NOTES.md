@@ -9,10 +9,6 @@ Implement the following feature or change on a feature.
 Do not assume something but ask for clarying questions if something is unclear. Give recommendation.
 Propose plan on the feature and implementation (concise, but also include technical parts, I am a staff software engineer).
 Present plan before implementation.
-For db changes no need to create a new migration. Update the one existing one and then delete db and recreate it.
-
-tasks
-- email with tasks: better design & sorting
 
 sunday
 - mobile: the list view takes too much space, maye also same as the other?
