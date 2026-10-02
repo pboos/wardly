@@ -38,7 +38,9 @@ export function SundayItemContentEditor({
       inline={inline}
       triggerLabel={
         inline
-          ? item.content || (item.type === "talk" ? "Add topic" : "Add details")
+          ? item.content ||
+            item.task?.title ||
+            (item.type === "talk" ? "Add topic" : "Add details")
           : "Edit details"
       }
       initialValue={item.content ?? ""}

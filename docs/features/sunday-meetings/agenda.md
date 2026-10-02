@@ -126,7 +126,12 @@ controls, task suggestions, and standard-slot movement rules are unchanged.
   Generated wording is currently English placeholder text; `content_locale` is stored
   but not yet used to localize it.
 - Ward business contains an expanded-by-default “Available tasks” list with a
-  collapsible heading, checkboxes, and “Add selected”. Candidates are derived
+  collapsible heading and an immediate Add button on each compact task row.
+  Available and added tasks show the resolved task type, current lifecycle status,
+  member name, and optional title/details. Content wraps at all screen sizes.
+  Added tasks have direct removal and next-local-Sunday controls alongside ordering
+  and section actions. Removing unlinks the task without deleting or advancing it;
+  moving uses carry-forward without a confirmation dialog. Candidates are derived
   from resolved task state configuration (`sunday_meeting_item_type`), including
   code defaults when the ward has no database lifecycle override. Supported
   types are `calling_sustain`, `calling_release`, `priesthood_aaronic_inform`,
@@ -134,8 +139,8 @@ controls, task suggestions, and standard-slot movement rules are unchanged.
   workflow maps its Blessing state to `child_naming_blessing`; the child-baptism
   workflow maps its In front of ward state to `member_welcome`.
 - Unselected candidates have no agenda row. Tasks already in this meeting are
-  excluded; tasks on other Sundays show “Moves from [date]”. Selected tasks save
-  atomically as separate business entries with the mapped type, task member/title,
+  excluded; tasks on other Sundays show “Moves from [date]”. Each added task saves
+  atomically as a separate business entry with the mapped type, task member/title,
   and task link. Eligibility and ward ownership are rechecked during the transaction.
 - A task can belong to only one Sunday, enforced by a unique `task_id` index.
   Selecting it elsewhere moves the existing item, retaining its ID, details, and

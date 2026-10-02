@@ -56,6 +56,13 @@ export async function loadSundayMeetingTaskCandidates(
       : null;
     const group = groups.get(itemType) ?? { itemType, items: [] };
     group.items.push({
+      typeLabel:
+        taskTypes.find((type) => type.type === task.type)?.name ?? task.type,
+      stateLabel:
+        taskTypes
+          .find((type) => type.type === task.type)
+          ?.states.find((state) => state.state === task.state)?.label ??
+        task.state,
       id: task.id,
       itemType,
       title: task.title,

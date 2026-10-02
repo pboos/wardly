@@ -99,6 +99,10 @@ export type SundayPersonInput = {
 };
 
 export type SundayMeetingTaskSummary = {
+  type: string;
+  state: string;
+  typeLabel?: string;
+  stateLabel?: string;
   id: string;
   title: string | null;
   description: string | null;
@@ -137,6 +141,8 @@ export type SundayMeeting = {
 };
 
 export type SundayMeetingTaskCandidate = {
+  typeLabel: string;
+  stateLabel: string;
   scheduledMeeting: { id: string; date: string } | null;
   id: string;
   itemType: SundayMeetingTaskItemType;

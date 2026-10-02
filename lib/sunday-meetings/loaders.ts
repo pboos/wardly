@@ -1,5 +1,6 @@
 import { isStandardSlot } from "./templates.ts";
 import type { Prisma } from "@/generated/prisma/client";
+import { loadTaskTypes } from "@/lib/tasks/loader";
 import { prisma } from "@/lib/prisma";
 import {
   assertSunday,
@@ -35,6 +36,8 @@ const itemInclude = {
   task: {
     select: {
       id: true,
+      type: true,
+      state: true,
       title: true,
       description: true,
       member: { select: { first_name: true, last_name: true } },
@@ -70,6 +73,8 @@ function mapTask(task: ItemRecord["task"]): SundayMeetingTaskSummary | null {
     return null;
   }
   return {
+    type: task.type,
+    state: task.state,
     id: task.id,
     title: task.title,
     description: task.description,
@@ -389,12 +394,22 @@ export async function loadLeadingSundayMeeting(
   const meeting = selectedDate
     ? await loadOrCreateByDate(wardId, selectedDate)
     : await defaultLeadingMeeting(wardId, settings.time_zone);
-  const [taskCandidates, memberHistory] = await Promise.all([
+  const [taskCandidates, memberHistory, taskTypes] = await Promise.all([
     isLocalMeetingType(meeting.type)
       ? loadSundayMeetingTaskCandidates(wardId)
       : Promise.resolve([]),
     loadSundayMeetingMemberHistory(wardId, settings.time_zone),
+    loadTaskTypes(wardId),
   ]);
+  for (const item of meeting.items) {
+    const task = item.task;
+    if (!task) continue;
+    const type = taskTypes.find((type) => type.type === task.type);
+    task.typeLabel = type?.name ?? task.type;
+    task.stateLabel =
+      type?.states.find((state) => state.state === task.state)?.label ??
+      task.state;
+  }
   const leader = meeting.items.find((item) => item.type === "leader");
 
   return {

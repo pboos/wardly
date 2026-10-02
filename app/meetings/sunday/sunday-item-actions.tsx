@@ -4,6 +4,7 @@ import {
   IconChevronUp,
   IconDots,
   IconTrash,
+  IconPlayerSkipForward,
 } from "@tabler/icons-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -25,6 +26,7 @@ import {
   type SundayAgendaMove,
 } from "@/lib/sunday-meetings/agenda";
 import {
+  carrySundayAgendaItemForward as carrySundayAgendaItemForwardAction,
   deleteSundayAgendaItem as deleteSundayAgendaItemAction,
   moveSundayAgendaItem as moveSundayAgendaItemAction,
 } from "./actions";
@@ -54,6 +56,10 @@ export function SundayItemActions({
     moveSundayAgendaItemAction,
   );
 
+  const { execute: carrySundayAgendaItemForward } = useAppMutation(
+    carrySundayAgendaItemForwardAction,
+  );
+
   function move(input: SundayAgendaMove) {
     run(
       () => moveSundayAgendaItem(item.id, input),
@@ -62,7 +68,42 @@ export function SundayItemActions({
   }
   return (
     <div className="flex shrink-0 items-center gap-0.5">
-      {isCarryForwardEligible(item.type) && (
+      {item.task && (
+        <>
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon-sm"
+            aria-label="Remove task from this Sunday"
+            title="Remove task from this Sunday"
+            disabled={pending}
+            onClick={() =>
+              run(
+                () => deleteSundayAgendaItem(item.id),
+                "Could not remove task.",
+              )
+            }
+          >
+            <IconTrash />
+          </Button>
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon-sm"
+            aria-label="Move task to next Sunday"
+            title="Move task to next local Sunday"
+            disabled={pending}
+            onClick={() =>
+              run(async () => {
+                await carrySundayAgendaItemForward(item.id);
+              }, "Could not move task.")
+            }
+          >
+            <IconPlayerSkipForward />
+          </Button>
+        </>
+      )}
+      {!item.task && isCarryForwardEligible(item.type) && (
         <CarryForwardButton item={item} disabled={pending} />
       )}
       <Button

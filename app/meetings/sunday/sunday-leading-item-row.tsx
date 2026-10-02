@@ -15,9 +15,14 @@ import {
 } from "@/lib/sunday-meetings/types";
 import type { SundayAgendaMove } from "@/lib/sunday-meetings/agenda";
 import { ITEM_LABELS, SLOT_LABELS } from "./sunday-leading-labels";
-import { PERSON_EDITORS, personTitle } from "./sunday-item-editors";
+import {
+  PERSON_EDITORS,
+  personTitle,
+  contentLabel,
+} from "./sunday-item-editors";
 import { SundayItemPersonEditor } from "./sunday-item-person-editor";
 import { SundayItemContentEditor } from "./sunday-item-content-editor";
+import { SundayTaskText } from "./sunday-task-text";
 import { SundayItemActions } from "./sunday-item-actions";
 import type { SundayMutationRunner } from "./use-sunday-mutation";
 
@@ -63,6 +68,32 @@ export function SundayLeadingItemRow({
       </li>
     );
   }
+  if (item.task) {
+    return (
+      <li className="flex flex-col gap-1">
+        {showSupportText &&
+          supportText.map((block) => (
+            <p
+              key={block.id}
+              className="rounded-md bg-muted px-3 py-2 text-sm text-muted-foreground"
+            >
+              {block.text}
+            </p>
+          ))}
+        <div className="flex flex-wrap items-center gap-2 rounded-md border px-3 py-1.5">
+          <SundayTaskText
+            task={item.task}
+            text={
+              contentLabel(item.type) ? (
+                <SundayItemContentEditor item={item} inline />
+              ) : undefined
+            }
+          />
+          {actions}
+        </div>
+      </li>
+    );
+  }
   const compact = [
     "hymn",
     "musical_number",
@@ -102,7 +133,7 @@ export function SundayLeadingItemRow({
         ? [item.content || "Musical number", item.personNameResolved]
             .filter(Boolean)
             .join(" — ")
-        : item.content || item.task?.title || null;
+        : item.content || null;
   return (
     <li className="flex flex-col gap-2">
       {showSupportText &&
@@ -140,9 +171,6 @@ export function SundayLeadingItemRow({
           ) : (
             <>
               {title}
-              {item.task?.memberName && (
-                <CardDescription>{item.task.memberName}</CardDescription>
-              )}
               {detail && <CardDescription>{detail}</CardDescription>}
               <div className="flex min-w-0 flex-wrap items-center gap-2">
                 <SundayItemContentEditor item={item} />
