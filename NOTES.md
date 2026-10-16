@@ -10,22 +10,7 @@ Do not assume something but ask for clarying questions if something is unclear. 
 Propose plan on the feature and implementation (concise, but also include technical parts, I am a staff software engineer).
 Present plan before implementation.
 
-## bishopric meetings
-
-look at the church of jesus christ of latter day saints handbook what topics should go into bishopric meetings. What should be done there and would be agenda items on every meeting, once a month, once a quarter or once a year. Give a good overview over those. Also from other topics in there, mention what should be discussed in bishopric meetings.
-Bishoprics would also be able to add own items and tell if they are recurring or not. We could have these default items suggested, if nothing is there. There might be a view that would mention those default agenda items (even if they got deleted), so that bishoprics could add them if they want. But that should be out of the way to not take much space.
-
-also consider how we could use the same setup for ward council meetings. also there mention what should be done in those meetings.
-goal is that we have as right now every time we have a meeting a list with agenda items for this meeting. we go through with a timer for each. we can extend the timer (as now) and when done mark it as done. Or we can mark it as again next meeting. Some items would be weekly items that will show up every week. Others can be done monthly (or custom recurring pattern) and when marked done will show up then again. We can also manually mark agenda items as done or as "move to next week". or maybe you have a better or other suggestions for how this could behave.
-We would also show the total amount of time planned in the agenda (and how much is left), so we have a feel of the duration planned and remaining in total for the meeting.
-
-Then I would like you to create a plan on how to store these items in the database. Should we reuse tasks with a separate type (e.g. bishopric_meeting) that won't be shown in normal tasks? or is a separate table better?
-Note we want these items to have a duration as they have now, can be repeated every specific day of month, each year on specific day, ... when completed, they will show up again on that specific date. Also give your suggestion here how this could work.
-
-Think about this and provide a good way that could work for bishoprics and branches to make their bishopric meetings more structured, efficient and allow them to focus on what is important.
-
-----
-
+---
 
 deployment
 - on server use github repository package now?
