@@ -10,7 +10,9 @@ change both agendas. Short decisions should exclude confidential counseling deta
 Set up a weekly interval or monthly ordinal-weekday schedule (first through fourth
 or last) with a local start
 time. Dates use the ward time zone. Setup plans the next
-800 days. Extend schedule adds future dates. Reads never generate meetings.
+three calendar months from today in the ward time zone, with month-end dates clamped.
+Opening either meeting page refreshes this rolling window before loading the agenda;
+read models themselves never generate meetings. Existing later dates and history remain.
 The date picker includes planned, active, closed, and cancelled meetings.
 
 - Start on an agenda row opens its discussion and begins a local timer. The first
@@ -43,8 +45,9 @@ meetings are unchanged. Monthly templates absent from the selected agenda keep
 their default slots. Newly appearing or moved recurring items insert by default
 rank while preserving existing rows' relative order. Future series edits inherit
 the replaced template's rank; new templates append to the default order. Planned and remaining totals appear below the list.
-Schedule, rescheduling, cancellation, close, and extension actions
-are available from the small meeting settings menu.
+Reschedule, cancel, and close controls appear beside the alarm control in the header.
+The Meeting schedule gear edits a configured schedule; unconfigured pages show a setup button.
+Explicitly moving unfinished work can create the next scheduled date beyond the rolling window.
 
 Add one-time topics or recurring templates. The editor previews the first three
 calendar due dates and their assigned meetings. Recurrence supports every meeting,

@@ -1,16 +1,16 @@
 "use client";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { MoreHorizontal, Volume2, VolumeX } from "lucide-react";
+import {
+  CalendarClock,
+  CircleX,
+  DoorClosed,
+  Settings,
+  Volume2,
+  VolumeX,
+} from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuGroup,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import { useAppMutation } from "@/lib/actions/use-app-mutation";
 import type {
   AgendaRow,
@@ -20,7 +20,6 @@ import type {
   AgendaInput,
   MeetingCommand,
 } from "@/lib/leadership-meetings/types";
-import { addDays } from "@/lib/leadership-meetings/calendar";
 import { changeLeadershipMeeting } from "./actions";
 import { AgendaEditor } from "./agenda-editor";
 import { AgendaItem } from "./agenda-item";
@@ -129,7 +128,7 @@ export function LeadershipView({ data }: { data: LeadershipData }) {
     : null;
   return (
     <div className="mx-auto flex w-full max-w-4xl flex-col gap-5">
-      <div className="flex items-center justify-between gap-2">
+      <div className="flex flex-wrap items-center justify-between gap-2">
         <h1 className="text-2xl font-semibold">{data.title}</h1>
         <div className="flex items-center gap-1">
           <Button
@@ -137,71 +136,58 @@ export function LeadershipView({ data }: { data: LeadershipData }) {
             variant="ghost"
             onClick={timer.toggleMuted}
             aria-label={timer.muted ? "Unmute alarm" : "Mute alarm"}
+            title={timer.muted ? "Unmute alarm" : "Mute alarm"}
             aria-pressed={timer.muted}
           >
             {timer.muted ? <VolumeX /> : <Volume2 />}
           </Button>
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
+          {meeting?.status === "planned" && (
+            <>
               <Button
                 size="icon"
-                variant="outline"
-                aria-label="Meeting settings and actions"
+                variant="ghost"
+                aria-label="Reschedule meeting"
+                title="Reschedule meeting"
+                disabled={mutation.isPending}
+                onClick={() => setModal({ kind: "reschedule" })}
               >
-                <MoreHorizontal />
+                <CalendarClock />
               </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuGroup>
-                <DropdownMenuItem
-                  onSelect={() => setModal({ kind: "schedule" })}
-                >
-                  {data.series ? "Meeting schedule" : "Set up meetings"}
-                </DropdownMenuItem>
-                {data.series && (
-                  <DropdownMenuItem
-                    disabled={mutation.isPending}
-                    onSelect={() =>
-                      void run({
-                        kind: "prepare",
-                        seriesId: data.series!.id,
-                        date: addDays(
-                          data.meetings.at(-1)?.date ?? data.today,
-                          90,
-                        ),
-                      })
-                    }
-                  >
-                    Extend schedule
-                  </DropdownMenuItem>
-                )}
-                {meeting?.status === "planned" && (
-                  <>
-                    <DropdownMenuItem
-                      onSelect={() => setModal({ kind: "reschedule" })}
-                    >
-                      Reschedule meeting
-                    </DropdownMenuItem>
-                    <DropdownMenuItem
-                      onSelect={() => setModal({ kind: "cancel" })}
-                    >
-                      Cancel meeting
-                    </DropdownMenuItem>
-                  </>
-                )}
-                {meeting && !readOnly && (
-                  <DropdownMenuItem
-                    onSelect={() => setModal({ kind: "close" })}
-                  >
-                    Close meeting
-                  </DropdownMenuItem>
-                )}
-                <DropdownMenuItem onSelect={timer.testSound}>
-                  Test alarm sound
-                </DropdownMenuItem>
-              </DropdownMenuGroup>
-            </DropdownMenuContent>
-          </DropdownMenu>
+              <Button
+                size="icon"
+                variant="ghost"
+                aria-label="Cancel meeting"
+                title="Cancel meeting"
+                disabled={mutation.isPending}
+                onClick={() => setModal({ kind: "cancel" })}
+              >
+                <CircleX />
+              </Button>
+            </>
+          )}
+          {meeting && !readOnly && (
+            <Button
+              size="icon"
+              variant="ghost"
+              aria-label="Close meeting"
+              title="Close meeting"
+              disabled={mutation.isPending}
+              onClick={() => setModal({ kind: "close" })}
+            >
+              <DoorClosed />
+            </Button>
+          )}
+          {data.series && (
+            <Button
+              size="icon"
+              variant="outline"
+              aria-label="Meeting schedule"
+              title="Meeting schedule"
+              onClick={() => setModal({ kind: "schedule" })}
+            >
+              <Settings />
+            </Button>
+          )}
         </div>
       </div>
       {error && (
@@ -230,6 +216,12 @@ export function LeadershipView({ data }: { data: LeadershipData }) {
             label: `${row.date} · ${row.start_time} · ${row.status}`,
           }))}
         />
+      )}
+      {data.series && !meeting && (
+        <p className="py-6 text-center text-sm text-muted-foreground">
+          No meetings are scheduled in the next three months. Use Meeting
+          schedule to review your schedule.
+        </p>
       )}
       {meeting && (
         <>

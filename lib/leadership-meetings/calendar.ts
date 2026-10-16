@@ -94,6 +94,16 @@ export function addDays(date: string, days: number): string {
   d.setUTCDate(d.getUTCDate() + days);
   return d.toISOString().slice(0, 10);
 }
+export function scheduleThrough(today: string): string {
+  const date = new Date(`${today}T12:00:00Z`);
+  const day = date.getUTCDate();
+  date.setUTCDate(1);
+  date.setUTCMonth(date.getUTCMonth() + 3);
+  date.setUTCDate(
+    Math.min(day, monthDays(date.getUTCFullYear(), date.getUTCMonth())),
+  );
+  return date.toISOString().slice(0, 10);
+}
 export function localToday(timeZone: string): string {
   return new Intl.DateTimeFormat("en-CA", {
     timeZone,

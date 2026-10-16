@@ -1,6 +1,6 @@
 import { nextTemplatePosition } from "./ordering";
 import { randomUUID } from "node:crypto";
-import { addDays, integer, dateString, parseRule, text } from "./calendar";
+import { integer, dateString, parseRule, text } from "./calendar";
 import {
   createAppearance,
   itemForWard,
@@ -109,7 +109,7 @@ export async function addAgenda(
       occurrence.id,
     ]);
   }
-  await reconcile(db, meeting.series_id, addDays(meeting.date, 800));
+  await reconcile(db, meeting.series_id);
 }
 export async function recordOutcome(
   db: Db,
@@ -294,11 +294,7 @@ export async function editAgenda(
         appearances: { create: { item_id: item.id } },
       },
     });
-    await reconcile(
-      db,
-      item.meeting.series_id,
-      addDays(item.meeting.date, 800),
-    );
+    await reconcile(db, item.meeting.series_id);
   }
 }
 

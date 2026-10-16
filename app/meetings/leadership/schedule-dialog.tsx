@@ -52,9 +52,11 @@ export function ScheduleDialog({
               : `Set up ${data.title.toLowerCase()} meetings`}
           </DialogTitle>
           <DialogDescription>
-            Dates and times use {data.timeZone}. Changes affect unstarted
-            meetings only. Individual cancellations remain exceptions. Keep the
-            schedule start date to preserve the current recurrence pattern.
+            Dates and times use {data.timeZone}. Opening this page automatically
+            prepares the next three calendar months. Changes affect unstarted
+            meetings in that window; later saved meetings are kept. Individual
+            cancellations remain exceptions. Keep the schedule start date to
+            preserve the current recurrence pattern.
           </DialogDescription>
         </DialogHeader>
         <form

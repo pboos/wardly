@@ -25,7 +25,6 @@ export type MeetingCommand =
       startTime: string;
       targetMinutes: number;
     }
-  | { kind: "prepare"; seriesId: string; date: string }
   | {
       kind: "meeting";
       meetingId: string;

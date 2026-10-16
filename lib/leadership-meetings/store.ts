@@ -6,7 +6,9 @@ import {
   assignMeeting,
   datesBetween,
   localToday,
+  matches,
   parseRule,
+  scheduleThrough,
 } from "./calendar";
 export type Db = Prisma.TransactionClient;
 export async function seriesForWard(db: Db, wardId: string, id: string) {
@@ -91,7 +93,7 @@ export async function ensureSchedule(
   };
   const rule = parseRule(schedule.rule);
   const today = localToday(series.time_zone);
-  const dates = datesBetween(rule, schedule.anchor, schedule.anchor, through);
+  const dates = datesBetween(rule, schedule.anchor, today, through);
   for (const date of dates) {
     const existing = await db.leadership_meeting.findUnique({
       where: {
@@ -125,12 +127,13 @@ export async function ensureSchedule(
     });
   }
 }
-export async function reconcile(db: Db, seriesId: string, through: string) {
-  await ensureSchedule(db, seriesId, through);
+export async function reconcile(db: Db, seriesId: string) {
   const owner = await db.leadership_meeting_series.findUniqueOrThrow({
     where: { id: seriesId },
   });
   const today = localToday(owner.time_zone);
+  const through = scheduleThrough(today);
+  await ensureSchedule(db, seriesId, through);
   const meetings = await db.leadership_meeting.findMany({
     where: { series_id: seriesId },
     orderBy: { date: "asc" },
@@ -166,6 +169,7 @@ export async function reconcile(db: Db, seriesId: string, through: string) {
               (m) =>
                 m.date >= template.anchor_date &&
                 m.date >= today &&
+                m.date <= through &&
                 !["cancelled", "superseded"].includes(m.status),
             )
             .map((m) => ({ key: m.id, date: m.date, meetingId: m.id }))
@@ -336,11 +340,56 @@ export async function reconcile(db: Db, seriesId: string, through: string) {
   }
 }
 export async function nextMeeting(db: Db, seriesId: string, after: string) {
-  await ensureSchedule(db, seriesId, addDays(after, 800));
-  const next = await db.leadership_meeting.findFirst({
+  const series = await db.leadership_meeting_series.findUniqueOrThrow({
+    where: { id: seriesId },
+  });
+  const schedule = JSON.parse(series.schedule) as {
+    anchor: string;
+    rule: unknown;
+  };
+  const rule = parseRule(schedule.rule);
+  let next = await db.leadership_meeting.findFirst({
     where: { series_id: seriesId, date: { gt: after }, status: "planned" },
     orderBy: { date: "asc" },
   });
+  const today = localToday(series.time_zone);
+  const from = after < today ? today : addDays(after, 1);
+  const limit = next?.date ?? "2100-12-31";
+  for (
+    let date = from > schedule.anchor ? from : schedule.anchor;
+    date <= limit;
+    date = addDays(date, 1)
+  ) {
+    if (!matches(rule, schedule.anchor, date)) continue;
+    if (next && date >= next.date) break;
+    const existing = await db.leadership_meeting.findUnique({
+      where: {
+        series_id_scheduled_date: { series_id: seriesId, scheduled_date: date },
+      },
+    });
+    if (existing && existing.status !== "superseded") continue;
+    const collision = await db.leadership_meeting.findFirst({
+      where: {
+        series_id: seriesId,
+        date,
+        status: { in: ["planned", "active", "closed"] },
+      },
+    });
+    if (collision) continue;
+    next = await db.leadership_meeting.upsert({
+      where: {
+        series_id_scheduled_date: { series_id: seriesId, scheduled_date: date },
+      },
+      create: {
+        series_id: seriesId,
+        scheduled_date: date,
+        date,
+        start_time: series.start_time,
+      },
+      update: { status: "planned", start_time: series.start_time },
+    });
+    break;
+  }
   if (!next)
     throw new Error("Schedule a future meeting before moving this item.");
   return next;

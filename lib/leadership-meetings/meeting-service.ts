@@ -4,6 +4,7 @@ import {
   integer,
   localToday,
   parseRule,
+  scheduleThrough,
   text,
   type CalendarRule,
 } from "./calendar";
@@ -70,7 +71,7 @@ export async function saveSchedule(
     const replaceable = await db.leadership_meeting.findMany({
       where: {
         series_id: series.id,
-        date: { gte: today },
+        date: { gte: today, lte: scheduleThrough(today) },
         status: "planned",
         items: {
           none: {
@@ -102,7 +103,7 @@ export async function saveSchedule(
       update: {},
     });
   }
-  await reconcile(db, series.id, addDays(anchor > today ? anchor : today, 800));
+  await reconcile(db, series.id);
   const stranded = await db.meeting_agenda_item.findMany({
     where: {
       meeting: { series_id: series.id, status: "superseded" },
@@ -199,7 +200,7 @@ export async function changeMeeting(
     if (meeting.status === "active") return;
     if (meeting.status !== "planned")
       throw new Error("Only planned meetings can start.");
-    await reconcile(db, meeting.series_id, addDays(meeting.date, 400));
+    await reconcile(db, meeting.series_id);
     await db.leadership_meeting.update({
       where: { id: meeting.id },
       data: { status: "active", updated_at: new Date() },
@@ -231,7 +232,7 @@ export async function changeMeeting(
     where: { id: meeting.id },
     data: { status, updated_at: new Date() },
   });
-  await reconcile(db, meeting.series_id, addDays(meeting.date, 400));
+  await reconcile(db, meeting.series_id);
 }
 export async function reschedule(
   db: Db,
@@ -259,5 +260,5 @@ export async function reschedule(
     where: { id: meeting.id },
     data: { date, start_time: timeString(startTime), updated_at: new Date() },
   });
-  await reconcile(db, meeting.series_id, addDays(date, 400));
+  await reconcile(db, meeting.series_id);
 }

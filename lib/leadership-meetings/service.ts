@@ -3,14 +3,8 @@ import { saveFutureOrder } from "./ordering";
 import { removeAgenda } from "./removal";
 import { prisma } from "@/lib/prisma";
 import { loadTaskTypes } from "@/lib/tasks/loader";
-import { addDays, dateString, object, text } from "./calendar";
-import {
-  itemForWard,
-  meetingForWard,
-  reconcile,
-  seriesForWard,
-  type Db,
-} from "./store";
+import { object, text } from "./calendar";
+import { itemForWard, meetingForWard, type Db } from "./store";
 import {
   requestUuid,
   addAgenda,
@@ -51,12 +45,6 @@ export async function executeMeetingCommand(
         case "schedule":
           await saveSchedule(db, wardId, input, { id: input.seriesId });
           break;
-        case "prepare": {
-          await seriesForWard(db, wardId, text(input.seriesId));
-          const date = dateString(input.date);
-          await reconcile(db, input.seriesId, addDays(date, 400));
-          break;
-        }
         case "meeting":
           await changeMeeting(
             db,
