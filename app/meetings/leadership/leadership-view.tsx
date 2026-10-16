@@ -254,31 +254,6 @@ export function LeadershipView({ data }: { data: LeadershipData }) {
                 <Button variant="ghost" size="sm" onClick={() => add()}>
                   Add recurring item
                 </Button>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  disabled={
-                    mutation.isPending ||
-                    data.items.filter((item) => item.repeating).length < 2
-                  }
-                  onClick={async () => {
-                    if (
-                      await run(
-                        {
-                          kind: "save-future-order",
-                          meetingId: meeting.id,
-                          itemIds: data.items.map((item) => item.id),
-                        },
-                        false,
-                      )
-                    )
-                      toast.success(
-                        "Recurring order saved for future planned meetings. One-time items and history keep their places.",
-                      );
-                  }}
-                >
-                  Use this order for future meetings
-                </Button>
               </div>
             </div>
           )}
@@ -316,17 +291,46 @@ export function LeadershipView({ data }: { data: LeadershipData }) {
               />
             ))}
           </div>
-          <div className="flex flex-wrap justify-end gap-x-5 gap-y-1 text-sm text-muted-foreground">
-            <span>
-              <strong className="text-foreground">{planned} min</strong> planned
-            </span>
-            <span>
-              <strong className="text-foreground">
-                {Math.ceil(remainingMs / 60000)} min
-              </strong>{" "}
-              remaining
-            </span>
-            {finish && <span>Finish around {finish}</span>}
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            {!readOnly && (
+              <Button
+                variant="ghost"
+                size="sm"
+                disabled={
+                  mutation.isPending ||
+                  data.items.filter((item) => item.repeating).length < 2
+                }
+                onClick={async () => {
+                  if (
+                    await run(
+                      {
+                        kind: "save-future-order",
+                        meetingId: meeting.id,
+                        itemIds: data.items.map((item) => item.id),
+                      },
+                      false,
+                    )
+                  )
+                    toast.success(
+                      "Recurring order saved for future planned meetings. One-time items and history keep their places.",
+                    );
+                }}
+              >
+                Use this order for future meetings
+              </Button>
+            )}
+            <div className="ml-auto flex flex-wrap justify-end gap-x-5 gap-y-1 text-sm text-muted-foreground">
+              <span>
+                <strong className="text-foreground">{planned} min</strong> planned
+              </span>
+              <span>
+                <strong className="text-foreground">
+                  {Math.ceil(remainingMs / 60000)} min
+                </strong>{" "}
+                remaining
+              </span>
+              {finish && <span>Finish around {finish}</span>}
+            </div>
           </div>
         </>
       )}

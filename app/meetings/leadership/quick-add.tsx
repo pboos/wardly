@@ -3,6 +3,12 @@ import { useState } from "react";
 import { Plus } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import {
+  InputGroup,
+  InputGroupAddon,
+  InputGroupInput,
+  InputGroupText,
+} from "@/components/ui/input-group";
 export function QuickAdd({
   pending,
   onAdd,
@@ -40,17 +46,22 @@ export function QuickAdd({
         onChange={(event) => setTitle(event.target.value)}
         className="min-w-0 flex-1"
       />
-      <Input
-        disabled={pending}
-        aria-label="Planned minutes"
-        type="number"
-        min={1}
-        max={240}
-        required
-        value={minutes}
-        onChange={(event) => setMinutes(event.target.value)}
-        className="w-16 sm:w-20"
-      />
+      <InputGroup className="w-28 shrink-0" data-disabled={pending}>
+        <InputGroupInput
+          disabled={pending}
+          aria-label="Planned minutes"
+          type="number"
+          min={1}
+          max={240}
+          required
+          value={minutes}
+          onChange={(event) => setMinutes(event.target.value)}
+          className="min-w-0"
+        />
+        <InputGroupAddon align="inline-end">
+          <InputGroupText>min</InputGroupText>
+        </InputGroupAddon>
+      </InputGroup>
       <Button disabled={pending} type="submit">
         <Plus data-icon="inline-start" />
         <span className="hidden sm:inline">Add</span>

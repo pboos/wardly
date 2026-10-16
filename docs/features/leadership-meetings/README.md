@@ -33,7 +33,7 @@ The date picker includes planned, active, closed, and cancelled meetings.
 
 Compact rows show completion, title, minutes, recurrence, task count, and Start.
 The completion circle marks a pending item Done. Clicking the title, row, or task
-count opens one discussion dialog. Quick add takes a title and minutes; Edit setup
+count opens one discussion dialog. Quick add takes a title and a duration with a visible min suffix; Edit setup
 inside the discussion contains title, duration, recurrence, and edit scope.
 Drag the handle to reorder with a mouse or touch, or focus it and use the up/down
 arrow keys. Each reorder validates and saves the entire visible agenda atomically,
@@ -44,7 +44,8 @@ One-time and resolved rows retain their slots; started, closed, cancelled, and p
 meetings are unchanged. Monthly templates absent from the selected agenda keep
 their default slots. Newly appearing or moved recurring items insert by default
 rank while preserving existing rows' relative order. Future series edits inherit
-the replaced template's rank; new templates append to the default order. Planned and remaining totals appear below the list.
+the replaced template's rank; new templates append to the default order. The future-order
+action sits below the agenda on the left, with planned and remaining totals on the right.
 Reschedule, cancel, and close controls appear beside the alarm control in the header.
 The Meeting schedule gear edits a configured schedule; unconfigured pages show a setup button.
 Explicitly moving unfinished work can create the next scheduled date beyond the rolling window.
