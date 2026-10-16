@@ -7,58 +7,16 @@ import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
+  DropdownMenuGroup,
   DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { UserAvatar } from "@/components/user-avatar";
-import { cn } from "@/lib/utils";
-import { IconChevronDown, IconLogout } from "@tabler/icons-react";
-
-type NavChild = {
-  label: string;
-  href: string;
-};
-
-type NavItem = {
-  label: string;
-  href: string;
-  /** Prefix used to detect the active section. */
-  match: string;
-  children?: NavChild[];
-};
-
-const NAV_ITEMS: NavItem[] = [
-  { label: "Members", href: "/members", match: "/members" },
-  { label: "Tasks", href: "/tasks", match: "/tasks" },
-  {
-    label: "Meetings",
-    href: "/meetings",
-    match: "/meetings",
-    children: [
-      { label: "Sunday schedule", href: "/meetings/sunday" },
-      { label: "Upcoming Sunday", href: "/meetings/sunday/upcoming" },
-      { label: "Bishopric", href: "/meetings/bishopric" },
-      { label: "Ward council", href: "/meetings/ward-council" },
-    ],
-  },
-  {
-    label: "Admin",
-    href: "/admin",
-    match: "/admin",
-    children: [
-      { label: "Users", href: "/admin/users" },
-      { label: "Ward settings", href: "/admin/ward" },
-      { label: "Sync", href: "/admin/sync" },
-    ],
-  },
-];
-
-function isActive(pathname: string, item: NavItem): boolean {
-  if (item.match === "/") return pathname === "/";
-  return pathname === item.match || pathname.startsWith(item.match + "/");
-}
+import { DesktopNavigation } from "@/components/desktop-navigation";
+import { MobileNavigation } from "@/components/mobile-navigation";
+import { IconLogout } from "@tabler/icons-react";
 
 export function SiteHeader({ userName }: { userName: string }) {
   const pathname = usePathname();
@@ -80,68 +38,18 @@ export function SiteHeader({ userName }: { userName: string }) {
           <span className="hidden sm:inline">Wardly</span>
         </Link>
 
-        <nav className="flex flex-1 items-center gap-1 overflow-x-auto overflow-y-hidden">
-          {NAV_ITEMS.map((item) => {
-            const active = isActive(pathname, item);
-            if (item.children) {
-              return (
-                <DropdownMenu key={item.label}>
-                  <DropdownMenuTrigger asChild>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className={cn(
-                        "flex items-center gap-1 text-muted-foreground hover:text-foreground",
-                        active && "text-foreground",
-                      )}
-                    >
-                      {item.label}
-                      <IconChevronDown className="size-4" />
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="start">
-                    {item.children.map((child) => {
-                      const childActive =
-                        pathname === child.href ||
-                        pathname.startsWith(child.href + "/");
-                      return (
-                        <DropdownMenuItem key={child.href} asChild>
-                          <Link
-                            href={child.href}
-                            className={cn(childActive && "font-medium")}
-                          >
-                            {child.label}
-                          </Link>
-                        </DropdownMenuItem>
-                      );
-                    })}
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              );
-            }
-            return (
-              <Button
-                key={item.label}
-                variant="ghost"
-                size="sm"
-                asChild
-                className={cn(
-                  "text-muted-foreground hover:text-foreground",
-                  active && "text-foreground",
-                )}
-              >
-                <Link href={item.href}>{item.label}</Link>
-              </Button>
-            );
-          })}
-        </nav>
+        <div className="flex min-w-0 flex-1 items-center">
+          <DesktopNavigation pathname={pathname} />
+          <MobileNavigation pathname={pathname} />
+        </div>
 
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button
               variant="ghost"
               size="sm"
-              className="flex items-center gap-2 px-2"
+              className="flex min-h-11 items-center gap-2 px-2"
+              aria-label={`Account menu for ${userName}`}
             >
               <UserAvatar name={userName} size="sm" />
               <span className="hidden max-w-32 truncate sm:inline">
@@ -154,12 +62,14 @@ export function SiteHeader({ userName }: { userName: string }) {
               {userName}
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
-            <DropdownMenuItem asChild>
-              <a href="/logout">
-                <IconLogout />
-                Log out
-              </a>
-            </DropdownMenuItem>
+            <DropdownMenuGroup>
+              <DropdownMenuItem asChild className="min-h-11">
+                <a href="/logout">
+                  <IconLogout />
+                  Log out
+                </a>
+              </DropdownMenuItem>
+            </DropdownMenuGroup>
           </DropdownMenuContent>
         </DropdownMenu>
       </div>
