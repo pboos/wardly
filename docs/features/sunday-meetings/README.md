@@ -1,7 +1,9 @@
 # Sunday meetings
 
 Plan Sunday sacrament meetings across dates and use a single-meeting agenda
-while conducting. Read this overview first; load the relevant topic below for details.
+while conducting. The header's Meetings menu has one Sunday link to the schedule.
+The schedule provides Open upcoming meeting for the next local agenda.
+Read this overview first; load the relevant topic below for details.
 
 | Topic | Route | Context |
 | --- | --- | --- |

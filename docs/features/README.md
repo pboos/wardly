@@ -6,6 +6,7 @@ links identify where to verify details or make changes.
 
 | Feature                 | Overview                                | Read when working on…                                                                                              |
 | ----------------------- | --------------------------------------- | ------------------------------------------------------------------------------------------------------------------ |
+| Site navigation         | [Overview](navigation/README.md)       | Header links, meeting entry points, mobile menu, and active states                                                   |
 | Ward settings           | [Overview](ward-settings/README.md)     | Admin ward name, content language, meeting start time, and time zone                                               |
 | Login                   | [Overview](login/README.md)             | Email/code login, session recovery · [Action architecture](login/actions.md)                                                        |
 | Member sync             | [Overview](member-sync/README.md)       | LCR page export, sync validation, and troubleshooting                                                              |
