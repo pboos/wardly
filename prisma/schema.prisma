@@ -25,6 +25,7 @@ model ward {
   task_type_state            task_type_state[]
   task_type_state_assignment task_type_state_assignment[]
   sunday_meeting             sunday_meeting[]
+  leadership_meeting_series  leadership_meeting_series[]
   task_digest_delivery       task_digest_delivery[]
 }
 
@@ -108,10 +109,11 @@ model task {
   created_at       DateTime @default(now())
   updated_at       DateTime @default(now())
 
-  ward                ward                  @relation(fields: [ward_id], references: [id], onDelete: Cascade)
-  assigned_user       user?                 @relation(fields: [assigned_user_id], references: [id], onDelete: SetNull)
-  member              member?               @relation(fields: [member_id], references: [id], onDelete: SetNull)
-  sunday_meeting_item sunday_meeting_item[]
+  ward                     ward                       @relation(fields: [ward_id], references: [id], onDelete: Cascade)
+  assigned_user            user?                      @relation(fields: [assigned_user_id], references: [id], onDelete: SetNull)
+  member                   member?                    @relation(fields: [member_id], references: [id], onDelete: SetNull)
+  sunday_meeting_item      sunday_meeting_item[]
+  meeting_agenda_item_task meeting_agenda_item_task[]
 
   @@index([ward_id])
   @@index([ward_id, type, state])
@@ -265,4 +267,117 @@ model member_tag_assignment {
 
   @@unique([member_id, tag_id])
   @@index([tag_id])
+}
+
+model leadership_meeting_series {
+  id             String                    @id @default(uuid())
+  ward_id        String
+  kind           String
+  schedule       String
+  start_time     String                    @default("09:00")
+  time_zone      String
+  target_minutes Int                       @default(60)
+  created_at     DateTime                  @default(now())
+  updated_at     DateTime                  @default(now())
+  ward           ward                      @relation(fields: [ward_id], references: [id], onDelete: Cascade)
+  meetings       leadership_meeting[]
+  templates      meeting_agenda_template[]
+
+  @@unique([ward_id, kind])
+}
+
+model leadership_meeting {
+  id             String                    @id @default(uuid())
+  series_id      String
+  date           String
+  scheduled_date String
+  start_time     String
+  status         String                    @default("planned")
+  created_at     DateTime                  @default(now())
+  updated_at     DateTime                  @default(now())
+  series         leadership_meeting_series @relation(fields: [series_id], references: [id], onDelete: Cascade)
+  items          meeting_agenda_item[]
+
+  @@unique([series_id, scheduled_date])
+  @@index([series_id, date])
+}
+
+model meeting_agenda_template {
+  id                 String                      @id @default(uuid())
+  series_id          String
+  title              String
+  duration_minutes   Int
+  recurrence         String
+  anchor_date        String
+  after_date         String?
+  after_meeting_date String?
+  suggestion_key     String?
+  archived           Boolean                     @default(false)
+  position           Int                         @default(0)
+  created_at         DateTime                    @default(now())
+  updated_at         DateTime                    @default(now())
+  series             leadership_meeting_series   @relation(fields: [series_id], references: [id], onDelete: Cascade)
+  occurrences        meeting_agenda_occurrence[]
+
+  @@index([series_id, archived])
+}
+
+model meeting_agenda_occurrence {
+  id             String                           @id @default(uuid())
+  template_id    String
+  occurrence_key String
+  due_date       String
+  status         String                           @default("pending")
+  created_at     DateTime                         @default(now())
+  updated_at     DateTime                         @default(now())
+  template       meeting_agenda_template          @relation(fields: [template_id], references: [id], onDelete: Cascade)
+  appearances    meeting_agenda_item_occurrence[]
+
+  @@unique([template_id, occurrence_key])
+}
+
+model meeting_agenda_item {
+  id               String                           @id @default(uuid())
+  meeting_id       String
+  title            String
+  duration_minutes Int
+  position         Int
+  outcome          String                           @default("pending")
+  decision         String                           @default("")
+  predecessor_id   String?                          @unique
+  created_at       DateTime                         @default(now())
+  updated_at       DateTime                         @default(now())
+  meeting          leadership_meeting               @relation(fields: [meeting_id], references: [id], onDelete: Cascade)
+  predecessor      meeting_agenda_item?             @relation("continuation", fields: [predecessor_id], references: [id], onDelete: SetNull)
+  successor        meeting_agenda_item?             @relation("continuation")
+  occurrences      meeting_agenda_item_occurrence[]
+  tasks            meeting_agenda_item_task[]
+
+  @@index([meeting_id, position])
+}
+
+model meeting_agenda_item_occurrence {
+  id            String                    @id @default(uuid())
+  item_id       String
+  occurrence_id String
+  created_at    DateTime                  @default(now())
+  updated_at    DateTime                  @default(now())
+  item          meeting_agenda_item       @relation(fields: [item_id], references: [id], onDelete: Cascade)
+  occurrence    meeting_agenda_occurrence @relation(fields: [occurrence_id], references: [id], onDelete: Cascade)
+
+  @@unique([item_id, occurrence_id])
+  @@index([occurrence_id])
+}
+
+model meeting_agenda_item_task {
+  id         String              @id @default(uuid())
+  item_id    String
+  task_id    String
+  created_at DateTime            @default(now())
+  updated_at DateTime            @default(now())
+  item       meeting_agenda_item @relation(fields: [item_id], references: [id], onDelete: Cascade)
+  task       task                @relation(fields: [task_id], references: [id], onDelete: Cascade)
+
+  @@unique([item_id, task_id])
+  @@index([task_id])
 }

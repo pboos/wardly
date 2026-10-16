@@ -1,8 +1,19 @@
-export default function WardCouncilPage() {
-  return (
-    <div className="flex flex-col gap-6">
-      <h1 className="text-2xl font-semibold text-foreground">Ward council</h1>
-      <p className="text-sm text-muted-foreground">Coming soon.</p>
-    </div>
+import { getCurrentUser } from "@/lib/auth/dal";
+import { loadLeadershipMeeting } from "@/lib/leadership-meetings/loaders";
+import { prepareLeadershipMeetings } from "@/lib/leadership-meetings/prepare";
+import { LeadershipView } from "../leadership/leadership-view";
+export default async function MeetingPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ meeting?: string }>;
+}) {
+  const user = await getCurrentUser();
+  await prepareLeadershipMeetings(user.ward_id, "ward_council");
+  const params = await searchParams;
+  const data = await loadLeadershipMeeting(
+    user.ward_id,
+    "ward_council",
+    typeof params.meeting === "string" ? params.meeting : undefined,
   );
+  return <LeadershipView key={data.meeting?.id ?? "setup"} data={data} />;
 }
