@@ -1,4 +1,5 @@
 import "server-only";
+import { insertionPosition } from "./ordering";
 import type { Prisma } from "@/generated/prisma/client";
 import {
   addDays,
@@ -62,16 +63,13 @@ export async function createAppearance(
   occurrenceIds: string[],
   predecessorId?: string,
 ) {
-  const max = await db.meeting_agenda_item.aggregate({
-    where: { meeting_id: meetingId },
-    _max: { position: true },
-  });
+  const position = await insertionPosition(db, meetingId, occurrenceIds);
   return db.meeting_agenda_item.create({
     data: {
       meeting_id: meetingId,
       title,
       duration_minutes: duration,
-      position: (max._max.position ?? -1) + 1,
+      position,
       predecessor_id: predecessorId,
       occurrences: {
         create: occurrenceIds.map((occurrence_id) => ({ occurrence_id })),
@@ -157,6 +155,7 @@ export async function reconcile(db: Db, seriesId: string, through: string) {
   );
   const templates = await db.meeting_agenda_template.findMany({
     where: { series_id: seriesId, archived: false },
+    orderBy: [{ position: "asc" }, { created_at: "asc" }, { id: "asc" }],
   });
   for (const template of templates) {
     const rule = parseRule(JSON.parse(template.recurrence));
@@ -213,6 +212,11 @@ export async function reconcile(db: Db, seriesId: string, through: string) {
         (a) => a.item.outcome === "pending",
       );
       if (
+        !existing &&
+        occurrence.appearances.some((a) => a.item.outcome === "removed")
+      )
+        continue;
+      if (
         existing &&
         (existing.item.meeting.status === "active" ||
           held.has(existing.item.meeting_id) ||
@@ -258,7 +262,15 @@ export async function reconcile(db: Db, seriesId: string, through: string) {
       ) {
         await db.meeting_agenda_item.update({
           where: { id: existing.item_id },
-          data: { meeting_id: target.id },
+          data: {
+            meeting_id: target.id,
+            position: await insertionPosition(
+              db,
+              target.id,
+              [occurrence.id],
+              existing.item_id,
+            ),
+          },
         });
         continue;
       }
@@ -269,7 +281,7 @@ export async function reconcile(db: Db, seriesId: string, through: string) {
           target.id,
           existing?.item.title ?? template.title,
           existing?.item.duration_minutes ?? template.duration_minutes,
-          [],
+          [occurrence.id],
         ));
       await db.meeting_agenda_item_occurrence.upsert({
         where: {

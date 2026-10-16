@@ -15,6 +15,7 @@ import {
   seriesForWard,
   type Db,
 } from "./store";
+import { insertionPosition } from "./ordering";
 import { recordOutcome } from "./item-service";
 import type { MeetingKind } from "./types";
 export function timeString(value: unknown): string {
@@ -157,17 +158,31 @@ export async function saveSchedule(
         },
       },
     });
+    let inheritedPosition: number | undefined;
     for (const duplicate of generated) {
       const pristine = duplicate.occurrences.every(
         (o) =>
           duplicate.title === o.occurrence.template.title &&
           duplicate.duration_minutes === o.occurrence.template.duration_minutes,
       );
-      if (pristine) await mergeAppearance(db, item.id, duplicate.id);
+      if (pristine) {
+        inheritedPosition ??= duplicate.position;
+        await mergeAppearance(db, item.id, duplicate.id);
+      }
     }
     await db.meeting_agenda_item.update({
       where: { id: item.id },
-      data: { meeting_id: destination.id },
+      data: {
+        meeting_id: destination.id,
+        position:
+          inheritedPosition ??
+          (await insertionPosition(
+            db,
+            destination.id,
+            item.occurrences.map((o) => o.occurrence_id),
+            item.id,
+          )),
+      },
     });
   }
   return series.id;

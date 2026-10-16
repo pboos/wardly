@@ -484,6 +484,7 @@ CREATE TABLE "meeting_agenda_template" (
     "after_meeting_date" TEXT,
     "suggestion_key" TEXT,
     "archived" BOOLEAN NOT NULL DEFAULT false,
+    "position" INTEGER NOT NULL DEFAULT 0,
     "created_at" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updated_at" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT "meeting_agenda_template_series_id_fkey" FOREIGN KEY ("series_id") REFERENCES "leadership_meeting_series" ("id") ON DELETE CASCADE ON UPDATE CASCADE
@@ -573,3 +574,6 @@ CREATE INDEX "meeting_agenda_item_task_task_id_idx" ON "meeting_agenda_item_task
 CREATE UNIQUE INDEX "meeting_agenda_item_task_item_id_task_id_key" ON "meeting_agenda_item_task"("item_id", "task_id");
 
 ```
+
+Recurring template positions define series defaults; item positions remain meeting snapshots.
+The additive ordering migration backfills templates per series by creation time and ID.

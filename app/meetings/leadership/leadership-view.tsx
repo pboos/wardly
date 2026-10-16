@@ -28,19 +28,12 @@ import { ChoiceField } from "./choice-field";
 import { ScheduleDialog } from "./schedule-dialog";
 import { SuggestionsDialog } from "./suggestions-dialog";
 import { MeetingControlsDialog } from "./meeting-controls-dialog";
-import { LegacyImportDialog } from "./legacy-import-dialog";
 import { DiscussionDialog } from "./discussion-dialog";
 import { QuickAdd } from "./quick-add";
 import { useMeetingTimer } from "./use-meeting-timer";
 type Modal =
   | {
-      kind:
-        | "schedule"
-        | "suggestions"
-        | "import"
-        | "close"
-        | "cancel"
-        | "reschedule";
+      kind: "schedule" | "suggestions" | "close" | "cancel" | "reschedule";
     }
   | { kind: "edit"; input: AgendaInput; requestId: string };
 export function LeadershipView({ data }: { data: LeadershipData }) {
@@ -203,13 +196,6 @@ export function LeadershipView({ data }: { data: LeadershipData }) {
                     Close meeting
                   </DropdownMenuItem>
                 )}
-                {meeting && !readOnly && data.kind === "bishopric" && (
-                  <DropdownMenuItem
-                    onSelect={() => setModal({ kind: "import" })}
-                  >
-                    Import old agenda
-                  </DropdownMenuItem>
-                )}
                 <DropdownMenuItem onSelect={timer.testSound}>
                   Test alarm sound
                 </DropdownMenuItem>
@@ -275,6 +261,31 @@ export function LeadershipView({ data }: { data: LeadershipData }) {
                 </Button>
                 <Button variant="ghost" size="sm" onClick={() => add()}>
                   Add recurring item
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  disabled={
+                    mutation.isPending ||
+                    data.items.filter((item) => item.repeating).length < 2
+                  }
+                  onClick={async () => {
+                    if (
+                      await run(
+                        {
+                          kind: "save-future-order",
+                          meetingId: meeting.id,
+                          itemIds: data.items.map((item) => item.id),
+                        },
+                        false,
+                      )
+                    )
+                      toast.success(
+                        "Recurring order saved for future planned meetings. One-time items and history keep their places.",
+                      );
+                  }}
+                >
+                  Use this order for future meetings
                 </Button>
               </div>
             </div>
@@ -408,16 +419,6 @@ export function LeadershipView({ data }: { data: LeadershipData }) {
             }}
           />
         )}
-      {modal?.kind === "import" && meeting && (
-        <LegacyImportDialog
-          date={meeting.date}
-          pending={mutation.isPending}
-          onClose={() => setModal(null)}
-          onImport={async (items) => {
-            await run({ kind: "import", meetingId: meeting.id, items });
-          }}
-        />
-      )}
     </div>
   );
 }

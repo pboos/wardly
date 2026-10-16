@@ -54,7 +54,8 @@ export type MeetingCommand =
       expectedDecision: string;
     }
   | { kind: "reorder"; meetingId: string; itemIds: string[] }
-  | { kind: "remove"; itemId: string }
+  | { kind: "save-future-order"; meetingId: string; itemIds: string[] }
+  | { kind: "remove"; itemId: string; scope: "this" | "future" }
   | { kind: "restore"; itemId: string }
   | { kind: "stop"; itemId: string }
   | { kind: "move"; itemId: string; direction: -1 | 1 }
@@ -65,9 +66,4 @@ export type MeetingCommand =
       title: string;
       assignedUserId: string | null;
       requestId: string;
-    }
-  | {
-      kind: "import";
-      meetingId: string;
-      items: { id: string; name: string; durationMin: number }[];
     };

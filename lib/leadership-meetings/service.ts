@@ -1,5 +1,6 @@
 import "server-only";
-import { createHash } from "node:crypto";
+import { saveFutureOrder } from "./ordering";
+import { removeAgenda } from "./removal";
 import { prisma } from "@/lib/prisma";
 import { loadTaskTypes } from "@/lib/tasks/loader";
 import { addDays, dateString, object, text } from "./calendar";
@@ -149,21 +150,17 @@ export async function executeMeetingCommand(
             });
           break;
         }
-        case "remove": {
-          const item = await itemForWard(db, wardId, text(input.itemId));
-          if (item.outcome === "removed") break;
-          if (item.outcome !== "pending")
-            throw new Error("Only pending items can be removed.");
-          await db.meeting_agenda_occurrence.updateMany({
-            where: { id: { in: item.occurrences.map((o) => o.occurrence_id) } },
-            data: { status: "removed", updated_at: new Date() },
-          });
-          await db.meeting_agenda_item.update({
-            where: { id: item.id },
-            data: { outcome: "removed", updated_at: new Date() },
-          });
+        case "save-future-order":
+          await saveFutureOrder(
+            db,
+            wardId,
+            text(input.meetingId),
+            input.itemIds,
+          );
           break;
-        }
+        case "remove":
+          await removeAgenda(db, wardId, text(input.itemId), input.scope);
+          break;
         case "restore": {
           const item = await itemForWard(db, wardId, text(input.itemId));
           if (item.outcome === "pending") break;
@@ -259,39 +256,10 @@ export async function executeMeetingCommand(
           await linkTask(db, wardId, input.itemId, id);
           break;
         }
-        case "import": {
-          await meetingForWard(db, wardId, text(input.meetingId));
-          if (!Array.isArray(input.items) || input.items.length > 100)
-            throw new Error("Import at most 100 items.");
-          const meeting = await meetingForWard(db, wardId, input.meetingId);
-          for (const item of input.items) {
-            object(item);
-            await addAgenda(
-              db,
-              wardId,
-              meeting.id,
-              {
-                title: item.name,
-                durationMinutes: item.durationMin,
-                anchorDate: meeting.date,
-                recurrence: { version: 1, kind: "once" },
-              },
-              legacyUuid(meeting.series_id, text(item.id, 100)),
-            );
-          }
-          break;
-        }
         default:
           throw new Error("Unknown meeting action.");
       }
     },
     { timeout: 30000 },
   );
-}
-
-function legacyUuid(seriesId: string, sourceId: string) {
-  const hash = createHash("sha256")
-    .update(JSON.stringify([seriesId, sourceId]))
-    .digest("hex");
-  return `${hash.slice(0, 8)}-${hash.slice(8, 12)}-5${hash.slice(13, 16)}-a${hash.slice(17, 20)}-${hash.slice(20, 32)}`;
 }

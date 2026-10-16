@@ -25,6 +25,7 @@ import type {
 import type { MeetingTimer } from "./use-meeting-timer";
 import { AgendaSetupFields } from "./agenda-setup-fields";
 import { DiscussionTasksForm } from "./discussion-tasks-form";
+import { RemovalChoice } from "./removal-choice";
 import { DiscussionTimer } from "./discussion-timer";
 export function DiscussionDialog({
   item,
@@ -281,30 +282,17 @@ export function DiscussionDialog({
               >
                 Skip occurrence
               </Button>
-              <Button
-                variant="ghost"
-                size="sm"
-                disabled={pending}
-                onClick={async () => {
+              <RemovalChoice
+                repeating={item.repeating}
+                pending={pending}
+                onRemove={async (scope) => {
                   if (
                     (await saveNotes()) &&
-                    (await onSave({ kind: "remove", itemId: item.id }))
+                    (await onSave({ kind: "remove", itemId: item.id, scope }))
                   )
                     onClose();
                 }}
-              >
-                Remove from agenda
-              </Button>
-              {item.repeating && (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  disabled={pending}
-                  onClick={() => void onSave({ kind: "stop", itemId: item.id })}
-                >
-                  Stop repeating
-                </Button>
-              )}
+              />
             </div>
           </>
         )}

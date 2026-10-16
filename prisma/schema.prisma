@@ -313,6 +313,7 @@ model meeting_agenda_template {
   after_meeting_date String?
   suggestion_key     String?
   archived           Boolean                     @default(false)
+  position           Int                         @default(0)
   created_at         DateTime                    @default(now())
   updated_at         DateTime                    @default(now())
   series             leadership_meeting_series   @relation(fields: [series_id], references: [id], onDelete: Cascade)

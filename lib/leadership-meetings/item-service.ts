@@ -1,3 +1,4 @@
+import { nextTemplatePosition } from "./ordering";
 import { randomUUID } from "node:crypto";
 import { addDays, integer, dateString, parseRule, text } from "./calendar";
 import {
@@ -81,6 +82,7 @@ export async function addAgenda(
   await db.meeting_agenda_template.create({
     data: {
       id,
+      position: await nextTemplatePosition(db, meeting.series_id),
       series_id: meeting.series_id,
       title: input.title,
       duration_minutes: input.durationMinutes,
@@ -164,6 +166,9 @@ export async function recordOutcome(
       },
       include: { occurrences: true, tasks: true },
     });
+    const inheritedPosition = duplicates.length
+      ? Math.min(...duplicates.map((row) => row.position))
+      : undefined;
     for (const duplicate of duplicates) {
       for (const o of duplicate.occurrences)
         await db.meeting_agenda_item_occurrence.upsert({
@@ -191,6 +196,11 @@ export async function recordOutcome(
         });
       await db.meeting_agenda_item.delete({ where: { id: duplicate.id } });
     }
+    if (inheritedPosition !== undefined)
+      await db.meeting_agenda_item.update({
+        where: { id: successor.id },
+        data: { position: inheritedPosition },
+      });
   } else {
     await db.meeting_agenda_occurrence.updateMany({
       where: { id: { in: item.occurrences.map((o) => o.occurrence_id) } },
@@ -256,6 +266,11 @@ export async function editAgenda(
     const replacement = await db.meeting_agenda_template.create({
       data: {
         id: randomUUID(),
+        position:
+          item.occurrences.find((o) => !o.occurrence.template.archived)
+            ?.occurrence.template.position ??
+          item.occurrences[0]?.occurrence.template.position ??
+          (await nextTemplatePosition(db, item.meeting.series_id)),
         series_id: item.meeting.series_id,
         title: input.title,
         duration_minutes: input.durationMinutes,

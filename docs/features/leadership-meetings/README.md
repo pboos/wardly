@@ -35,8 +35,15 @@ count opens one discussion dialog. Quick add takes a title and minutes; Edit set
 inside the discussion contains title, duration, recurrence, and edit scope.
 Drag the handle to reorder with a mouse or touch, or focus it and use the up/down
 arrow keys. Each reorder validates and saves the entire visible agenda atomically,
-including resolved items. Planned and remaining totals appear below the list.
-Schedule, rescheduling, cancellation, close, extension, and legacy import actions
+including resolved items. Reordering applies only to the selected meeting.
+Use this order for future meetings saves the displayed recurring order as the
+series default and applies it to pending recurring slots in future planned meetings.
+One-time and resolved rows retain their slots; started, closed, cancelled, and past
+meetings are unchanged. Monthly templates absent from the selected agenda keep
+their default slots. Newly appearing or moved recurring items insert by default
+rank while preserving existing rows' relative order. Future series edits inherit
+the replaced template's rank; new templates append to the default order. Planned and remaining totals appear below the list.
+Schedule, rescheduling, cancellation, close, and extension actions
 are available from the small meeting settings menu.
 
 Add one-time topics or recurring templates. The editor previews the first three
@@ -55,10 +62,13 @@ with separate occurrence records retaining the original due dates.
 - Done resolves the current occurrence(s), leaving future recurrence intact.
 - Continue next meeting records a discussion and creates a continuation.
 - Move to next meeting defers without completing the discussion.
-- Skip resolves only this occurrence. Remove from this agenda hides it and leaves
-  an occurrence tombstone so refresh cannot restore it.
-- Stop repeating archives the template and removes automatically generated future
-  pending appearances. Current and carried discussions remain.
+- Skip resolves only this occurrence. Remove item asks for This meeting only or
+  This and future meetings, then Confirm removal. Both preserve records, notes,
+  task links, and resolved history. This meeting only hides the appearance.
+  This and future meetings archives linked templates and hides matching pending
+  appearances in this and later planned or active meetings, including carried discussions.
+  Shared historical occurrence statuses remain intact; archived templates prevent
+  regeneration. Dirty notes save before removal; a failure keeps the dialog draft.
 - Edit this occurrence changes its title and allocation. Edit recurring series
   changes the current appearance and replaces future recurrence while keeping its
   chosen calendar anchor. Already covered due dates and the source meeting are
@@ -104,10 +114,6 @@ Follow-up tasks can be created or linked in the same discussion, including after
 the meeting closes. Creation uses the enabled
 ordinary Task type and its configured initial state. Discussion completion never
 changes task completion, and notes are not automatically copied into tasks.
-
-An explicit browser import previews the old bishopric localStorage list and adds
-one-time items to the selected meeting. It preserves the source list, imports no
-undated completion flags, and uses deterministic UUIDs to avoid repeated imports.
 
 ## Implementation and verification
 
