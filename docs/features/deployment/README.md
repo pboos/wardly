@@ -8,11 +8,9 @@ label links the package to the GitHub repository. ARM64 images are not built.
 ## Publishing
 
 - Pushes to `main` publish `latest`, `main`, and `sha-<short-commit>` tags.
-- Pushing a `v*` Git tag publishes that exact tag (for example `v1.2.3`) and a
-  commit tag. Version tags do not move `latest`.
-- Pull requests targeting `main` build without logging in or publishing.
-- **Actions → Docker image → Run workflow** publishes the selected branch/tag;
-  only the default branch updates `latest`.
+- Pull requests, other branches, and Git tags do not build or publish images.
+- **Actions → Docker image → Run workflow** publishes only when `main` is
+  selected; runs for other branches or tags skip the build job.
 - Build layers use the GitHub Actions cache. Actions are pinned to commit SHAs.
 
 Authentication uses the automatic `GITHUB_TOKEN` with `packages: write`; no
@@ -48,6 +46,6 @@ SQLite database; back it up before upgrading. The
 Next.js. See [database setup](../../DATABASE.md) for database rules.
 
 Pulling a newer image does not replace a running container: recreate it with the
-same environment and volume. Use a version or commit tag for a fixed deployment.
+same environment and volume. Use a commit tag for a fixed deployment.
 The existing [Compose file](../../../docker-compose.yml) builds locally; it does
 not pull from GHCR.

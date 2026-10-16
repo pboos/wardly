@@ -47,8 +47,9 @@ This project uses [`next/font`](https://nextjs.org/docs/app/building-your-applic
 ## Deploy to server
 
 GitHub Actions builds and publishes `ghcr.io/pboos/wardly:latest` whenever `main`
-is pushed. Pull requests build without publishing; `v*` Git tags publish versioned
-images. No additional GitHub secret is needed.
+is pushed. Images build only on `main`, including manual workflow runs; pull
+requests, other branches, and Git tags do not build images. No additional GitHub
+secret is needed.
 
 See [Docker publishing and deployment](docs/features/deployment/README.md) for
 package visibility, private-registry login, and running the image on your server.
