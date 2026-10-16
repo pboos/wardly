@@ -147,3 +147,7 @@ and demo databases after this change; see [members](features/members/README.md).
 The initial migration includes `member_tag.is_default_excluded` (default false).
 Reset existing local and demo databases after this change. See
 [members](features/members/README.md) for default filters and selector ordering.
+
+Leadership meeting agendas use the additive `20261016120000_leadership_meetings`
+migration. Apply pending migrations and regenerate the client; existing data does
+not need to be reset. See [leadership meetings](features/leadership-meetings/README.md).
