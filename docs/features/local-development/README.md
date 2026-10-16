@@ -82,6 +82,9 @@ Invoke the fallback as `$check-ui` in a task.
    its controls. Check the browser console and network requests for errors.
 5. For layout changes, check desktop and mobile widths and capture screenshots.
    Report what passed and any browser errors or checks you could not complete.
+6. When checks finish or fail, stop any server you started for verification and
+   confirm that its port is no longer listening. Leave a reused server running.
+   Keep your server running only if the user asks you to leave it available.
 
 The check-ui skill includes a reusable runner and scenario template, plus
 responsive checks, light/dark colors, failure recovery, Linux/WSL browser setup,
