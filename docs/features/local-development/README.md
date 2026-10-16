@@ -69,13 +69,25 @@ remain in place. Only code generation and email delivery change.
 
 ## Browser UI checks
 
-Use the repository's [check-ui skill](../../../.agents/skills/check-ui/SKILL.md)
-for Playwright checks against the local demo: email-free login, responsive
-screenshots, interaction assertions, light/dark colors, and failure recovery.
-It includes a reusable runner and scenario template, plus Linux/WSL browser
-setup and stale development CSS troubleshooting. Dependencies, session state,
-and screenshots stay outside the repository; temporary demo records are cleaned
-up without resetting existing data. Invoke it as `$check-ui` in a task.
+Use the Chrome DevTools MCP or Brave DevTools MCP, whichever is available.
+If neither is available, use the repository's
+[check-ui skill](../../../.agents/skills/check-ui/SKILL.md) for Playwright checks.
+Invoke the fallback as `$check-ui` in a task.
+
+1. Reuse a running local demo server, or start one with `npm run dev:demo`.
+2. Open `http://127.0.0.1:3000` in a new browser tab through the available MCP.
+   Use the server's actual port if it differs.
+3. Log in with `demo@example.test` and code **123456**.
+4. Verify that the dashboard loads, then open the page under test and exercise
+   its controls. Check the browser console and network requests for errors.
+5. For layout changes, check desktop and mobile widths and capture screenshots.
+   Report what passed and any browser errors or checks you could not complete.
+
+The check-ui skill includes a reusable runner and scenario template, plus
+responsive checks, light/dark colors, failure recovery, Linux/WSL browser setup,
+and stale development CSS troubleshooting. Keep temporary dependencies, session
+state, and screenshots outside the repository. Clean up temporary demo records
+without resetting existing data.
 
 ## Implementation and verification
 
