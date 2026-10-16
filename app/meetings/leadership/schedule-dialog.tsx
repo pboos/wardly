@@ -36,9 +36,7 @@ export function ScheduleDialog({
     },
   );
   const [startTime, setStartTime] = useState(data.series?.startTime ?? "09:00");
-  const [targetMinutes, setTargetMinutes] = useState(
-    data.series?.targetMinutes ?? 60,
-  );
+  const targetMinutes = data.series?.targetMinutes ?? 60;
   return (
     <Dialog
       open
@@ -112,19 +110,6 @@ export function ScheduleDialog({
                 required
                 value={startTime}
                 onChange={(e) => setStartTime(e.target.value)}
-              />
-            </Field>
-            <Field>
-              <FieldLabel htmlFor="schedule-target">
-                Target meeting length (minutes)
-              </FieldLabel>
-              <Input
-                id="schedule-target"
-                type="number"
-                min={10}
-                max={240}
-                value={targetMinutes}
-                onChange={(e) => setTargetMinutes(Number(e.target.value))}
               />
             </Field>
             <Button disabled={pending} type="submit">

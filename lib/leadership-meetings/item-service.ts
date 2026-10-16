@@ -115,14 +115,19 @@ export async function recordOutcome(
   itemId: string,
   outcome: ItemOutcome,
   decision: string,
+  expectedDecision?: string,
 ) {
   if (!["done", "continued", "deferred", "skipped"].includes(outcome))
     throw new Error("Invalid agenda outcome.");
   if (typeof decision !== "string" || decision.length > 4000)
     throw new Error("Decision must be at most 4000 characters.");
   const item = await itemForWard(db, wardId, itemId);
+  if (item.outcome === outcome && item.decision === decision.trim()) return;
+  if (expectedDecision !== undefined && item.decision !== expectedDecision)
+    throw new Error(
+      "Discussion notes changed in another window. Copy your draft, close and reopen this item to review the latest notes.",
+    );
   if (item.outcome !== "pending") {
-    if (item.outcome === outcome) return;
     throw new Error("This item has already been resolved. Refresh the agenda.");
   }
   if (outcome === "continued" || outcome === "deferred") {

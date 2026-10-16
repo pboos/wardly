@@ -30,7 +30,12 @@ export async function meetingForWard(
     throw new Error("This meeting is read-only.");
   return meeting;
 }
-export async function itemForWard(db: Db, wardId: string, id: string) {
+export async function itemForWard(
+  db: Db,
+  wardId: string,
+  id: string,
+  editable = true,
+) {
   const item = await db.meeting_agenda_item.findFirst({
     where: { id, meeting: { series: { ward_id: wardId } } },
     include: {
@@ -40,7 +45,12 @@ export async function itemForWard(db: Db, wardId: string, id: string) {
     },
   });
   if (!item) throw new Error("Agenda item not found.");
-  if (!["planned", "active"].includes(item.meeting.status))
+  if (
+    !editable &&
+    (item.outcome === "removed" || item.meeting.status === "superseded")
+  )
+    throw new Error("This discussion is no longer visible.");
+  if (editable && !["planned", "active"].includes(item.meeting.status))
     throw new Error("This meeting is read-only.");
   return item;
 }

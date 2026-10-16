@@ -1,16 +1,16 @@
 "use client";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { MoreHorizontal, Volume2, VolumeX } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuGroup,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { useAppMutation } from "@/lib/actions/use-app-mutation";
 import type {
   AgendaRow,
@@ -18,7 +18,6 @@ import type {
 } from "@/lib/leadership-meetings/loaders";
 import type {
   AgendaInput,
-  ItemOutcome,
   MeetingCommand,
 } from "@/lib/leadership-meetings/types";
 import { addDays } from "@/lib/leadership-meetings/calendar";
@@ -28,10 +27,10 @@ import { AgendaItem } from "./agenda-item";
 import { ChoiceField } from "./choice-field";
 import { ScheduleDialog } from "./schedule-dialog";
 import { SuggestionsDialog } from "./suggestions-dialog";
-import { OutcomeDialog } from "./outcome-dialog";
-import { TaskDialog } from "./task-dialog";
 import { MeetingControlsDialog } from "./meeting-controls-dialog";
 import { LegacyImportDialog } from "./legacy-import-dialog";
+import { DiscussionDialog } from "./discussion-dialog";
+import { QuickAdd } from "./quick-add";
 import { useMeetingTimer } from "./use-meeting-timer";
 type Modal =
   | {
@@ -43,39 +42,41 @@ type Modal =
         | "cancel"
         | "reschedule";
     }
-  | { kind: "edit"; input: AgendaInput; item?: AgendaRow; requestId: string }
-  | { kind: "outcome"; item: AgendaRow; outcome: ItemOutcome }
-  | { kind: "task"; item: AgendaRow };
+  | { kind: "edit"; input: AgendaInput; requestId: string };
 export function LeadershipView({ data }: { data: LeadershipData }) {
   const router = useRouter(),
     mutation = useAppMutation(changeLeadershipMeeting),
     timer = useMeetingTimer();
   const [modal, setModal] = useState<Modal | null>(null);
+  const [selectedId, setSelectedId] = useState<string | null>(null);
   const [error, setError] = useState("");
   const meeting = data.meeting,
     readOnly = !meeting || !["planned", "active"].includes(meeting.status);
+  const selected = data.items.find((item) => item.id === selectedId);
   const planned = data.items.reduce(
     (sum, item) => sum + item.durationMinutes + timer.extension(item.id),
     0,
   );
   const remainingMs = data.items
-    .filter((i) => i.outcome === "pending")
+    .filter((item) => item.outcome === "pending")
     .reduce(
       (sum, item) =>
         sum + Math.max(0, timer.remainingMs(item.id, item.durationMinutes)),
       0,
     );
-  const remainingMinutes = Math.ceil(remainingMs / 60000);
-  async function run(command: MeetingCommand, close = true) {
+  async function run(command: MeetingCommand, close = true): Promise<boolean> {
     setError("");
     try {
       await mutation.execute(command);
       if (command.kind === "outcome" || command.kind === "remove")
         timer.finish(command.itemId);
+      if (command.kind === "edit")
+        timer.replan(command.itemId, command.input.durationMinutes);
       if (command.kind === "meeting" && command.operation !== "start")
         timer.pause();
       if (close) setModal(null);
       router.refresh();
+      return true;
     } catch (cause) {
       const message =
         cause instanceof Error
@@ -83,6 +84,8 @@ export function LeadershipView({ data }: { data: LeadershipData }) {
           : "Unable to save. Please try again.";
       setError(message);
       toast.error(message);
+      router.refresh();
+      return false;
     }
   }
   function add(input?: AgendaInput) {
@@ -97,6 +100,29 @@ export function LeadershipView({ data }: { data: LeadershipData }) {
       },
     });
   }
+  function start(item: AgendaRow) {
+    timer.primeSound();
+    setSelectedId(item.id);
+    if (timer.runningId === item.id) return;
+    if (meeting?.status === "planned")
+      void run(
+        { kind: "meeting", meetingId: meeting.id, operation: "start" },
+        false,
+      ).then((saved) => {
+        if (saved) timer.start(item.id, item.durationMinutes);
+      });
+    else timer.start(item.id, item.durationMinutes);
+  }
+  function reorder(itemId: string, target: string | -1 | 1) {
+    if (!meeting) return;
+    const ids = data.items.map((item) => item.id),
+      from = ids.indexOf(itemId);
+    const to = typeof target === "number" ? from + target : ids.indexOf(target);
+    if (to < 0 || to >= ids.length || from === to) return;
+    ids.splice(from, 1);
+    ids.splice(to, 0, itemId);
+    void run({ kind: "reorder", meetingId: meeting.id, itemIds: ids }, false);
+  }
   const path =
     data.kind === "bishopric"
       ? "/meetings/bishopric"
@@ -110,20 +136,87 @@ export function LeadershipView({ data }: { data: LeadershipData }) {
     : null;
   return (
     <div className="mx-auto flex w-full max-w-4xl flex-col gap-5">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <h1 className="text-2xl font-semibold">{data.title}</h1>
-          <p className="text-sm text-muted-foreground">
-            Focused discussions, clear decisions, and shared follow-up.
-          </p>
+      <div className="flex items-center justify-between gap-2">
+        <h1 className="text-2xl font-semibold">{data.title}</h1>
+        <div className="flex items-center gap-1">
+          <Button
+            size="icon"
+            variant="ghost"
+            onClick={timer.toggleMuted}
+            aria-label={timer.muted ? "Unmute alarm" : "Mute alarm"}
+            aria-pressed={timer.muted}
+          >
+            {timer.muted ? <VolumeX /> : <Volume2 />}
+          </Button>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                size="icon"
+                variant="outline"
+                aria-label="Meeting settings and actions"
+              >
+                <MoreHorizontal />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuGroup>
+                <DropdownMenuItem
+                  onSelect={() => setModal({ kind: "schedule" })}
+                >
+                  {data.series ? "Meeting schedule" : "Set up meetings"}
+                </DropdownMenuItem>
+                {data.series && (
+                  <DropdownMenuItem
+                    disabled={mutation.isPending}
+                    onSelect={() =>
+                      void run({
+                        kind: "prepare",
+                        seriesId: data.series!.id,
+                        date: addDays(
+                          data.meetings.at(-1)?.date ?? data.today,
+                          90,
+                        ),
+                      })
+                    }
+                  >
+                    Extend schedule
+                  </DropdownMenuItem>
+                )}
+                {meeting?.status === "planned" && (
+                  <>
+                    <DropdownMenuItem
+                      onSelect={() => setModal({ kind: "reschedule" })}
+                    >
+                      Reschedule meeting
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      onSelect={() => setModal({ kind: "cancel" })}
+                    >
+                      Cancel meeting
+                    </DropdownMenuItem>
+                  </>
+                )}
+                {meeting && !readOnly && (
+                  <DropdownMenuItem
+                    onSelect={() => setModal({ kind: "close" })}
+                  >
+                    Close meeting
+                  </DropdownMenuItem>
+                )}
+                {meeting && !readOnly && data.kind === "bishopric" && (
+                  <DropdownMenuItem
+                    onSelect={() => setModal({ kind: "import" })}
+                  >
+                    Import old agenda
+                  </DropdownMenuItem>
+                )}
+                <DropdownMenuItem onSelect={timer.testSound}>
+                  Test alarm sound
+                </DropdownMenuItem>
+              </DropdownMenuGroup>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
-        <Button
-          variant="outline"
-          disabled={mutation.isPending}
-          onClick={() => setModal({ kind: "schedule" })}
-        >
-          {data.series ? "Schedule" : "Set up meetings"}
-        </Button>
       </div>
       {error && (
         <p role="alert" className="text-sm text-destructive">
@@ -131,218 +224,131 @@ export function LeadershipView({ data }: { data: LeadershipData }) {
         </p>
       )}
       {!data.series && (
-        <Card>
-          <CardHeader>
-            <CardTitle>Plan your first meeting</CardTitle>
-            <CardDescription>
-              Choose your schedule to create dated agendas. You decide which
-              suggested topics to add.
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <Button onClick={() => setModal({ kind: "schedule" })}>
-              Choose meeting schedule
-            </Button>
-          </CardContent>
-        </Card>
+        <Button
+          className="self-start"
+          onClick={() => setModal({ kind: "schedule" })}
+        >
+          Choose meeting schedule
+        </Button>
       )}
       {data.series && (
-        <div className="flex flex-wrap items-end gap-3">
-          <div className="min-w-0 flex-1">
-            <ChoiceField
-              id="meeting-date"
-              label="Meeting and history"
-              value={meeting?.id ?? ""}
-              onChange={(id) =>
-                router.push(`${path}?meeting=${encodeURIComponent(id)}`)
-              }
-              options={data.meetings.map((m) => ({
-                value: m.id,
-                label: `${m.date} · ${m.start_time} · ${m.status}`,
-              }))}
-            />
-          </div>
-          <Button
-            variant="outline"
-            disabled={mutation.isPending}
-            onClick={() =>
-              void run({
-                kind: "prepare",
-                seriesId: data.series!.id,
-                date: addDays(data.meetings.at(-1)?.date ?? data.today, 90),
-              })
-            }
-          >
-            Extend schedule
-          </Button>
-        </div>
+        <ChoiceField
+          id="meeting-date"
+          label="Meeting and history"
+          value={meeting?.id ?? ""}
+          onChange={(id) =>
+            router.push(`${path}?meeting=${encodeURIComponent(id)}`)
+          }
+          options={data.meetings.map((row) => ({
+            value: row.id,
+            label: `${row.date} · ${row.start_time} · ${row.status}`,
+          }))}
+        />
       )}
       {meeting && (
         <>
-          <Card>
-            <CardHeader>
-              <div className="flex flex-wrap items-center justify-between gap-3">
-                <CardTitle>
-                  {meeting.date} · {meeting.start_time}
-                </CardTitle>
-                <Badge variant="outline">{meeting.status}</Badge>
-              </div>
-              <CardDescription>
-                {data.timeZone} · Visible to all ward users
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="flex flex-col gap-4">
-              <div className="flex flex-wrap gap-x-6 gap-y-2 text-sm">
-                <span>
-                  <strong>{planned} min</strong> planned
-                </span>
-                <span>
-                  <strong>{remainingMinutes} min</strong> remaining
-                </span>
-                <span>Target {data.series?.targetMinutes} min</span>
-                {finish && <span>Estimated finish {finish}</span>}
-              </div>
-              <div className="flex flex-wrap gap-2">
-                {meeting.status === "planned" && (
-                  <>
-                    <Button
-                      disabled={mutation.isPending}
-                      onClick={() =>
-                        void run({
-                          kind: "meeting",
-                          meetingId: meeting.id,
-                          operation: "start",
-                        })
-                      }
-                    >
-                      Start meeting
-                    </Button>
-                    <Button
-                      variant="outline"
-                      disabled={mutation.isPending}
-                      onClick={() => setModal({ kind: "reschedule" })}
-                    >
-                      Reschedule
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      disabled={mutation.isPending}
-                      onClick={() => setModal({ kind: "cancel" })}
-                    >
-                      Cancel meeting
-                    </Button>
-                  </>
-                )}
-                {!readOnly && (
-                  <Button
-                    variant="outline"
-                    disabled={mutation.isPending}
-                    onClick={() => setModal({ kind: "close" })}
-                  >
-                    Close meeting
-                  </Button>
-                )}
-              </div>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={timer.toggleMuted}
-                aria-pressed={timer.muted}
-              >
-                {timer.muted ? "Unmute alarm" : "Mute alarm"}
-              </Button>
-              <p className="text-xs text-muted-foreground">
-                Timers run only in this window and reset on reload. Decisions,
-                agenda changes, and task links are saved.
-              </p>
-            </CardContent>
-          </Card>
           {!readOnly && (
-            <div className="flex flex-wrap gap-2">
-              <Button onClick={() => add()} disabled={mutation.isPending}>
-                Add item
-              </Button>
-              <Button
-                variant="ghost"
-                onClick={() => setModal({ kind: "suggestions" })}
-              >
-                Suggested items
-              </Button>
-              {data.kind === "bishopric" && (
+            <div className="flex flex-col gap-2">
+              <QuickAdd
+                pending={mutation.isPending}
+                onAdd={(title, durationMinutes, requestId) =>
+                  run({
+                    kind: "add",
+                    meetingId: meeting.id,
+                    requestId,
+                    input: {
+                      title,
+                      durationMinutes,
+                      anchorDate: meeting.date,
+                      recurrence: { version: 1, kind: "once" },
+                    },
+                  })
+                }
+              />
+              <div className="flex flex-wrap gap-1">
                 <Button
                   variant="ghost"
-                  onClick={() => setModal({ kind: "import" })}
+                  size="sm"
+                  onClick={() => setModal({ kind: "suggestions" })}
                 >
-                  Import old agenda
+                  Suggested items
                 </Button>
-              )}
+                <Button variant="ghost" size="sm" onClick={() => add()}>
+                  Add recurring item
+                </Button>
+              </div>
             </div>
           )}
           {!data.items.length && (
-            <Card>
-              <CardHeader>
-                <CardTitle>No agenda items yet</CardTitle>
-                <CardDescription>
-                  {readOnly
-                    ? "This meeting has no recorded discussions."
-                    : "Add your own topic or choose a starter item from the Handbook-based suggestions."}
-                </CardDescription>
-              </CardHeader>
-              {!readOnly && (
-                <CardContent>
-                  <Button
-                    variant="outline"
-                    onClick={() => setModal({ kind: "suggestions" })}
-                  >
-                    Browse suggested items
-                  </Button>
-                </CardContent>
-              )}
-            </Card>
+            <p className="py-6 text-center text-sm text-muted-foreground">
+              {readOnly
+                ? "No recorded discussions."
+                : "Add a topic to begin your agenda."}
+            </p>
           )}
-          <div className="flex flex-col gap-3">
+          <div className="flex flex-col gap-2">
             {data.items.map((item) => (
               <AgendaItem
                 key={item.id}
                 item={item}
                 today={data.today}
-                onRemove={() => void run({ kind: "remove", itemId: item.id })}
                 readOnly={readOnly}
-                activeMeeting={meeting.status === "active"}
                 pending={mutation.isPending}
                 timer={timer}
-                onEdit={() =>
-                  setModal({
-                    kind: "edit",
-                    item,
-                    requestId: crypto.randomUUID(),
-                    input: {
-                      title: item.title,
-                      durationMinutes: item.durationMinutes,
-                      anchorDate: item.anchorDate,
-                      recurrence: item.recurrence,
+                onOpen={() => setSelectedId(item.id)}
+                onStart={() => start(item)}
+                onReorder={(target) => reorder(item.id, target)}
+                onComplete={() =>
+                  void run(
+                    {
+                      kind: "outcome",
+                      itemId: item.id,
+                      outcome: "done",
+                      decision: item.decision,
+                      expectedDecision: item.decision,
                     },
-                  })
-                }
-                onOutcome={(outcome) =>
-                  setModal({ kind: "outcome", item, outcome })
-                }
-                onTask={() => setModal({ kind: "task", item })}
-                onStop={() => void run({ kind: "stop", itemId: item.id })}
-                onMove={(direction) =>
-                  void run({ kind: "move", itemId: item.id, direction })
+                    false,
+                  )
                 }
               />
             ))}
           </div>
+          <div className="flex flex-wrap justify-end gap-x-5 gap-y-1 text-sm text-muted-foreground">
+            <span>
+              <strong className="text-foreground">{planned} min</strong> planned
+            </span>
+            <span>
+              <strong className="text-foreground">
+                {Math.ceil(remainingMs / 60000)} min
+              </strong>{" "}
+              remaining
+            </span>
+            {finish && <span>Finish around {finish}</span>}
+          </div>
         </>
+      )}
+      {selected && (
+        <DiscussionDialog
+          key={selected.id}
+          item={selected}
+          data={data}
+          readOnly={readOnly}
+          pending={mutation.isPending}
+          timer={timer}
+          onStart={() => start(selected)}
+          onSave={(command) => run(command, false)}
+          onClose={() => setSelectedId(null)}
+          saveError={error}
+        />
       )}
       {modal?.kind === "schedule" && (
         <ScheduleDialog
           data={data}
           pending={mutation.isPending}
           onClose={() => setModal(null)}
-          onSave={run}
+          onSave={async (command) => {
+            await run(command);
+          }}
         />
       )}
       {modal?.kind === "suggestions" && (
@@ -375,47 +381,18 @@ export function LeadershipView({ data }: { data: LeadershipData }) {
       {modal?.kind === "edit" && meeting && (
         <AgendaEditor
           initial={modal.input}
-          editing={!!modal.item}
+          editing={false}
           data={data}
           pending={mutation.isPending}
           onClose={() => setModal(null)}
-          onSave={(input, scope) =>
-            run(
-              modal.item
-                ? { kind: "edit", itemId: modal.item.id, input, scope }
-                : {
-                    kind: "add",
-                    meetingId: meeting.id,
-                    input,
-                    requestId: modal.requestId,
-                  },
-            )
-          }
-        />
-      )}
-      {modal?.kind === "outcome" && (
-        <OutcomeDialog
-          item={modal.item}
-          outcome={modal.outcome}
-          pending={mutation.isPending}
-          onClose={() => setModal(null)}
-          onSave={(decision) =>
-            run({
-              kind: "outcome",
-              itemId: modal.item.id,
-              outcome: modal.outcome,
-              decision,
-            })
-          }
-        />
-      )}
-      {modal?.kind === "task" && (
-        <TaskDialog
-          item={modal.item}
-          data={data}
-          pending={mutation.isPending}
-          onClose={() => setModal(null)}
-          onSave={run}
+          onSave={async (input) => {
+            await run({
+              kind: "add",
+              meetingId: meeting.id,
+              input,
+              requestId: modal.requestId,
+            });
+          }}
         />
       )}
       {meeting &&
@@ -426,7 +403,9 @@ export function LeadershipView({ data }: { data: LeadershipData }) {
             mode={modal.kind as "close" | "cancel" | "reschedule"}
             pending={mutation.isPending}
             onClose={() => setModal(null)}
-            onSave={run}
+            onSave={async (command) => {
+              await run(command);
+            }}
           />
         )}
       {modal?.kind === "import" && meeting && (
@@ -434,9 +413,9 @@ export function LeadershipView({ data }: { data: LeadershipData }) {
           date={meeting.date}
           pending={mutation.isPending}
           onClose={() => setModal(null)}
-          onImport={(items) =>
-            run({ kind: "import", meetingId: meeting.id, items })
-          }
+          onImport={async (items) => {
+            await run({ kind: "import", meetingId: meeting.id, items });
+          }}
         />
       )}
     </div>

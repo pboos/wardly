@@ -25,7 +25,7 @@ async function linkTask(
   itemId: string,
   taskId: string,
 ) {
-  await itemForWard(db, wardId, text(itemId));
+  await itemForWard(db, wardId, text(itemId), false);
   const task = await db.task.findFirst({
     where: { id: text(taskId), ward_id: wardId },
   });
@@ -101,8 +101,54 @@ export async function executeMeetingCommand(
             text(input.itemId),
             input.outcome,
             input.decision,
+            input.expectedDecision,
           );
           break;
+        case "notes": {
+          if (
+            typeof input.decision !== "string" ||
+            input.decision.length > 4000 ||
+            typeof input.expectedDecision !== "string"
+          )
+            throw new Error(
+              "Discussion notes must be at most 4000 characters.",
+            );
+          const item = await itemForWard(db, wardId, text(input.itemId), false);
+          if (item.decision === input.decision.trim()) break;
+          if (item.decision !== input.expectedDecision)
+            throw new Error(
+              "Discussion notes changed in another window. Copy your draft, close and reopen this item to review the latest notes.",
+            );
+          await db.meeting_agenda_item.update({
+            where: { id: item.id },
+            data: { decision: input.decision.trim(), updated_at: new Date() },
+          });
+          break;
+        }
+        case "reorder": {
+          const meeting = await meetingForWard(
+            db,
+            wardId,
+            text(input.meetingId),
+          );
+          const rows = await db.meeting_agenda_item.findMany({
+            where: { meeting_id: meeting.id, outcome: { not: "removed" } },
+            select: { id: true },
+          });
+          if (
+            !Array.isArray(input.itemIds) ||
+            input.itemIds.length !== rows.length ||
+            new Set(input.itemIds).size !== rows.length ||
+            rows.some((row) => !input.itemIds.includes(row.id))
+          )
+            throw new Error("The agenda changed. Refresh before reordering.");
+          for (const [position, id] of input.itemIds.entries())
+            await db.meeting_agenda_item.update({
+              where: { id },
+              data: { position },
+            });
+          break;
+        }
         case "remove": {
           const item = await itemForWard(db, wardId, text(input.itemId));
           if (item.outcome === "removed") break;
@@ -164,7 +210,7 @@ export async function executeMeetingCommand(
           await linkTask(db, wardId, input.itemId, input.taskId);
           break;
         case "task": {
-          await itemForWard(db, wardId, text(input.itemId));
+          await itemForWard(db, wardId, text(input.itemId), false);
           const title = text(input.title),
             id = requestUuid(input.requestId);
           const existing = await db.task.findUnique({ where: { id } });

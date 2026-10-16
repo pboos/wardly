@@ -40,7 +40,20 @@ export type MeetingCommand =
       input: AgendaInput;
       scope: "this" | "future";
     }
-  | { kind: "outcome"; itemId: string; outcome: ItemOutcome; decision: string }
+  | {
+      kind: "outcome";
+      itemId: string;
+      outcome: ItemOutcome;
+      decision: string;
+      expectedDecision?: string;
+    }
+  | {
+      kind: "notes";
+      itemId: string;
+      decision: string;
+      expectedDecision: string;
+    }
+  | { kind: "reorder"; meetingId: string; itemIds: string[] }
   | { kind: "remove"; itemId: string }
   | { kind: "restore"; itemId: string }
   | { kind: "stop"; itemId: string }

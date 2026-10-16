@@ -9,12 +9,13 @@ change both agendas. Short decisions should exclude confidential counseling deta
 
 Set up a weekly interval or monthly ordinal-weekday schedule (first through fourth
 or last) with a local start
-time and target duration. Dates use the ward time zone. Setup plans the next
+time. Dates use the ward time zone. Setup plans the next
 800 days. Extend schedule adds future dates. Reads never generate meetings.
 The date picker includes planned, active, closed, and cancelled meetings.
 
-- Start meeting freezes automatic reassignment of its agenda. Timers are available
-  after starting, but starting a timer makes no server request.
+- Start on an agenda row opens its discussion and begins a local timer. The first
+  start activates a planned meeting, freezing automatic agenda reassignment. Later
+  timer controls make no server request.
 - Reschedule changes an unstarted meeting; collisions are rejected. Cancelled
   dates remain exceptions when a series schedule is saved again.
 - Schedule changes replace unstarted future slots and preserve existing items.
@@ -27,6 +28,16 @@ The date picker includes planned, active, closed, and cancelled meetings.
   meeting or be skipped. Resolved discussions remain in history.
 
 ## Agenda and recurrence
+
+Compact rows show completion, title, minutes, recurrence, task count, and Start.
+The completion circle marks a pending item Done. Clicking the title, row, or task
+count opens one discussion dialog. Quick add takes a title and minutes; Edit setup
+inside the discussion contains title, duration, recurrence, and edit scope.
+Drag the handle to reorder with a mouse or touch, or focus it and use the up/down
+arrow keys. Each reorder validates and saves the entire visible agenda atomically,
+including resolved items. Planned and remaining totals appear below the list.
+Schedule, rescheduling, cancellation, close, extension, and legacy import actions
+are available from the small meeting settings menu.
 
 Add one-time topics or recurring templates. The editor previews the first three
 calendar due dates and their assigned meetings. Recurrence supports every meeting,
@@ -48,7 +59,7 @@ with separate occurrence records retaining the original due dates.
   an occurrence tombstone so refresh cannot restore it.
 - Stop repeating archives the template and removes automatically generated future
   pending appearances. Current and carried discussions remain.
-- Editing this meeting changes its title and allocation. This and future meetings
+- Edit this occurrence changes its title and allocation. Edit recurring series
   changes the current appearance and replaces future recurrence while keeping its
   chosen calendar anchor. Already covered due dates and the source meeting are
   excluded from new appearances. Earlier completed history remains unchanged.
@@ -72,10 +83,25 @@ window. Reloading or selecting another meeting resets them. No timer table,
 storage, synchronization, or timing mutation exists. Planned totals include local
 extensions; remaining totals exclude resolved items and clamp overruns to zero.
 The running item shows its overrun separately. Estimated finish uses the remaining
-time. Expiry prompts the user; it never completes an item automatically.
+time. Expiry appears in the discussion; it never completes an item automatically.
+The timer keeps running when its dialog closes. Start and Unmute prime a reusable
+AudioContext from the user gesture, Test sound verifies browser sound, and each
+expiry sounds once. An extension rearms the next expiry. Sound failures are
+visible. Resources close when the meeting view unmounts. Editing a started item's
+planned minutes preserves elapsed time and adjusts the remaining allocation.
+An existing local clock keeps its allocation when another window changes the
+agenda; starting/resuming or extending it picks up the updated allocation.
 
-A short decision is stored when an outcome is recorded. Follow-up tasks can be
-created or linked independently before closing a meeting. Creation uses the enabled
+Discussion notes stay editable in the discussion dialog, including resolved
+items and closed/cancelled meetings. Save notes writes independently; closing the
+dialog saves dirty notes, and an outcome saves the latest notes atomically.
+A failed save retains the draft. Concurrent note edits are rejected with an error;
+Discard unsaved notes and close provides an explicit way to reopen the saved
+version. Task refreshes preserve unsaved notes and setup drafts. Historical note
+or task amendments never reopen outcomes, dates, or recurrence.
+
+Follow-up tasks can be created or linked in the same discussion, including after
+the meeting closes. Creation uses the enabled
 ordinary Task type and its configured initial state. Discussion completion never
 changes task completion, and notes are not automatically copied into tasks.
 

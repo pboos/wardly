@@ -1,224 +1,172 @@
 "use client";
-import Link from "next/link";
+import { useRef, useState } from "react";
 import {
-  ArrowDown,
-  ArrowUp,
-  MoreHorizontal,
-  Pause,
+  CheckCircle2,
+  Circle,
+  GripVertical,
+  ListTodo,
   Play,
-  Plus,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuGroup,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+import { cn } from "@/lib/utils";
 import type { AgendaRow } from "@/lib/leadership-meetings/loaders";
-import type { ItemOutcome } from "@/lib/leadership-meetings/types";
 import { ruleLabel } from "@/lib/leadership-meetings/calendar";
 import { formatTimer, type MeetingTimer } from "./use-meeting-timer";
-import { outcomeLabels } from "./outcome-dialog";
 export function AgendaItem({
   item,
   readOnly,
-  activeMeeting,
   pending,
   timer,
-  onOutcome,
-  onEdit,
-  onTask,
-  onStop,
-  onMove,
-  onRemove,
+  onOpen,
+  onStart,
+  onReorder,
+  onComplete,
   today,
 }: {
   item: AgendaRow;
   readOnly: boolean;
-  activeMeeting: boolean;
   pending: boolean;
   timer: MeetingTimer;
-  onOutcome: (outcome: ItemOutcome) => void;
-  onEdit: () => void;
-  onTask: () => void;
-  onStop: () => void;
-  onRemove: () => void;
+  onOpen: () => void;
+  onComplete: () => void;
+  onStart: () => void;
+  onReorder: (target: string | -1 | 1) => void;
   today: string;
-  onMove: (direction: -1 | 1) => void;
 }) {
-  const unresolved = item.outcome === "pending",
-    running = timer.runningId === item.id;
-  const remaining = timer.remainingMs(item.id, item.durationMinutes);
+  const [dragging, setDragging] = useState(false);
+  const target = useRef<string | null>(null);
+  const running = timer.runningId === item.id;
+  const unresolved = item.outcome === "pending";
   return (
-    <Card role="group" aria-label={item.title}>
-      <CardHeader className="gap-3">
-        <div className="flex items-start justify-between gap-3">
-          <CardTitle className="leading-relaxed">{item.title}</CardTitle>
-          {!readOnly && (
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button
-                  size="icon"
-                  variant="ghost"
-                  aria-label={`Actions for ${item.title}`}
-                >
-                  <MoreHorizontal />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <DropdownMenuGroup>
-                  {unresolved && (
-                    <>
-                      <DropdownMenuItem disabled={pending} onSelect={onEdit}>
-                        Edit item
-                      </DropdownMenuItem>
-                      <DropdownMenuItem
-                        disabled={pending}
-                        onSelect={() => onOutcome("continued")}
-                      >
-                        Continue next meeting
-                      </DropdownMenuItem>
-                      <DropdownMenuItem
-                        disabled={pending}
-                        onSelect={() => onOutcome("deferred")}
-                      >
-                        Move to next meeting
-                      </DropdownMenuItem>
-                      <DropdownMenuItem
-                        disabled={pending}
-                        onSelect={() => onOutcome("skipped")}
-                      >
-                        Skip this occurrence
-                      </DropdownMenuItem>
-                      <DropdownMenuItem disabled={pending} onSelect={onRemove}>
-                        Remove from this agenda
-                      </DropdownMenuItem>
-                    </>
-                  )}
-                  <DropdownMenuItem disabled={pending} onSelect={onTask}>
-                    Add follow-up task
-                  </DropdownMenuItem>
-                  {item.repeating && (
-                    <DropdownMenuItem disabled={pending} onSelect={onStop}>
-                      Stop repeating
-                    </DropdownMenuItem>
-                  )}
-                  <DropdownMenuItem
-                    disabled={pending}
-                    onSelect={() => onMove(-1)}
-                  >
-                    <ArrowUp />
-                    Move up
-                  </DropdownMenuItem>
-                  <DropdownMenuItem
-                    disabled={pending}
-                    onSelect={() => onMove(1)}
-                  >
-                    <ArrowDown />
-                    Move down
-                  </DropdownMenuItem>
-                </DropdownMenuGroup>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          )}
-        </div>
-        <div className="flex flex-wrap items-center gap-2">
-          <Badge variant="secondary">{item.durationMinutes} min</Badge>
-          {item.repeating && (
-            <Badge variant="outline">{ruleLabel(item.recurrence)}</Badge>
-          )}
+    <div
+      data-agenda-id={item.id}
+      role="group"
+      aria-label={item.title}
+      onClick={onOpen}
+      className={cn(
+        "flex cursor-pointer items-center gap-1 rounded-lg border bg-card px-1 py-2 sm:gap-2 sm:px-3",
+        running && "ring-2 ring-primary",
+        dragging && "opacity-50",
+      )}
+    >
+      <Button
+        variant="ghost"
+        size="icon-sm"
+        disabled={readOnly || pending}
+        aria-label={`Reorder ${item.title}. Use up and down arrow keys.`}
+        className="shrink-0 touch-none cursor-grab"
+        onClick={(event) => event.stopPropagation()}
+        onKeyDown={(event) => {
+          if (event.key === "ArrowUp" || event.key === "ArrowDown") {
+            event.preventDefault();
+            onReorder(event.key === "ArrowUp" ? -1 : 1);
+          }
+        }}
+        onPointerDown={(event) => {
+          event.preventDefault();
+          event.stopPropagation();
+          event.currentTarget.setPointerCapture(event.pointerId);
+          target.current = null;
+          setDragging(true);
+        }}
+        onPointerMove={(event) => {
+          if (!dragging) return;
+          target.current =
+            document
+              .elementFromPoint(event.clientX, event.clientY)
+              ?.closest<HTMLElement>("[data-agenda-id]")?.dataset.agendaId ??
+            null;
+        }}
+        onPointerUp={(event) => {
+          event.stopPropagation();
+          setDragging(false);
+          if (target.current && target.current !== item.id)
+            onReorder(target.current);
+          target.current = null;
+        }}
+        onPointerCancel={() => {
+          setDragging(false);
+          target.current = null;
+        }}
+      >
+        <GripVertical />
+      </Button>
+      <Button
+        size="icon-sm"
+        variant="ghost"
+        disabled={pending}
+        aria-label={`${unresolved && !readOnly ? "Mark done" : "Discuss"} ${item.title}`}
+        onClick={(event) => {
+          event.stopPropagation();
+          if (unresolved && !readOnly) onComplete();
+          else onOpen();
+        }}
+      >
+        {unresolved ? <Circle /> : <CheckCircle2 />}
+      </Button>
+      <div className="flex min-w-0 flex-1 flex-wrap items-center gap-x-3 gap-y-1">
+        <Button
+          variant="ghost"
+          className="h-auto min-w-0 max-w-full justify-start whitespace-normal px-0 py-1 text-left"
+          onClick={(event) => {
+            event.stopPropagation();
+            onOpen();
+          }}
+        >
+          {item.title}
+        </Button>
+        <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+          <span>{item.durationMinutes + timer.extension(item.id)} min</span>
+          {item.repeating && <span>{ruleLabel(item.recurrence)}</span>}
           {!unresolved && (
-            <Badge>
-              {outcomeLabels[item.outcome as ItemOutcome] ?? item.outcome}
-            </Badge>
+            <span>
+              {item.outcome === "done"
+                ? "Done"
+                : item.outcome === "continued"
+                  ? "Continued"
+                  : item.outcome === "deferred"
+                    ? "Moved"
+                    : "Skipped"}
+            </span>
           )}
           {unresolved && item.dueDates.some((date) => date < today) && (
             <Badge variant="destructive">Overdue</Badge>
           )}
-          {item.predecessorId && (
-            <Badge variant="outline">Carried forward</Badge>
+          {running && (
+            <span className="font-mono text-primary tabular-nums">
+              {formatTimer(timer.remainingMs(item.id, item.durationMinutes))}
+            </span>
           )}
         </div>
-      </CardHeader>
-      <CardContent className="flex flex-col gap-3">
-        {item.dueDates.length > 0 &&
-          item.recurrence.kind !== "every_meeting" && (
-            <p className="text-xs text-muted-foreground">
-              Due {item.dueDates.join(", ")}
-              {item.dueDates.length > 1 ? " · combined discussion" : ""}
-            </p>
-          )}
-        {item.decision && (
-          <p className="whitespace-pre-wrap text-sm">{item.decision}</p>
-        )}
-        {item.tasks.length > 0 && (
-          <ul className="flex flex-col gap-1 text-sm">
-            {item.tasks.map((t) => (
-              <li key={t.id}>
-                <Link href="/tasks" className="text-primary underline">
-                  {t.title}
-                </Link>{" "}
-                · {t.completed ? "Completed" : "Open"}
-              </li>
-            ))}
-          </ul>
-        )}
-        {!readOnly && unresolved && (
-          <div className="flex flex-wrap items-center gap-2">
-            <span
-              className="min-w-16 font-mono text-lg tabular-nums"
-              aria-label="Remaining time"
-            >
-              {formatTimer(remaining)}
-            </span>
-            <Button
-              variant="outline"
-              size="sm"
-              disabled={!activeMeeting}
-              onClick={() =>
-                running
-                  ? timer.pause()
-                  : timer.start(item.id, item.durationMinutes)
-              }
-              aria-label={`${running ? "Pause" : "Start"} timer for ${item.title}`}
-            >
-              {running ? <Pause /> : <Play />}
-              {running ? "Pause" : "Start"}
-            </Button>
-            {[1, 2, 5].map((minutes) => (
-              <Button
-                key={minutes}
-                variant="ghost"
-                size="sm"
-                disabled={!activeMeeting}
-                onClick={() =>
-                  timer.extend(item.id, item.durationMinutes, minutes)
-                }
-                aria-label={`Extend timer for ${item.title} by ${minutes} minutes`}
-              >
-                <Plus />
-                {minutes} min
-              </Button>
-            ))}
-            <Button
-              size="sm"
-              disabled={pending}
-              onClick={() => onOutcome("done")}
-            >
-              Done
-            </Button>
-            {remaining <= 0 && (
-              <span className="text-sm text-destructive">
-                Time is up. Extend or finish the discussion.
-              </span>
-            )}
-          </div>
-        )}
-      </CardContent>
-    </Card>
+      </div>
+      <Button
+        variant="ghost"
+        size="sm"
+        className="shrink-0 gap-1 px-1 sm:px-2"
+        aria-label={`${item.tasks.length} follow-up tasks for ${item.title}`}
+        onClick={(event) => {
+          event.stopPropagation();
+          onOpen();
+        }}
+      >
+        <ListTodo />
+        <span>{item.tasks.length}</span>
+      </Button>
+      {!readOnly && unresolved && (
+        <Button
+          size="sm"
+          className="shrink-0"
+          disabled={pending}
+          onClick={(event) => {
+            event.stopPropagation();
+            onStart();
+          }}
+        >
+          <Play data-icon="inline-start" />
+          {running ? "Open" : "Start"}
+        </Button>
+      )}
+    </div>
   );
 }
