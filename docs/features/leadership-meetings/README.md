@@ -33,8 +33,10 @@ The date picker includes planned, active, closed, and cancelled meetings.
 
 Compact rows show completion, title, minutes, recurrence, task count, and Start.
 The completion circle marks a pending item Done. Clicking the title, row, or task
-count opens one discussion dialog. Quick add takes a title and a duration with a visible min suffix; Edit setup
-inside the discussion contains title, duration, recurrence, and edit scope.
+count opens one discussion dialog. Quick add takes a title and a right-aligned
+duration with a visible min suffix. Agenda durations accept whole minutes from
+1 through 90 in quick add and Edit setup. Edit setup inside the discussion contains
+title, duration, recurrence, and edit scope.
 Drag the handle to reorder with a mouse or touch, or focus it and use the up/down
 arrow keys. Each reorder validates and saves the entire visible agenda atomically,
 including resolved items. Reordering applies only to the selected meeting.

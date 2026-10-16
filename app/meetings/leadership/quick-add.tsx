@@ -1,6 +1,7 @@
 "use client";
 import { useState } from "react";
 import { Plus } from "lucide-react";
+import { MAX_AGENDA_MINUTES } from "@/lib/leadership-meetings/types";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import {
@@ -46,17 +47,17 @@ export function QuickAdd({
         onChange={(event) => setTitle(event.target.value)}
         className="min-w-0 flex-1"
       />
-      <InputGroup className="w-28 shrink-0" data-disabled={pending}>
+      <InputGroup className="w-24 shrink-0" data-disabled={pending}>
         <InputGroupInput
           disabled={pending}
           aria-label="Planned minutes"
           type="number"
           min={1}
-          max={240}
+          max={MAX_AGENDA_MINUTES}
           required
           value={minutes}
           onChange={(event) => setMinutes(event.target.value)}
-          className="min-w-0"
+          className="min-w-0 text-right"
         />
         <InputGroupAddon align="inline-end">
           <InputGroupText>min</InputGroupText>

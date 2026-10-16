@@ -7,7 +7,7 @@ import {
   datesBetween,
   parseRule,
 } from "@/lib/leadership-meetings/calendar";
-import type { AgendaInput } from "@/lib/leadership-meetings/types";
+import { MAX_AGENDA_MINUTES, type AgendaInput } from "@/lib/leadership-meetings/types";
 import type { LeadershipData } from "@/lib/leadership-meetings/loaders";
 import { ChoiceField } from "./choice-field";
 import { RecurrenceFields } from "./recurrence-fields";
@@ -74,7 +74,7 @@ export function AgendaSetupFields({
           type="number"
           required
           min={1}
-          max={240}
+          max={MAX_AGENDA_MINUTES}
           value={draft.durationMinutes}
           onChange={(e) =>
             setDraft({

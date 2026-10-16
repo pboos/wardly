@@ -1,4 +1,5 @@
 import type { CalendarRule } from "./calendar";
+export const MAX_AGENDA_MINUTES = 90;
 export type MeetingKind = "bishopric" | "ward_council";
 export type ItemOutcome = "done" | "continued" | "deferred" | "skipped";
 export type AgendaInput = {

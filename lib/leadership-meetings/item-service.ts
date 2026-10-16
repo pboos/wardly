@@ -9,11 +9,11 @@ import {
   reconcile,
   type Db,
 } from "./store";
-import type { AgendaInput, ItemOutcome } from "./types";
+import { MAX_AGENDA_MINUTES, type AgendaInput, type ItemOutcome } from "./types";
 export function parseAgenda(value: AgendaInput): AgendaInput {
   return {
     title: text(value.title),
-    durationMinutes: integer(value.durationMinutes, 1, 240),
+    durationMinutes: integer(value.durationMinutes, 1, MAX_AGENDA_MINUTES),
     anchorDate: dateString(value.anchorDate),
     recurrence: parseRule(value.recurrence),
     ...(value.suggestionKey
