@@ -117,6 +117,7 @@ export async function saveSchedule(
   });
   for (const item of stranded) {
     const automaticStanding =
+      !item.assignment_overridden &&
       !item.predecessor_id &&
       !item.decision &&
       !item.tasks.length &&
@@ -161,11 +162,14 @@ export async function saveSchedule(
     });
     let inheritedPosition: number | undefined;
     for (const duplicate of generated) {
-      const pristine = duplicate.occurrences.every(
-        (o) =>
-          duplicate.title === o.occurrence.template.title &&
-          duplicate.duration_minutes === o.occurrence.template.duration_minutes,
-      );
+      const pristine =
+        !duplicate.assignment_overridden &&
+        duplicate.occurrences.every(
+          (o) =>
+            duplicate.title === o.occurrence.template.title &&
+            duplicate.duration_minutes ===
+              o.occurrence.template.duration_minutes,
+        );
       if (pristine) {
         inheritedPosition ??= duplicate.position;
         await mergeAppearance(db, item.id, duplicate.id);

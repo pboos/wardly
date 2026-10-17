@@ -269,6 +269,7 @@ export function LeadershipView({ data }: { data: LeadershipData }) {
               <AgendaItem
                 key={item.id}
                 item={item}
+                users={data.users}
                 today={data.today}
                 readOnly={readOnly}
                 pending={mutation.isPending}

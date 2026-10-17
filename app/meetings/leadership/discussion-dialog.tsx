@@ -26,6 +26,7 @@ import type { MeetingTimer } from "./use-meeting-timer";
 import { AgendaSetupFields } from "./agenda-setup-fields";
 import { DiscussionTasksForm } from "./discussion-tasks-form";
 import { RemovalChoice } from "./removal-choice";
+import { DiscussionAssignment } from "./discussion-assignment";
 import { DiscussionTimer } from "./discussion-timer";
 export function DiscussionDialog({
   item,
@@ -57,6 +58,7 @@ export function DiscussionDialog({
     durationMinutes: item.durationMinutes,
     recurrence: item.recurrence,
     anchorDate: item.anchorDate,
+    defaultAssignedUserId: item.defaultAssignedUserId,
   }));
   const [scope, setScope] = useState<"this" | "future">("this");
   const [error, setError] = useState("");
@@ -139,6 +141,13 @@ export function DiscussionDialog({
             {error}
           </p>
         )}
+        <DiscussionAssignment
+          item={item}
+          data={data}
+          editable={editableSetup}
+          pending={pending}
+          onSave={onSave}
+        />
         <FieldGroup>
           <Field>
             <FieldLabel htmlFor="discussion-notes">Discussion notes</FieldLabel>

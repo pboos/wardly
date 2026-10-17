@@ -2,7 +2,10 @@ import type { CalendarRule } from "./calendar";
 export const MAX_AGENDA_MINUTES = 90;
 export type MeetingKind = "bishopric" | "ward_council";
 export type ItemOutcome = "done" | "continued" | "deferred" | "skipped";
+export type AgendaAssignment =
+  { kind: "default" } | { kind: "override"; userId: string | null };
 export type AgendaInput = {
+  defaultAssignedUserId?: string | null;
   title: string;
   durationMinutes: number;
   anchorDate: string;
@@ -53,6 +56,7 @@ export type MeetingCommand =
       decision: string;
       expectedDecision: string;
     }
+  | { kind: "assign"; itemId: string; assignment: AgendaAssignment }
   | { kind: "reorder"; meetingId: string; itemIds: string[] }
   | { kind: "save-future-order"; meetingId: string; itemIds: string[] }
   | { kind: "remove"; itemId: string; scope: "this" | "future" }

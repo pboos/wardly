@@ -31,7 +31,16 @@ The date picker includes planned, active, closed, and cancelled meetings.
 
 ## Agenda and recurrence
 
-Compact rows show completion, title, minutes, recurrence, task count, and Start.
+Compact rows show completion, title, assignee when set, minutes, recurrence, task count, and Start.
+Agenda setup offers an optional Default assignee from the ward's users (Assigned to
+for one-time topics). In the discussion, Assigned to changes only that meeting;
+choose Unassigned to clear it explicitly or Use recurring default to reset it.
+Different meetings can name different people for the same recurring topic.
+Changing a recurring default updates pending planned appearances from the edited
+meeting forward, preserving explicit choices, continuations, and historical discussions.
+Editing recurrence and rescheduling also preserve meeting-specific assignments;
+conflicting explicit assignees keep separate discussions instead of merging.
+Deleting a user clears their assignments and defaults.
 The completion circle marks a pending item Done. Clicking the title, row, or task
 count opens one discussion dialog. Quick add takes a title and a right-aligned
 duration with a visible min suffix. Agenda durations accept whole minutes from

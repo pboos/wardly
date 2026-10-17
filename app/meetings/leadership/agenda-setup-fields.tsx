@@ -7,7 +7,10 @@ import {
   datesBetween,
   parseRule,
 } from "@/lib/leadership-meetings/calendar";
-import { MAX_AGENDA_MINUTES, type AgendaInput } from "@/lib/leadership-meetings/types";
+import {
+  MAX_AGENDA_MINUTES,
+  type AgendaInput,
+} from "@/lib/leadership-meetings/types";
 import type { LeadershipData } from "@/lib/leadership-meetings/loaders";
 import { ChoiceField } from "./choice-field";
 import { RecurrenceFields } from "./recurrence-fields";
@@ -112,6 +115,28 @@ export function AgendaSetupFields({
               }
             />
           </Field>
+          <ChoiceField
+            id="agenda-default-assignee"
+            label={
+              draft.recurrence.kind === "once"
+                ? "Assigned to"
+                : "Default assignee"
+            }
+            value={draft.defaultAssignedUserId ?? "unassigned"}
+            onChange={(value) =>
+              setDraft({
+                ...draft,
+                defaultAssignedUserId: value === "unassigned" ? null : value,
+              })
+            }
+            options={[
+              { value: "unassigned", label: "Unassigned" },
+              ...data.users.map((user) => ({
+                value: user.id,
+                label: user.name,
+              })),
+            ]}
+          />
           <RecurrenceFields
             value={draft.recurrence}
             onChange={(recurrence) => setDraft({ ...draft, recurrence })}

@@ -1,4 +1,5 @@
 import "server-only";
+import { assignAgenda } from "./assignment";
 import { saveFutureOrder } from "./ordering";
 import { removeAgenda } from "./removal";
 import { prisma } from "@/lib/prisma";
@@ -82,6 +83,9 @@ export async function executeMeetingCommand(
             input.input,
             input.scope,
           );
+          break;
+        case "assign":
+          await assignAgenda(db, wardId, text(input.itemId), input.assignment);
           break;
         case "outcome":
           await recordOutcome(

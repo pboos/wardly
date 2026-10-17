@@ -53,6 +53,9 @@ export async function loadLeadershipMeeting(
       return {
         id: row.id,
         title: row.title,
+        assignedUserId: row.assigned_user_id,
+        assignmentOverridden: row.assignment_overridden,
+        defaultAssignedUserId: template?.default_assigned_user_id ?? null,
         durationMinutes: row.duration_minutes,
         outcome: row.outcome,
         decision: row.decision,
