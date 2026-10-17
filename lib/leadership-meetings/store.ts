@@ -1,4 +1,6 @@
 import "server-only";
+import { canMergeInstructions, mergedInstructions } from "./instructions";
+import { canMergeAssignments, mergedAssignment } from "./assignment";
 import { insertionPosition } from "./ordering";
 import type { Prisma } from "@/generated/prisma/client";
 import {
@@ -64,12 +66,27 @@ export async function createAppearance(
   duration: number,
   occurrenceIds: string[],
   predecessorId?: string,
+  assignment?: {
+    assigned_user_id: string | null;
+    assignment_overridden: boolean;
+    instructions: string;
+  },
 ) {
   const position = await insertionPosition(db, meetingId, occurrenceIds);
+  const template = await db.meeting_agenda_occurrence.findFirst({
+    where: { id: { in: occurrenceIds } },
+    include: { template: true },
+  });
   return db.meeting_agenda_item.create({
     data: {
       meeting_id: meetingId,
+      assigned_user_id:
+        assignment?.assigned_user_id ??
+        (assignment ? null : template?.template.default_assigned_user_id),
+      assignment_overridden: assignment?.assignment_overridden ?? false,
       title,
+      instructions:
+        assignment?.instructions ?? template?.template.instructions ?? "",
       duration_minutes: duration,
       position,
       predecessor_id: predecessorId,
@@ -250,13 +267,21 @@ export async function reconcile(db: Db, seriesId: string) {
           );
       if (!target) continue;
       if (existing?.item.meeting_id === target.id) continue;
-      const same = await db.meeting_agenda_item.findFirst({
+      const candidates = await db.meeting_agenda_item.findMany({
         where: {
           meeting_id: target.id,
           outcome: "pending",
           occurrences: { some: { occurrence: { template_id: template.id } } },
         },
       });
+      const same = candidates.find(
+        (candidate) =>
+          !existing ||
+          (canMergeAssignments(candidate, existing.item) &&
+            canMergeInstructions(candidate, existing.item, [
+              template.instructions,
+            ])),
+      );
       if (
         existing &&
         !same &&
@@ -286,7 +311,19 @@ export async function reconcile(db: Db, seriesId: string) {
           existing?.item.title ?? template.title,
           existing?.item.duration_minutes ?? template.duration_minutes,
           [occurrence.id],
+          undefined,
+          existing?.item,
         ));
+      if (existing && same)
+        await db.meeting_agenda_item.update({
+          where: { id: same.id },
+          data: {
+            ...mergedAssignment(same, existing.item),
+            instructions: mergedInstructions(same, existing.item, [
+              template.instructions,
+            ]),
+          },
+        });
       await db.meeting_agenda_item_occurrence.upsert({
         where: {
           item_id_occurrence_id: {
@@ -402,7 +439,28 @@ export async function mergeAppearance(
 ) {
   const duplicate = await db.meeting_agenda_item.findUniqueOrThrow({
     where: { id: duplicateId },
-    include: { occurrences: true, tasks: true },
+    include: {
+      occurrences: { include: { occurrence: { include: { template: true } } } },
+      tasks: true,
+    },
+  });
+  const keeper = await db.meeting_agenda_item.findUniqueOrThrow({
+    where: { id: keeperId },
+  });
+  const defaults = duplicate.occurrences.map(
+    (o) => o.occurrence.template.instructions,
+  );
+  if (
+    !canMergeAssignments(keeper, duplicate) ||
+    !canMergeInstructions(keeper, duplicate, defaults)
+  )
+    return false;
+  await db.meeting_agenda_item.update({
+    where: { id: keeperId },
+    data: {
+      ...mergedAssignment(keeper, duplicate),
+      instructions: mergedInstructions(keeper, duplicate, defaults),
+    },
   });
   for (const occurrence of duplicate.occurrences)
     await db.meeting_agenda_item_occurrence.upsert({
@@ -422,4 +480,5 @@ export async function mergeAppearance(
       update: {},
     });
   await db.meeting_agenda_item.delete({ where: { id: duplicateId } });
+  return true;
 }

@@ -62,3 +62,23 @@ export async function removeAgenda(
       });
   }
 }
+
+export async function restoreAgenda(db: Db, wardId: string, itemId: string) {
+  const item = await itemForWard(db, wardId, itemId);
+  if (item.outcome === "pending") return;
+  if (item.outcome !== "removed")
+    throw new Error(
+      "Only a removed occurrence can be restored. Completed discussions remain in history.",
+    );
+  await db.meeting_agenda_occurrence.updateMany({
+    where: {
+      id: { in: item.occurrences.map((o) => o.occurrence_id) },
+      status: "removed",
+    },
+    data: { status: "pending", updated_at: new Date() },
+  });
+  await db.meeting_agenda_item.update({
+    where: { id: item.id },
+    data: { outcome: "pending", updated_at: new Date() },
+  });
+}

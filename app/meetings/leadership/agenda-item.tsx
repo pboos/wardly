@@ -23,6 +23,7 @@ export function AgendaItem({
   onReorder,
   onComplete,
   today,
+  users,
 }: {
   item: AgendaRow;
   readOnly: boolean;
@@ -33,6 +34,7 @@ export function AgendaItem({
   onStart: () => void;
   onReorder: (target: string | -1 | 1) => void;
   today: string;
+  users: { id: string; name: string }[];
 }) {
   const [dragging, setDragging] = useState(false);
   const target = useRef<string | null>(null);
@@ -118,6 +120,11 @@ export function AgendaItem({
         </Button>
         <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
           <span>{item.durationMinutes + timer.extension(item.id)} min</span>
+          {item.assignedUserId && (
+            <span>
+              {users.find((user) => user.id === item.assignedUserId)?.name}
+            </span>
+          )}
           {item.repeating && <span>{ruleLabel(item.recurrence)}</span>}
           {!unresolved && (
             <span>

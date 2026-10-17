@@ -1,9 +1,10 @@
-import type { CalendarRule } from "./calendar";
+import { ruleLabel, type CalendarRule } from "./calendar";
 import type { MeetingKind } from "./types";
 const handbook =
   "https://www.churchofjesuschrist.org/study/manual/general-handbook/";
 export type Suggestion = {
   key: string;
+  repeatable?: boolean;
   title: string;
   detail: string;
   duration: number;
@@ -30,21 +31,23 @@ const quarter: CalendarRule = {
 const annual: CalendarRule = { version: 1, kind: "annual", month: 11, day: 1 };
 export const SUGGESTIONS: Suggestion[] = [
   {
-    key: "closing",
-    title: "Closing prayer",
-    detail: "Close the meeting with prayer.",
+    key: "prayer",
+    repeatable: true,
+    title: "Prayer",
+    detail:
+      "Invite someone to offer a prayer. Meetings may begin and end with prayer.",
     duration: 1,
     recurrence: every,
     source: "29-meetings-in-the-church",
-    reference: "29.2.4–29.2.5",
+    reference: "29.6",
     frequency: "Suggested rhythm",
     kinds: both,
   },
   {
-    key: "opening",
-    title: "Prayer and brief instruction",
-    detail: "Prepare to counsel together. Keep instruction focused.",
-    duration: 3,
+    key: "spiritual-thought",
+    title: "Spiritual thought",
+    detail: "Share a brief gospel thought to prepare to counsel together.",
+    duration: 2,
     recurrence: every,
     source: "29-meetings-in-the-church",
     reference: "29.2.4–29.2.5",
@@ -63,6 +66,18 @@ export const SUGGESTIONS: Suggestion[] = [
     kinds: both,
   },
   {
+    key: "upcoming-sundays",
+    title: "Upcoming Sundays",
+    detail:
+      "Coordinate upcoming Sunday meetings, teaching, and organization responsibilities.",
+    duration: 5,
+    recurrence: every,
+    source: "29-meetings-in-the-church",
+    reference: "29.2.4–29.2.5",
+    frequency: "Suggested rhythm",
+    kinds: both,
+  },
+  {
     key: "youth",
     title: "Children and youth",
     detail:
@@ -73,6 +88,18 @@ export const SUGGESTIONS: Suggestion[] = [
     reference: "7.1–7.2",
     frequency: "Suggested rhythm",
     kinds: ["bishopric"],
+  },
+  {
+    key: "council-youth",
+    title: "Children, youth, and gospel learning",
+    detail:
+      "Coordinate support across organizations and address teaching needs that benefit from the whole council.",
+    duration: 10,
+    recurrence: monthly,
+    source: "29-meetings-in-the-church",
+    reference: "29.2.5",
+    frequency: "Suggested rhythm",
+    kinds: ["ward_council"],
   },
   {
     key: "people",
@@ -88,9 +115,21 @@ export const SUGGESTIONS: Suggestion[] = [
   },
   {
     key: "callings",
-    title: "Callings, ordinances, and upcoming Sundays",
-    detail: "Make needed decisions and assign preparation.",
+    title: "Callings",
+    detail: "Counsel about needed callings and releases, and assign follow-up.",
     duration: 8,
+    recurrence: every,
+    source: "29-meetings-in-the-church",
+    reference: "29.2.4",
+    frequency: "Suggested rhythm",
+    kinds: ["bishopric"],
+  },
+  {
+    key: "ordinances",
+    title: "Ordinances",
+    detail:
+      "Review ordinance preparation and assign needed follow-up. Keep confidential counseling details private.",
+    duration: 5,
     recurrence: every,
     source: "29-meetings-in-the-church",
     reference: "29.2.4",
@@ -135,14 +174,27 @@ export const SUGGESTIONS: Suggestion[] = [
   },
   {
     key: "budget",
-    title: "Annual budget and calendar preparation",
-    detail: "Agree priorities, resources, and preparation responsibilities.",
+    title: "Annual budget preparation",
+    detail:
+      "Prepare the annual budget with organization leaders and agree priorities and resources.",
     duration: 15,
     recurrence: annual,
     source: "34-finances-and-audits",
-    reference: "34.6–34.7",
+    reference: "34.6.1",
     frequency: "Suggested rhythm",
     kinds: ["bishopric"],
+  },
+  {
+    key: "annual-calendar",
+    title: "Annual calendar preparation",
+    detail:
+      "Coordinate the coming year’s activities with organization leaders and assign preparation responsibilities.",
+    duration: 10,
+    recurrence: annual,
+    source: "20-activities",
+    reference: "20.2.5",
+    frequency: "Suggested rhythm",
+    kinds: both,
   },
   {
     key: "tithing",
@@ -239,18 +291,6 @@ export const SUGGESTIONS: Suggestion[] = [
     kinds: both,
   },
   {
-    key: "council-youth",
-    title: "Children, youth, and gospel learning",
-    detail:
-      "Coordinate support across organizations and address teaching needs that benefit from the whole council.",
-    duration: 10,
-    recurrence: monthly,
-    source: "29-meetings-in-the-church",
-    reference: "29.2.5",
-    frequency: "Suggested rhythm",
-    kinds: ["ward_council"],
-  },
-  {
     key: "annual-plans",
     title: "Refresh plans and major activities",
     detail: "Coordinate the coming year's priorities and preparation.",
@@ -264,4 +304,24 @@ export const SUGGESTIONS: Suggestion[] = [
 ];
 export function sourceUrl(suggestion: Suggestion) {
   return `${handbook}${suggestion.source}?lang=eng`;
+}
+
+export function canonicalSuggestionKey(key: string | null) {
+  return key === "opening" || key === "closing" ? "prayer" : key;
+}
+export function suggestionsForKind(kind: MeetingKind) {
+  return SUGGESTIONS.filter((suggestion) => suggestion.kinds.includes(kind));
+}
+export function suggestionAnchor(key: string, date: string) {
+  if (key !== "report") return date;
+  const anchor = new Date(`${date}T12:00:00Z`);
+  anchor.setUTCDate(10);
+  anchor.setUTCMonth(Math.ceil(anchor.getUTCMonth() / 3) * 3);
+  if (anchor.toISOString().slice(0, 10) < date)
+    anchor.setUTCMonth(anchor.getUTCMonth() + 3);
+  return anchor.toISOString().slice(0, 10);
+}
+
+export function suggestionInstructions(suggestion: Suggestion) {
+  return `${suggestion.detail}\n\n${suggestion.frequency}: ${ruleLabel(suggestion.recurrence)}. Edit the schedule to control which meetings this topic appears in.\n\n[General Handbook ${suggestion.reference}](${sourceUrl(suggestion)})`;
 }

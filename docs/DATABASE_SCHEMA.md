@@ -477,12 +477,14 @@ CREATE TABLE "meeting_agenda_template" (
     "id" TEXT NOT NULL PRIMARY KEY,
     "series_id" TEXT NOT NULL,
     "title" TEXT NOT NULL,
+    "instructions" TEXT NOT NULL DEFAULT '',
     "duration_minutes" INTEGER NOT NULL,
     "recurrence" TEXT NOT NULL,
     "anchor_date" TEXT NOT NULL,
     "after_date" TEXT,
     "after_meeting_date" TEXT,
     "suggestion_key" TEXT,
+    "default_assigned_user_id" TEXT REFERENCES "user"("id") ON DELETE SET NULL ON UPDATE CASCADE,
     "archived" BOOLEAN NOT NULL DEFAULT false,
     "position" INTEGER NOT NULL DEFAULT 0,
     "created_at" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -507,11 +509,14 @@ CREATE TABLE "meeting_agenda_item" (
     "id" TEXT NOT NULL PRIMARY KEY,
     "meeting_id" TEXT NOT NULL,
     "title" TEXT NOT NULL,
+    "instructions" TEXT NOT NULL DEFAULT '',
     "duration_minutes" INTEGER NOT NULL,
     "position" INTEGER NOT NULL,
     "outcome" TEXT NOT NULL DEFAULT 'pending',
     "decision" TEXT NOT NULL DEFAULT '',
     "predecessor_id" TEXT,
+    "assigned_user_id" TEXT REFERENCES "user"("id") ON DELETE SET NULL ON UPDATE CASCADE,
+    "assignment_overridden" BOOLEAN NOT NULL DEFAULT false,
     "created_at" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updated_at" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT "meeting_agenda_item_meeting_id_fkey" FOREIGN KEY ("meeting_id") REFERENCES "leadership_meeting" ("id") ON DELETE CASCADE ON UPDATE CASCADE,
@@ -577,3 +582,25 @@ CREATE UNIQUE INDEX "meeting_agenda_item_task_item_id_task_id_key" ON "meeting_a
 
 Recurring template positions define series defaults; item positions remain meeting snapshots.
 The additive ordering migration backfills templates per series by creation time and ID.
+
+Agenda templates optionally name a ward user as their default assignee. Each appearance
+snapshots its effective assignee; `assignment_overridden` distinguishes a meeting-specific
+choice (including an explicit unassigned choice) from the recurring default. Default
+changes affect pending future planned appearances only. User deletion clears foreign
+keys while retaining explicit override provenance.
+
+Agenda instructions are Markdown snapshots separate from discussion notes.
+Templates supply defaults; appearance edits preserve historical snapshots.
+The existing `20261017120000_agenda_assignees` development migration also adds
+these fields and command receipts. Explicitly recreate development/demo databases
+that already applied that migration before using this revision.
+
+```sql
+CREATE TABLE "meeting_suggestion_receipt" (
+    "id" TEXT NOT NULL PRIMARY KEY,
+    "meeting_id" TEXT NOT NULL REFERENCES "leadership_meeting"("id") ON DELETE CASCADE ON UPDATE CASCADE,
+    "fingerprint" TEXT NOT NULL,
+    "created_at" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updated_at" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+```
