@@ -477,6 +477,7 @@ CREATE TABLE "meeting_agenda_template" (
     "id" TEXT NOT NULL PRIMARY KEY,
     "series_id" TEXT NOT NULL,
     "title" TEXT NOT NULL,
+    "instructions" TEXT NOT NULL DEFAULT '',
     "duration_minutes" INTEGER NOT NULL,
     "recurrence" TEXT NOT NULL,
     "anchor_date" TEXT NOT NULL,
@@ -508,6 +509,7 @@ CREATE TABLE "meeting_agenda_item" (
     "id" TEXT NOT NULL PRIMARY KEY,
     "meeting_id" TEXT NOT NULL,
     "title" TEXT NOT NULL,
+    "instructions" TEXT NOT NULL DEFAULT '',
     "duration_minutes" INTEGER NOT NULL,
     "position" INTEGER NOT NULL,
     "outcome" TEXT NOT NULL DEFAULT 'pending',
@@ -586,3 +588,19 @@ snapshots its effective assignee; `assignment_overridden` distinguishes a meetin
 choice (including an explicit unassigned choice) from the recurring default. Default
 changes affect pending future planned appearances only. User deletion clears foreign
 keys while retaining explicit override provenance.
+
+Agenda instructions are Markdown snapshots separate from discussion notes.
+Templates supply defaults; appearance edits preserve historical snapshots.
+The existing `20261017120000_agenda_assignees` development migration also adds
+these fields and command receipts. Explicitly recreate development/demo databases
+that already applied that migration before using this revision.
+
+```sql
+CREATE TABLE "meeting_suggestion_receipt" (
+    "id" TEXT NOT NULL PRIMARY KEY,
+    "meeting_id" TEXT NOT NULL REFERENCES "leadership_meeting"("id") ON DELETE CASCADE ON UPDATE CASCADE,
+    "fingerprint" TEXT NOT NULL,
+    "created_at" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updated_at" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+```

@@ -1,5 +1,6 @@
 import type { CalendarRule } from "./calendar";
 export const MAX_AGENDA_MINUTES = 90;
+export const MAX_INSTRUCTIONS_LENGTH = 8000;
 export type MeetingKind = "bishopric" | "ward_council";
 export type ItemOutcome = "done" | "continued" | "deferred" | "skipped";
 export type AgendaAssignment =
@@ -7,6 +8,7 @@ export type AgendaAssignment =
 export type AgendaInput = {
   defaultAssignedUserId?: string | null;
   title: string;
+  instructions?: string;
   durationMinutes: number;
   anchorDate: string;
   recurrence: CalendarRule;
@@ -36,6 +38,13 @@ export type MeetingCommand =
       unfinished?: "defer" | "skip";
     }
   | { kind: "reschedule"; meetingId: string; date: string; startTime: string }
+  | {
+      kind: "add-suggestion";
+      meetingId: string;
+      suggestionKey: string;
+      requestId: string;
+    }
+  | { kind: "add-all-suggestions"; meetingId: string; requestId: string }
   | { kind: "add"; meetingId: string; input: AgendaInput; requestId: string }
   | {
       kind: "edit";

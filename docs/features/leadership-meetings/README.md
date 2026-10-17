@@ -84,22 +84,14 @@ with separate occurrence records retaining the original due dates.
   appearances in this and later planned or active meetings, including carried discussions.
   Shared historical occurrence statuses remain intact; archived templates prevent
   regeneration. Dirty notes save before removal; a failure keeps the dialog draft.
-- Edit this occurrence changes its title and allocation. Edit recurring series
-  changes the current appearance and replaces future recurrence while keeping its
-  chosen calendar anchor. Already covered due dates and the source meeting are
-  excluded from new appearances. Earlier completed history remains unchanged.
+- Edit this occurrence changes its title, Markdown instructions, and allocation.
+  Edit recurring series changes the current appearance and replaces future
+  recurrence while keeping its calendar anchor. Completed history keeps its
+  instructions snapshot. Omitted instructions in older API callers preserve the
+  appearance; an explicit empty string clears them.
 
-The compact Suggested items library is always available, including after removal.
-Active suggestions show their local title, duration, and recurrence. Restore item
-restores a removed appearance with its saved edits and existing template; it never
-creates a second recurring series or reopens completed discussions. To change a
-restored item, use its agenda editor. Already scheduled recurring suggestions cannot be
-added again until their recurrence is stopped. A one-time suggestion removed
-from a closed meeting can be chosen again without reopening the historical item.
-No defaults are inserted automatically. Handbook frequency labels distinguish
-specified responsibilities from suggested meeting rhythms. Suggested dates and
-allocations are editable. Quarterly Report suggestions start in January, April,
-July, or October. The library links each topic to its Handbook source.
+See [agenda instructions and suggested items](instructions-and-suggestions.md)
+for Markdown snapshots, direct additions, recurrence defaults, and bulk ordering.
 
 ## Timers and follow-up
 
@@ -142,4 +134,7 @@ uses guarded session-recovery actions. See [schema](../../DATABASE_SCHEMA.md#lea
 `npm test` includes calendar edge cases and isolated SQLite tests against all
 versioned migrations. Browser verification covers both meeting types, mobile forms,
 local timers across windows/reloads, outcomes, and linked tasks. The additive
-migration requires `prisma migrate deploy` and client regeneration; no reset.
+migration `20261017120000_agenda_assignees` now includes instructions and command
+receipts. Regenerate the Prisma client. Development databases that already applied
+that migration require an explicit reset; `demo:reset` recreates only the isolated
+demo database. No new migration was added.

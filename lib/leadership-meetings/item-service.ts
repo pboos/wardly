@@ -1,9 +1,6 @@
-import {
-  canMergeAssignments,
-  mergedAssignment,
-  updateDefaultAssignment,
-  wardAssignee,
-} from "./assignment";
+import { updateDefaultAssignment, wardAssignee } from "./assignment";
+import { SUGGESTIONS, canonicalSuggestionKey } from "./suggestions";
+import { suggestionState } from "./suggestion-state";
 import { localToday } from "./calendar";
 import { nextTemplatePosition } from "./ordering";
 import { randomUUID } from "node:crypto";
@@ -13,17 +10,27 @@ import {
   itemForWard,
   meetingForWard,
   mergeAppearance,
-  nextMeeting,
   reconcile,
   type Db,
 } from "./store";
 import {
   MAX_AGENDA_MINUTES,
+  MAX_INSTRUCTIONS_LENGTH,
   type AgendaInput,
-  type ItemOutcome,
 } from "./types";
 export function parseAgenda(value: AgendaInput): AgendaInput {
+  if (
+    value.instructions !== undefined &&
+    (typeof value.instructions !== "string" ||
+      value.instructions.length > MAX_INSTRUCTIONS_LENGTH)
+  )
+    throw new Error(
+      `Instructions must be at most ${MAX_INSTRUCTIONS_LENGTH} characters.`,
+    );
   return {
+    ...(value.instructions !== undefined
+      ? { instructions: value.instructions }
+      : {}),
     defaultAssignedUserId: value.defaultAssignedUserId,
     title: text(value.title),
     durationMinutes: integer(value.durationMinutes, 1, MAX_AGENDA_MINUTES),
@@ -59,41 +66,14 @@ export async function addAgenda(
     return;
   }
   if (input.suggestionKey) {
-    const templates = await db.meeting_agenda_template.findMany({
-      where: {
-        series_id: meeting.series_id,
-        suggestion_key: input.suggestionKey,
-        archived: false,
-      },
-      include: {
-        occurrences: {
-          where: {
-            OR: [
-              { status: "pending" },
-              {
-                status: "removed",
-                appearances: {
-                  some: {
-                    item: {
-                      meeting: { status: { in: ["planned", "active"] } },
-                    },
-                  },
-                },
-              },
-            ],
-          },
-          select: { status: true },
-        },
-      },
-    });
-    const scheduled = templates.some(
-      (template) =>
-        parseRule(JSON.parse(template.recurrence)).kind !== "once" ||
-        template.occurrences.some(
-          (o) => o.status === "pending" || o.status === "removed",
-        ),
-    );
-    if (scheduled)
+    const key = canonicalSuggestionKey(input.suggestionKey);
+    const suggestion = SUGGESTIONS.find((s) => s.key === key);
+    if (
+      !suggestion?.repeatable &&
+      (await suggestionState(db, meeting.series_id, meeting.id)).some(
+        (s) => s.key === key,
+      )
+    )
       throw new Error(
         "This suggestion is already scheduled. Restore its removed item from Suggested items, or edit the existing agenda item to change its recurrence.",
       );
@@ -104,6 +84,7 @@ export async function addAgenda(
       position: await nextTemplatePosition(db, meeting.series_id),
       series_id: meeting.series_id,
       title: input.title,
+      instructions: input.instructions ?? "",
       duration_minutes: input.durationMinutes,
       recurrence: JSON.stringify(input.recurrence),
       anchor_date: input.anchorDate,
@@ -130,119 +111,6 @@ export async function addAgenda(
     ]);
   }
   await reconcile(db, meeting.series_id);
-}
-export async function recordOutcome(
-  db: Db,
-  wardId: string,
-  itemId: string,
-  outcome: ItemOutcome,
-  decision: string,
-  expectedDecision?: string,
-) {
-  if (!["done", "continued", "deferred", "skipped"].includes(outcome))
-    throw new Error("Invalid agenda outcome.");
-  if (typeof decision !== "string" || decision.length > 4000)
-    throw new Error("Decision must be at most 4000 characters.");
-  const item = await itemForWard(db, wardId, itemId);
-  if (item.outcome === outcome && item.decision === decision.trim()) return;
-  if (expectedDecision !== undefined && item.decision !== expectedDecision)
-    throw new Error(
-      "Discussion notes changed in another window. Copy your draft, close and reopen this item to review the latest notes.",
-    );
-  if (item.outcome !== "pending") {
-    throw new Error("This item has already been resolved. Refresh the agenda.");
-  }
-  if (outcome === "continued" || outcome === "deferred") {
-    const next = await nextMeeting(
-      db,
-      item.meeting.series_id,
-      item.meeting.date,
-    );
-    const successor = await createAppearance(
-      db,
-      next.id,
-      item.title,
-      item.duration_minutes,
-      item.occurrences.map((o) => o.occurrence_id),
-      item.id,
-      item,
-    );
-    await db.meeting_agenda_item_task.createMany({
-      data: (
-        await db.meeting_agenda_item_task.findMany({
-          where: { item_id: item.id },
-        })
-      ).map((t) => ({ item_id: successor.id, task_id: t.task_id })),
-    });
-    const templateIds = item.occurrences.map((o) => o.occurrence.template_id);
-    const duplicates = await db.meeting_agenda_item.findMany({
-      where: {
-        meeting_id: next.id,
-        id: { not: successor.id },
-        outcome: "pending",
-        predecessor_id: null,
-        occurrences: {
-          some: { occurrence: { template_id: { in: templateIds } } },
-        },
-      },
-      include: { occurrences: true, tasks: true },
-    });
-    const compatible = duplicates.filter((duplicate) =>
-      canMergeAssignments(item, duplicate),
-    );
-    const inheritedPosition = compatible.length
-      ? Math.min(...compatible.map((row) => row.position))
-      : undefined;
-    for (const duplicate of compatible) {
-      const latest = await db.meeting_agenda_item.findUniqueOrThrow({
-        where: { id: successor.id },
-      });
-      if (!canMergeAssignments(latest, duplicate)) continue;
-      await db.meeting_agenda_item.update({
-        where: { id: successor.id },
-        data: mergedAssignment(latest, duplicate),
-      });
-      for (const o of duplicate.occurrences)
-        await db.meeting_agenda_item_occurrence.upsert({
-          where: {
-            item_id_occurrence_id: {
-              item_id: successor.id,
-              occurrence_id: o.occurrence_id,
-            },
-          },
-          create: { item_id: successor.id, occurrence_id: o.occurrence_id },
-          update: {},
-        });
-      for (const t of duplicate.tasks)
-        await db.meeting_agenda_item_task.upsert({
-          where: {
-            item_id_task_id: { item_id: successor.id, task_id: t.task_id },
-          },
-          create: { item_id: successor.id, task_id: t.task_id },
-          update: {},
-        });
-      if (duplicate.decision)
-        await db.meeting_agenda_item.update({
-          where: { id: successor.id },
-          data: { decision: duplicate.decision },
-        });
-      await db.meeting_agenda_item.delete({ where: { id: duplicate.id } });
-    }
-    if (inheritedPosition !== undefined)
-      await db.meeting_agenda_item.update({
-        where: { id: successor.id },
-        data: { position: inheritedPosition },
-      });
-  } else {
-    await db.meeting_agenda_occurrence.updateMany({
-      where: { id: { in: item.occurrences.map((o) => o.occurrence_id) } },
-      data: { status: outcome, updated_at: new Date() },
-    });
-  }
-  await db.meeting_agenda_item.update({
-    where: { id: itemId },
-    data: { outcome, decision: decision.trim(), updated_at: new Date() },
-  });
 }
 export async function stopRepeating(
   db: Db,
@@ -303,6 +171,8 @@ export async function editAgenda(
     template &&
     input.title === item.title &&
     input.title === template.title &&
+    (input.instructions ?? item.instructions) === item.instructions &&
+    (input.instructions ?? item.instructions) === template.instructions &&
     input.durationMinutes === item.duration_minutes &&
     input.durationMinutes === template.duration_minutes &&
     input.anchorDate === template.anchor_date &&
@@ -324,6 +194,7 @@ export async function editAgenda(
     where: { id: itemId },
     data: {
       title: input.title,
+      instructions: input.instructions ?? item.instructions,
       duration_minutes: input.durationMinutes,
       ...(scope === "future" &&
       !item.assignment_overridden &&
@@ -363,6 +234,7 @@ export async function editAgenda(
           (await nextTemplatePosition(db, item.meeting.series_id)),
         series_id: item.meeting.series_id,
         title: input.title,
+        instructions: input.instructions ?? item.instructions,
         default_assigned_user_id: defaultUserId,
         duration_minutes: input.durationMinutes,
         recurrence: JSON.stringify(input.recurrence),
@@ -413,6 +285,7 @@ export async function editAgenda(
         where: { id: override.id },
         data: {
           title: input.title,
+          instructions: input.instructions ?? item.instructions,
           duration_minutes: input.durationMinutes,
         },
       });
@@ -430,3 +303,5 @@ export function requestUuid(value: unknown): string {
     throw new Error("Invalid request identifier.");
   return value;
 }
+
+export { recordOutcome } from "./outcome-service";

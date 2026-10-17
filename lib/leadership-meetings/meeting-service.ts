@@ -126,6 +126,7 @@ export async function saveSchedule(
         return (
           parseRule(JSON.parse(template.recurrence)).kind === "every_meeting" &&
           item.title === template.title &&
+          item.instructions === template.instructions &&
           item.duration_minutes === template.duration_minutes
         );
       });
@@ -167,6 +168,7 @@ export async function saveSchedule(
         duplicate.occurrences.every(
           (o) =>
             duplicate.title === o.occurrence.template.title &&
+            duplicate.instructions === o.occurrence.template.instructions &&
             duplicate.duration_minutes ===
               o.occurrence.template.duration_minutes,
         );

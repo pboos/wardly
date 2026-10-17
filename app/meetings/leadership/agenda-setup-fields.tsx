@@ -1,5 +1,6 @@
 "use client";
 import { Field, FieldLabel } from "@/components/ui/field";
+import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import {
   addDays,
@@ -9,6 +10,7 @@ import {
 } from "@/lib/leadership-meetings/calendar";
 import {
   MAX_AGENDA_MINUTES,
+  MAX_INSTRUCTIONS_LENGTH,
   type AgendaInput,
 } from "@/lib/leadership-meetings/types";
 import type { LeadershipData } from "@/lib/leadership-meetings/loaders";
@@ -68,6 +70,20 @@ export function AgendaSetupFields({
           maxLength={200}
           value={draft.title}
           onChange={(e) => setDraft({ ...draft, title: e.target.value })}
+        />
+      </Field>
+      <Field>
+        <FieldLabel htmlFor="agenda-instructions">
+          Instructions (Markdown)
+        </FieldLabel>
+        <Textarea
+          id="agenda-instructions"
+          rows={4}
+          maxLength={MAX_INSTRUCTIONS_LENGTH}
+          value={draft.instructions ?? ""}
+          onChange={(event) =>
+            setDraft({ ...draft, instructions: event.target.value })
+          }
         />
       </Field>
       <Field>

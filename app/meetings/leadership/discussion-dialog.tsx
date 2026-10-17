@@ -1,4 +1,5 @@
 "use client";
+import { MarkdownInstructions } from "./markdown-instructions";
 import { useState } from "react";
 import Link from "next/link";
 import { ChevronDown, ChevronUp, Settings2 } from "lucide-react";
@@ -55,6 +56,7 @@ export function DiscussionDialog({
   const [tasksOpen, setTasksOpen] = useState(false);
   const [draft, setDraft] = useState<AgendaInput>(() => ({
     title: item.title,
+    instructions: item.instructions,
     durationMinutes: item.durationMinutes,
     recurrence: item.recurrence,
     anchorDate: item.anchorDate,
@@ -110,7 +112,7 @@ export function DiscussionDialog({
       }}
     >
       <DialogContent
-        className="max-h-[92dvh] overflow-y-auto sm:max-w-xl"
+        className="max-h-[92dvh] overflow-y-auto sm:max-w-3xl"
         onInteractOutside={(event) => {
           if (pending) event.preventDefault();
         }}
@@ -148,32 +150,50 @@ export function DiscussionDialog({
           pending={pending}
           onSave={onSave}
         />
-        <FieldGroup>
-          <Field>
-            <FieldLabel htmlFor="discussion-notes">Discussion notes</FieldLabel>
-            <Textarea
-              id="discussion-notes"
-              disabled={pending}
-              rows={5}
-              maxLength={4000}
-              value={notes}
-              onChange={(event) => setNotes(event.target.value)}
-            />
-            <div className="flex items-center justify-between gap-2">
-              <span role="status" className="text-xs text-muted-foreground">
-                {pending ? "Saving…" : dirty ? "Unsaved notes" : "Notes saved"}
-              </span>
-              <Button
-                variant="outline"
-                size="sm"
-                disabled={pending || !dirty}
-                onClick={() => void saveNotes()}
-              >
-                Save notes
-              </Button>
-            </div>
-          </Field>
-        </FieldGroup>
+        <div className="grid min-w-0 gap-5 md:grid-cols-2">
+          <section aria-label="Instructions" className="min-w-0">
+            <h2 className="mb-2 text-sm font-medium">Instructions</h2>
+            {item.instructions ? (
+              <MarkdownInstructions>{item.instructions}</MarkdownInstructions>
+            ) : (
+              <p className="text-sm text-muted-foreground">
+                No instructions yet. Add them in setup.
+              </p>
+            )}
+          </section>
+          <FieldGroup>
+            <Field>
+              <FieldLabel htmlFor="discussion-notes">
+                Discussion notes
+              </FieldLabel>
+              <Textarea
+                id="discussion-notes"
+                disabled={pending}
+                rows={5}
+                maxLength={4000}
+                value={notes}
+                onChange={(event) => setNotes(event.target.value)}
+              />
+              <div className="flex items-center justify-between gap-2">
+                <span role="status" className="text-xs text-muted-foreground">
+                  {pending
+                    ? "Saving…"
+                    : dirty
+                      ? "Unsaved notes"
+                      : "Notes saved"}
+                </span>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  disabled={pending || !dirty}
+                  onClick={() => void saveNotes()}
+                >
+                  Save notes
+                </Button>
+              </div>
+            </Field>
+          </FieldGroup>
+        </div>
         <div className="flex flex-col gap-3">
           <div className="flex flex-wrap items-center justify-between gap-2">
             <h2 className="font-medium">
