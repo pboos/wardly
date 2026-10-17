@@ -57,7 +57,7 @@ export function AgendaSetupFields({
       )?.date,
     }));
   } catch {
-    /* Incomplete date/number drafts have no preview. */
+    preview = [];
   }
   return (
     <>
