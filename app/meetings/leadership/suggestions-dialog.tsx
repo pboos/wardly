@@ -35,6 +35,13 @@ export function SuggestionsDialog({
   onAdd: (key?: string) => Promise<boolean>;
   onClose: () => void;
 }) {
+  const catalog = suggestionsForKind(kind);
+  const rows = catalog.map((suggestion) => ({
+    rowKey: suggestion.key,
+    suggestion,
+  }));
+  const prayer = catalog.find((suggestion) => suggestion.key === "prayer");
+  if (prayer) rows.push({ rowKey: "final-prayer", suggestion: prayer });
   const [busy, setBusy] = useState(false);
   const [status, setStatus] = useState("");
   async function add(key?: string) {
@@ -46,7 +53,7 @@ export function SuggestionsDialog({
       saved
         ? key
           ? "Agenda item added."
-          : "Suggested items added."
+          : "Suggested agenda added."
         : "Unable to add. Try again to finish the same request.",
     );
     setBusy(false);
@@ -60,11 +67,11 @@ export function SuggestionsDialog({
     >
       <DialogContent className="max-h-[90dvh] overflow-y-auto sm:max-w-xl">
         <DialogHeader>
-          <DialogTitle>Suggested agenda items</DialogTitle>
+          <DialogTitle>Suggested agenda</DialogTitle>
           <DialogDescription>
-            Add topics immediately, then edit their setup on the agenda. Add all
-            keeps monthly and annual schedules; the schedule controls which
-            meetings each topic appears in.
+            Use this suggested schedule or select individual items. Adjust each
+            schedule as needed; monthly and annual topics appear only when
+            scheduled, rather than at every meeting.
           </DialogDescription>
         </DialogHeader>
         <Button
@@ -72,10 +79,10 @@ export function SuggestionsDialog({
           disabled={busy || pending}
           onClick={() => void add()}
         >
-          Add all suggested items
+          Add entire agenda
         </Button>
         <div className="flex flex-col gap-1">
-          {suggestionsForKind(kind).map((suggestion) => {
+          {rows.map(({ rowKey, suggestion }) => {
             const matches = activeSuggestions.filter(
               (item) => item.key === suggestion.key,
             );
@@ -85,12 +92,18 @@ export function SuggestionsDialog({
               !suggestion.repeatable && !!active && !active.restoreItemId;
             return (
               <div
-                key={suggestion.key}
+                key={rowKey}
                 className="flex items-center gap-2 border-b py-2"
               >
-                <span className="min-w-0 flex-1 text-sm font-medium">
-                  {suggestion.title}
-                </span>
+                <div className="flex min-w-0 flex-1 flex-col gap-1">
+                  <span className="text-sm font-medium">{suggestion.title}</span>
+                  <div className="flex gap-2 text-xs text-muted-foreground">
+                    <span className="w-12 shrink-0 tabular-nums">
+                      {suggestion.duration} min
+                    </span>
+                    <span>{ruleLabel(suggestion.recurrence)}</span>
+                  </div>
+                </div>
                 <Popover>
                   <PopoverTrigger asChild>
                     <Button

@@ -250,7 +250,7 @@ export function LeadershipView({ data }: { data: LeadershipData }) {
                   size="sm"
                   onClick={() => setModal({ kind: "suggestions" })}
                 >
-                  Suggested items
+                  Suggested agenda
                 </Button>
                 <Button variant="ghost" size="sm" onClick={() => add()}>
                   Add recurring item
