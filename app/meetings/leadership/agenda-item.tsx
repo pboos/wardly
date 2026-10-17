@@ -147,19 +147,21 @@ export function AgendaItem({
           )}
         </div>
       </div>
-      <Button
-        variant="ghost"
-        size="sm"
-        className="shrink-0 gap-1 px-1 sm:px-2"
-        aria-label={`${item.tasks.length} follow-up tasks for ${item.title}`}
-        onClick={(event) => {
-          event.stopPropagation();
-          onOpen();
-        }}
-      >
-        <ListTodo />
-        <span>{item.tasks.length}</span>
-      </Button>
+      {(item.canAddTasks || item.tasks.length > 0) && (
+        <Button
+          variant="ghost"
+          size="sm"
+          className="shrink-0 gap-1 px-1 sm:px-2"
+          aria-label={`${item.tasks.length} follow-up tasks for ${item.title}`}
+          onClick={(event) => {
+            event.stopPropagation();
+            onOpen();
+          }}
+        >
+          <ListTodo />
+          <span>{item.tasks.length}</span>
+        </Button>
+      )}
       {!readOnly && unresolved && (
         <Button
           size="sm"

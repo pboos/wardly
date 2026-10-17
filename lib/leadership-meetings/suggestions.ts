@@ -5,6 +5,7 @@ const handbook =
 export type Suggestion = {
   key: string;
   repeatable?: boolean;
+  supportsTasks?: boolean;
   title: string;
   detail: string;
   duration: number;
@@ -32,6 +33,7 @@ const annual: CalendarRule = { version: 1, kind: "annual", month: 11, day: 1 };
 export const SUGGESTIONS: Suggestion[] = [
   {
     key: "prayer",
+    supportsTasks: false,
     repeatable: true,
     title: "Prayer",
     detail:
@@ -45,6 +47,7 @@ export const SUGGESTIONS: Suggestion[] = [
   },
   {
     key: "spiritual-thought",
+    supportsTasks: false,
     title: "Spiritual thought",
     detail: "Share a brief gospel thought to prepare to counsel together.",
     duration: 2,

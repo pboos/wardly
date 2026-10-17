@@ -1,6 +1,6 @@
 "use client";
-import { useState } from "react";
-import { CircleHelp, Plus } from "lucide-react";
+import { useRef, useState } from "react";
+import { CircleHelp, LoaderCircle, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -42,21 +42,31 @@ export function SuggestionsDialog({
   }));
   const prayer = catalog.find((suggestion) => suggestion.key === "prayer");
   if (prayer) rows.push({ rowKey: "final-prayer", suggestion: prayer });
-  const [busy, setBusy] = useState(false);
+  const [operation, setOperation] = useState<"all" | "one" | null>(null);
+  const submitting = useRef(false);
+  const busy = operation !== null;
   const [status, setStatus] = useState("");
   async function add(key?: string) {
-    if (busy || pending) return;
-    setBusy(true);
+    if (submitting.current || pending) return;
+    submitting.current = true;
+    setOperation(key ? "one" : "all");
     setStatus("Adding…");
-    const saved = await onAdd(key);
-    setStatus(
-      saved
-        ? key
-          ? "Agenda item added."
-          : "Suggested agenda added."
-        : "Unable to add. Try again to finish the same request.",
-    );
-    setBusy(false);
+    try {
+      const saved = await onAdd(key);
+      setStatus(
+        saved
+          ? key
+            ? "Agenda item added."
+            : "Suggested agenda added."
+          : "Unable to add. Try again to finish the same request.",
+      );
+      if (saved && !key) onClose();
+    } catch {
+      setStatus("Unable to add. Try again to finish the same request.");
+    } finally {
+      submitting.current = false;
+      setOperation(null);
+    }
   }
   return (
     <Dialog
@@ -77,8 +87,12 @@ export function SuggestionsDialog({
         <Button
           variant="outline"
           disabled={busy || pending}
+          aria-busy={operation === "all"}
           onClick={() => void add()}
         >
+          {operation === "all" && (
+            <LoaderCircle className="animate-spin" data-icon="inline-start" />
+          )}
           Add entire agenda
         </Button>
         <div className="flex flex-col gap-1">
@@ -96,7 +110,9 @@ export function SuggestionsDialog({
                 className="flex items-center gap-2 border-b py-2"
               >
                 <div className="flex min-w-0 flex-1 flex-col gap-1">
-                  <span className="text-sm font-medium">{suggestion.title}</span>
+                  <span className="text-sm font-medium">
+                    {suggestion.title}
+                  </span>
                   <div className="flex gap-2 text-xs text-muted-foreground">
                     <span className="w-12 shrink-0 tabular-nums">
                       {suggestion.duration} min

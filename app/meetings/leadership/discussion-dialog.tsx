@@ -194,51 +194,55 @@ export function DiscussionDialog({
             </Field>
           </FieldGroup>
         </div>
-        <div className="flex flex-col gap-3">
-          <div className="flex flex-wrap items-center justify-between gap-2">
-            <h2 className="font-medium">
-              Follow-up tasks ({item.tasks.length})
-            </h2>
-            <Button
-              variant="ghost"
-              size="sm"
-              aria-expanded={tasksOpen}
-              onClick={() => setTasksOpen(!tasksOpen)}
-            >
-              {tasksOpen ? (
-                <ChevronUp data-icon="inline-start" />
-              ) : (
-                <ChevronDown data-icon="inline-start" />
-              )}
-              Create or link task
-            </Button>
-          </div>
-          {!!item.tasks.length && (
-            <ul className="flex flex-col gap-2">
-              {item.tasks.map((task) => (
-                <li
-                  key={task.id}
-                  className="flex items-start justify-between gap-3 text-sm"
+        {(item.canAddTasks || item.tasks.length > 0) && (
+          <div className="flex flex-col gap-3">
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <h2 className="font-medium">
+                Follow-up tasks ({item.tasks.length})
+              </h2>
+              {item.canAddTasks && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  aria-expanded={tasksOpen}
+                  onClick={() => setTasksOpen(!tasksOpen)}
                 >
-                  <Link href="/tasks" className="text-primary underline">
-                    {task.title}
-                  </Link>
-                  <span className="shrink-0 text-muted-foreground">
-                    {task.completed ? "Completed" : "Open"}
-                  </span>
-                </li>
-              ))}
-            </ul>
-          )}
-          {tasksOpen && (
-            <DiscussionTasksForm
-              item={item}
-              data={data}
-              pending={pending}
-              onSave={onSave}
-            />
-          )}
-        </div>
+                  {tasksOpen ? (
+                    <ChevronUp data-icon="inline-start" />
+                  ) : (
+                    <ChevronDown data-icon="inline-start" />
+                  )}
+                  Create or link task
+                </Button>
+              )}
+            </div>
+            {!!item.tasks.length && (
+              <ul className="flex flex-col gap-2">
+                {item.tasks.map((task) => (
+                  <li
+                    key={task.id}
+                    className="flex items-start justify-between gap-3 text-sm"
+                  >
+                    <Link href="/tasks" className="text-primary underline">
+                      {task.title}
+                    </Link>
+                    <span className="shrink-0 text-muted-foreground">
+                      {task.completed ? "Completed" : "Open"}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            )}
+            {item.canAddTasks && tasksOpen && (
+              <DiscussionTasksForm
+                item={item}
+                data={data}
+                pending={pending}
+                onSave={onSave}
+              />
+            )}
+          </div>
+        )}
         {editableSetup && (
           <>
             <Separator />

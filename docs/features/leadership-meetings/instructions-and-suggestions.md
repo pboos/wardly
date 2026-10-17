@@ -14,7 +14,9 @@ fixed-width duration column and schedule label to its right, a help popover, and
 immediate add button. Prayer appears first and last; both buttons independently
 add the same repeatable Prayer suggestion. The help and
 new templates share the same Markdown instructions, source, and frequency context.
-Adding keeps the library open. A removed appearance on the selected date restores
+Adding one item keeps the library open. Adding the entire agenda closes it only
+after success. While an addition is pending, all add buttons are disabled; bulk
+addition shows a spinner. Failed additions stay open for retry with the same UUID. A removed appearance on the selected date restores
 with its edits; completed discussions remain history. Scheduled nonrepeatable
 suggestions are disabled. Prayer can be added repeatedly, with independent
 recurrence and assignment. Its add button restores removed appearances first,

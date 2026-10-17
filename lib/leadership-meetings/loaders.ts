@@ -1,4 +1,5 @@
 import "server-only";
+import { canonicalSuggestionKey, SUGGESTIONS } from "./suggestions";
 import { suggestionState } from "./suggestion-state";
 import { prisma } from "@/lib/prisma";
 import { localToday, parseRule } from "./calendar";
@@ -73,6 +74,12 @@ export async function loadLeadershipMeeting(
           !!template &&
           !template.archived &&
           parseRule(JSON.parse(template.recurrence)).kind !== "once",
+        canAddTasks:
+          SUGGESTIONS.find(
+            (suggestion) =>
+              suggestion.key ===
+              canonicalSuggestionKey(template?.suggestion_key ?? null),
+          )?.supportsTasks !== false,
         tasks: row.tasks.map((t) => ({
           id: t.task.id,
           title: t.task.title ?? "Member task",

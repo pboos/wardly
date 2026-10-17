@@ -118,7 +118,10 @@ version. Task refreshes preserve unsaved notes and setup drafts. Historical note
 or task amendments never reopen outcomes, dates, or recurrence.
 
 Follow-up tasks can be created or linked in the same discussion, including after
-the meeting closes. Creation uses the enabled
+the meeting closes. Prayer and Spiritual thought omit task creation/linking
+controls and empty task counts, based on the original suggestion key even after
+renaming. Existing linked tasks remain visible. Custom topics allow tasks.
+Creation uses the enabled
 ordinary Task type and its configured initial state. Discussion completion never
 changes task completion, and notes are not automatically copied into tasks.
 
