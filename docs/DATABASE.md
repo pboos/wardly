@@ -120,6 +120,7 @@ bun run db:generate
 - The SQLite database file (`prisma/dev.db`) is **gitignored** and regenerated locally.
 - Never use `prisma db push` for production-bound changes — always go through `prisma migrate dev` so changes are versioned and reviewable.
 - To reset the local database (e.g. after a bad migration), run `bun run db:reset`. This drops all data and re-applies all migrations.
+- When working on a new feature in a worktree do not create multiple migrations. Only create a single migration and update it. Then recreate the database when testing/running.
 
 ---
 
