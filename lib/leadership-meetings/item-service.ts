@@ -1,3 +1,4 @@
+import { topicId } from "./topics";
 import { updateDefaultAssignment, wardAssignee } from "./assignment";
 import { SUGGESTIONS, canonicalSuggestionKey } from "./suggestions";
 import { suggestionState } from "./suggestion-state";
@@ -78,9 +79,13 @@ export async function addAgenda(
         "This suggestion is already scheduled. Restore its removed item from Suggested items, or edit the existing agenda item to change its recurrence.",
       );
   }
+  const topic = await db.meeting_agenda_topic.create({
+    data: { series_id: meeting.series_id },
+  });
   await db.meeting_agenda_template.create({
     data: {
       id,
+      topic_id: topic.id,
       position: await nextTemplatePosition(db, meeting.series_id),
       series_id: meeting.series_id,
       title: input.title,
@@ -227,6 +232,7 @@ export async function editAgenda(
     const replacement = await db.meeting_agenda_template.create({
       data: {
         id: randomUUID(),
+        topic_id: topicId(item),
         position:
           item.occurrences.find((o) => !o.occurrence.template.archived)
             ?.occurrence.template.position ??

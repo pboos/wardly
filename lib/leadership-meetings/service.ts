@@ -1,3 +1,4 @@
+import { saveDiscussionNotes } from "./notes-service";
 import "server-only";
 import { assignAgenda } from "./assignment";
 import { saveFutureOrder } from "./ordering";
@@ -114,29 +115,12 @@ export async function executeMeetingCommand(
             input.outcome,
             input.decision,
             input.expectedDecision,
+            input.sharedNotes,
           );
           break;
-        case "notes": {
-          if (
-            typeof input.decision !== "string" ||
-            input.decision.length > 4000 ||
-            typeof input.expectedDecision !== "string"
-          )
-            throw new Error(
-              "Discussion notes must be at most 4000 characters.",
-            );
-          const item = await itemForWard(db, wardId, text(input.itemId), false);
-          if (item.decision === input.decision.trim()) break;
-          if (item.decision !== input.expectedDecision)
-            throw new Error(
-              "Discussion notes changed in another window. Copy your draft, close and reopen this item to review the latest notes.",
-            );
-          await db.meeting_agenda_item.update({
-            where: { id: item.id },
-            data: { decision: input.decision.trim(), updated_at: new Date() },
-          });
+        case "notes":
+          await saveDiscussionNotes(db, wardId, { ...input, itemId: text(input.itemId) });
           break;
-        }
         case "reorder": {
           const meeting = await meetingForWard(
             db,

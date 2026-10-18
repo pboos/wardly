@@ -27,6 +27,7 @@ export async function createSuggestedAgenda(
   const position = await nextTemplatePosition(db, meeting.series_id);
   const templates = suggestions.map((suggestion, index) => ({
     id: randomUUID(),
+    topic_id: randomUUID(),
     position: position + index,
     series_id: meeting.series_id,
     title: suggestion.title,
@@ -107,6 +108,11 @@ export async function createSuggestedAgenda(
       links.push({ item_id: itemId, occurrence_id: occurrenceId });
     }
   }
+  await db.meeting_agenda_topic.createMany({
+    data: templates.map((template) => ({
+      id: template.topic_id, series_id: meeting.series_id,
+    })),
+  });
   await db.meeting_agenda_template.createMany({ data: templates });
   if (occurrences.length)
     await db.meeting_agenda_occurrence.createMany({ data: occurrences });

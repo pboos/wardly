@@ -31,7 +31,8 @@ The date picker includes planned, active, closed, and cancelled meetings.
 
 ## Agenda and recurrence
 
-Compact rows show completion, title, assignee when set, minutes, recurrence, task count, and Start.
+Compact rows align minutes, nonempty task counts, assignee initials, and an icon-only
+Start/Open control on the right. Empty task and assignee slots retain alignment.
 Agenda setup offers an optional Default assignee from the ward's users (Assigned to
 for one-time topics). In the discussion, Assigned to changes only that meeting;
 choose Unassigned to clear it explicitly or Use recurring default to reset it.
@@ -109,13 +110,13 @@ planned minutes preserves elapsed time and adjusts the remaining allocation.
 An existing local clock keeps its allocation when another window changes the
 agenda; starting/resuming or extending it picks up the updated allocation.
 
-Discussion notes stay editable in the discussion dialog, including resolved
-items and closed/cancelled meetings. Save notes writes independently; closing the
-dialog saves dirty notes, and an outcome saves the latest notes atomically.
-A failed save retains the draft. Concurrent note edits are rejected with an error;
-Discard unsaved notes and close provides an explicit way to reopen the saved
-version. Task refreshes preserve unsaved notes and setup drafts. Historical note
-or task amendments never reopen outcomes, dates, or recurrence.
+Discussion notes include This meeting and Shared notes for recurring topics.
+Save & close saves notes without resolving the discussion; Done saves and resolves
+it. X, Escape, and outside clicks save dirty notes first. Discard changes closes
+without saving. Failed saves retain drafts and the selected tab. Previous meeting
+notes loads earlier discussions only on request. See
+[discussion notes](discussion-notes.md) for shared identity, conflicts, historical
+amendments, and pagination.
 
 Follow-up tasks can be created or linked in the same discussion, including after
 the meeting closes. Prayer and Spiritual thought omit task creation/linking
@@ -141,7 +142,7 @@ uses guarded session-recovery actions. See [schema](../../DATABASE_SCHEMA.md#lea
 `npm test` includes calendar edge cases and isolated SQLite tests against all
 versioned migrations. Browser verification covers both meeting types, mobile forms,
 local timers across windows/reloads, outcomes, and linked tasks. The additive
-migration `20261017120000_agenda_assignees` now includes instructions and command
-receipts. Regenerate the Prisma client. Development databases that already applied
+migration `20261017120000_agenda_assignees` now includes instructions, command
+receipts, and stable topics with shared notes. Regenerate the Prisma client. Development databases that already applied
 that migration require an explicit reset; `demo:reset` recreates only the isolated
 demo database. No new migration was added.

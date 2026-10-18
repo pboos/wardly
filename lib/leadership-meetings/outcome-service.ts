@@ -1,7 +1,8 @@
+import { saveSharedNotes, topicId } from "./topics";
 import { canMergeAssignments, mergedAssignment } from "./assignment";
 import { canMergeInstructions, mergedInstructions } from "./instructions";
 import { createAppearance, itemForWard, nextMeeting, type Db } from "./store";
-import type { ItemOutcome } from "./types";
+import type { ItemOutcome, SharedNotesEdit } from "./types";
 export async function recordOutcome(
   db: Db,
   wardId: string,
@@ -9,12 +10,14 @@ export async function recordOutcome(
   outcome: ItemOutcome,
   decision: string,
   expectedDecision?: string,
+  sharedNotes?: SharedNotesEdit,
 ) {
   if (!["done", "continued", "deferred", "skipped"].includes(outcome))
     throw new Error("Invalid agenda outcome.");
   if (typeof decision !== "string" || decision.length > 4000)
     throw new Error("Decision must be at most 4000 characters.");
   const item = await itemForWard(db, wardId, itemId);
+  await saveSharedNotes(db, item, sharedNotes);
   if (item.outcome === outcome && item.decision === decision.trim()) return;
   if (expectedDecision !== undefined && item.decision !== expectedDecision)
     throw new Error(
@@ -65,6 +68,7 @@ export async function recordOutcome(
     });
     const compatible = duplicates.filter(
       (duplicate) =>
+        topicId(item) === topicId(duplicate) &&
         canMergeAssignments(item, duplicate) &&
         canMergeInstructions(
           item,

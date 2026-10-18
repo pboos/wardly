@@ -1,5 +1,7 @@
 "use client";
-import { MarkdownInstructions } from "./markdown-instructions";
+import { DiscussionHelp } from "./discussion-help";
+import { DiscussionNotes } from "./discussion-notes";
+import { PreviousMeetingNotes } from "./previous-meeting-notes";
 import { useState } from "react";
 import Link from "next/link";
 import { ChevronDown, ChevronUp, Settings2 } from "lucide-react";
@@ -11,8 +13,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Field, FieldGroup, FieldLabel, FieldSet } from "@/components/ui/field";
-import { Textarea } from "@/components/ui/textarea";
+import { FieldSet } from "@/components/ui/field";
 import { Separator } from "@/components/ui/separator";
 import type {
   AgendaRow,
@@ -52,6 +53,8 @@ export function DiscussionDialog({
 }) {
   const [notes, setNotes] = useState(item.decision);
   const [savedNotes, setSavedNotes] = useState(item.decision);
+  const [sharedNotes, setSharedNotes] = useState(item.sharedNotes);
+  const [savedSharedNotes, setSavedSharedNotes] = useState(item.sharedNotes);
   const [setupOpen, setSetupOpen] = useState(false);
   const [tasksOpen, setTasksOpen] = useState(false);
   const [draft, setDraft] = useState<AgendaInput>(() => ({
@@ -64,7 +67,10 @@ export function DiscussionDialog({
   }));
   const [scope, setScope] = useState<"this" | "future">("this");
   const [error, setError] = useState("");
-  const dirty = notes !== savedNotes;
+  const dirty = notes !== savedNotes || sharedNotes !== savedSharedNotes;
+  const sharedEdit = sharedNotes !== savedSharedNotes
+    ? { sharedNotes: { value: sharedNotes, expected: savedSharedNotes } }
+    : {};
   const editableSetup = !readOnly && item.outcome === "pending";
   async function saveNotes() {
     if (!dirty) return true;
@@ -74,9 +80,12 @@ export function DiscussionDialog({
       itemId: item.id,
       decision: notes,
       expectedDecision: savedNotes,
+      ...sharedEdit,
     });
     if (saved) {
       setSavedNotes(notes.trim());
+      setSavedSharedNotes(sharedNotes.trim());
+      setSharedNotes((current) => (current === sharedNotes ? sharedNotes.trim() : current));
       setNotes((current) => (current === notes ? notes.trim() : current));
     } else
       setError(
@@ -96,6 +105,7 @@ export function DiscussionDialog({
         outcome: value,
         decision: notes,
         expectedDecision: savedNotes,
+        ...sharedEdit,
       })
     )
       onClose();
@@ -118,7 +128,10 @@ export function DiscussionDialog({
         }}
       >
         <DialogHeader>
-          <DialogTitle className="pr-6 leading-snug">{item.title}</DialogTitle>
+          <div className="flex items-start justify-between gap-2 pr-5">
+            <DialogTitle className="min-w-0 break-words leading-snug">{item.title}</DialogTitle>
+            <DiscussionHelp instructions={item.instructions} />
+          </div>
           <DialogDescription>
             {item.durationMinutes} min
             {item.outcome !== "pending" ? ` · ${item.outcome}` : ""}
@@ -150,55 +163,16 @@ export function DiscussionDialog({
           pending={pending}
           onSave={onSave}
         />
-        <div className="grid min-w-0 gap-5 md:grid-cols-2">
-          <section aria-label="Instructions" className="min-w-0">
-            <h2 className="mb-2 text-sm font-medium">Instructions</h2>
-            {item.instructions ? (
-              <MarkdownInstructions>{item.instructions}</MarkdownInstructions>
-            ) : (
-              <p className="text-sm text-muted-foreground">
-                No instructions yet. Add them in setup.
-              </p>
-            )}
-          </section>
-          <FieldGroup>
-            <Field>
-              <FieldLabel htmlFor="discussion-notes">
-                Discussion notes
-              </FieldLabel>
-              <Textarea
-                id="discussion-notes"
-                disabled={pending}
-                rows={5}
-                maxLength={4000}
-                value={notes}
-                onChange={(event) => setNotes(event.target.value)}
-              />
-              <div className="flex items-center justify-between gap-2">
-                <span role="status" className="text-xs text-muted-foreground">
-                  {pending
-                    ? "Saving…"
-                    : dirty
-                      ? "Unsaved notes"
-                      : "Notes saved"}
-                </span>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  disabled={pending || !dirty}
-                  onClick={() => void saveNotes()}
-                >
-                  Save notes
-                </Button>
-              </div>
-            </Field>
-          </FieldGroup>
-        </div>
+        <DiscussionNotes
+          notes={notes} sharedNotes={sharedNotes} hasSharedNotes={item.hasSharedNotes}
+          pending={pending} dirty={dirty} onNotes={setNotes} onSharedNotes={setSharedNotes}
+        />
+        <PreviousMeetingNotes itemId={item.id} />
         {(item.canAddTasks || item.tasks.length > 0) && (
           <div className="flex flex-col gap-3">
             <div className="flex flex-wrap items-center justify-between gap-2">
               <h2 className="font-medium">
-                Follow-up tasks ({item.tasks.length})
+                Follow-up tasks{item.tasks.length > 0 ? ` (${item.tasks.length})` : ""}
               </h2>
               {item.canAddTasks && (
                 <Button
@@ -288,6 +262,8 @@ export function DiscussionDialog({
             </div>
             <Separator />
             <div className="flex flex-wrap gap-2">
+              <Button variant="outline" disabled={pending} onClick={() => void close()}>Save &amp; close</Button>
+              {dirty && <Button variant="ghost" disabled={pending} onClick={onClose}>Discard changes</Button>}
               <Button disabled={pending} onClick={() => void outcome("done")}>
                 Done
               </Button>
@@ -329,16 +305,14 @@ export function DiscussionDialog({
             </div>
           </>
         )}
-        <Button
-          variant="outline"
-          disabled={pending}
-          onClick={() => void close()}
-        >
-          Close discussion
-        </Button>
-        {dirty && (
-          <Button variant="ghost" disabled={pending} onClick={onClose}>
-            Discard unsaved notes and close
+        {!editableSetup && (
+          <Button variant="outline" disabled={pending} onClick={() => void close()}>
+            Save &amp; close
+          </Button>
+        )}
+        {dirty && !editableSetup && (
+          <Button variant="ghost" className="self-start" disabled={pending} onClick={onClose}>
+            Discard changes
           </Button>
         )}
       </DialogContent>

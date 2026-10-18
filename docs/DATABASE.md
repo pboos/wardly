@@ -154,7 +154,9 @@ migration. Apply pending migrations and regenerate the client; existing data doe
 not need to be reset. See [leadership meetings](features/leadership-meetings/README.md).
 
 The existing `20261017120000_agenda_assignees` development migration also adds
-agenda instructions and suggestion command receipts. Regenerate the Prisma
+agenda instructions, suggestion command receipts, and stable agenda topics with
+shared notes. Its template rebuild backfills topic identity through connected
+appearance links and adds a required indexed foreign key. Regenerate the Prisma
 client and explicitly recreate development databases that already applied this
 migration. `demo:reset` recreates only the isolated demo database. See
 [leadership meetings](features/leadership-meetings/README.md).

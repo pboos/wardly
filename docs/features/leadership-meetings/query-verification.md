@@ -1,40 +1,49 @@
 # Leadership meeting query verification
 
-The isolated SQLite regression in
-[`query-scaling.test.mjs`](../../../lib/leadership-meetings/query-scaling.test.mjs)
-counts Prisma SQL events against the real preparation, loader, and command paths.
-Run it through `npm test`. Fixtures apply every versioned migration and assert
-visible agenda content, receipt retries, date collisions, selected active/past/held
-meetings, coalesced dues, and preservation of existing custom content.
+The isolated SQLite regressions in
+[query scaling](../../../lib/leadership-meetings/query-scaling.test.mjs) and
+[discussion notes](../../../lib/leadership-meetings/discussion-notes.test.mjs)
+count Prisma SQL events against real preparation, loader, command, and history
+paths. Run them through `npm test`. Fixtures apply every versioned migration and
+assert visible content, retries, exceptions, preserved custom discussions, stable
+topics, and history pagination. Counts measure SQL statements, not page latency.
 
-Measurements on 2026-10-18 used the same migrated fixtures before and after the
-change, with five repetitions per case. Every repetition returned the same counts.
-They measure SQL statements, not page latency. The HTTP check reloaded the same
-selected meeting five times before and after, checked all 29 rendered items, and
-received HTTP 200 each time. A separate browser check verified bulk addition,
-duplicate-click prevention, retry after an injected failure, and automatic modal
-closure for both meeting types.
+## Current counts
 
-| Case | Before | After |
-| --- | ---: | ---: |
-| Selected meeting HTTP reload, 29 visible items | 2993 | 31 |
-| Prepare and load, 1 recurring topic over 14 meetings | 192 | 30 |
-| Prepare and load, 20 recurring topics over 14 meetings | 2054 | 30 |
-| Add entire Bishopric agenda, 18 templates and 9 selected items | 16398 | 38 |
-| Add entire Council agenda, 14 templates and 7 selected items | 10687 | 38 |
+Measurements on 2026-10-18 include the stable topic and shared notes work.
+The warm fixture repeats each topic count three times with identical returned
+content and no writes. Bulk additions and history pages use fresh migrated
+fixtures and verify their results. These counts do not measure browser latency
+or concurrent traffic.
 
-The warm path performs no inserts, updates, or deletes. Its 30 statements comprise
-13 preparation statements and 17 loader statements. The regression checks a fixed
-40-statement ceiling and equal counts for 1 and 20 topics, with identical visible
-results across repeated preparation.
+| Case | SQL statements |
+| --- | ---: |
+| Prepare and load, 1 recurring topic | 31 |
+| Prepare and load, 20 recurring topics | 31 |
+| Add entire Bishopric agenda | 39 |
+| Add entire Council agenda | 39 |
+| Previous meeting notes, first page with 25 qualifying discussions | 8 |
 
-Fresh Add entire agenda uses six insert statements, including its receipt and the
-transactional command work. New templates, occurrences, appearances, and links
-use bulk inserts with preassigned IDs. Existing custom rows and resolved history
-are not rewritten by generation. Final ordering skips unchanged positions.
+The warm path previously used 30 statements. One batched topic SELECT adds the
+current shared text for all visible agenda rows, independent of topic count.
+The regression checks a 40-statement ceiling, equal counts for 1 and 20 topics,
+and zero inserts, updates, or deletes. Initial loading sends no history payload.
+The history read performs bounded authorization and occurrence graph reads plus
+one 21-row item query. A date/ID cursor returns 20 results and a next cursor.
+Multiple occurrence links do not duplicate discussions.
 
-Reconciliation snapshots are local to one transaction. After its first occurrence
-or appearance change, reconciliation reads fresh graphs for subsequent dues.
-Repairs, restorations, and complex agenda moves therefore retain sequential reads
-and writes. There is no persistent cache, time-based skip, schema change, or
-promise of a fixed query count for those mutation paths.
+Fresh Add entire agenda previously used 38 statements and six INSERT statements.
+It now uses seven INSERT statements, including one topic batch and one template
+batch, plus the existing receipt, occurrences, appearances, and links. IDs are
+assigned before insertion. Existing custom rows and resolved history are not
+rewritten. Final ordering skips unchanged positions. The test checks a
+60-statement ceiling and at most eight INSERT statements for both meeting kinds.
+
+## Mutation limits
+
+Reconciliation snapshots last for one transaction. After the first occurrence or
+appearance change, reconciliation reads fresh graphs for subsequent dues.
+Repairs, restorations, and complex moves retain sequential reads and writes.
+Shared note saves and outcomes remain transactional. Query bounds here apply to
+the named fixtures; they are not a fixed count for every mutation path. There is
+no persistent cache or time-based preparation skip.

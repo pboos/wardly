@@ -1,4 +1,5 @@
 import "server-only";
+import { topicId } from "./topics";
 import { canonicalSuggestionKey, SUGGESTIONS } from "./suggestions";
 import { suggestionState } from "./suggestion-state";
 import { prisma } from "@/lib/prisma";
@@ -46,9 +47,20 @@ export async function loadLeadershipMeeting(
         },
       })
     : [];
-  const items = rows
-    .filter((row) => row.outcome !== "removed")
+  const visibleRows = rows.filter((row) => row.outcome !== "removed");
+  const topicIds = [...new Set(visibleRows.flatMap((row) =>
+    row.occurrences.length ? [topicId(row)] : [],
+  ))];
+  const topics = await prisma.meeting_agenda_topic.findMany({
+    where: { id: { in: topicIds } },
+    select: { id: true, notes: true },
+  });
+  const topicsById = new Map(topics.map((topic) => [topic.id, topic]));
+  const items = visibleRows
     .map((row) => {
+      const sharedNotes = row.occurrences.length
+        ? topicsById.get(topicId(row))?.notes ?? ""
+        : "";
       const template =
         row.occurrences.find((o) => !o.occurrence.template.archived)?.occurrence
           .template ?? row.occurrences[0]?.occurrence.template;
@@ -62,6 +74,10 @@ export async function loadLeadershipMeeting(
         durationMinutes: row.duration_minutes,
         outcome: row.outcome,
         decision: row.decision,
+        sharedNotes,
+        hasSharedNotes: !!sharedNotes || row.occurrences.some((link) =>
+          parseRule(JSON.parse(link.occurrence.template.recurrence)).kind !== "once",
+        ),
         predecessorId: row.predecessor_id,
         dueDates: [
           ...new Set(row.occurrences.map((o) => o.occurrence.due_date)),

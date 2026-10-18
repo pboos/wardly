@@ -285,6 +285,7 @@ model leadership_meeting_series {
   ward           ward                      @relation(fields: [ward_id], references: [id], onDelete: Cascade)
   meetings       leadership_meeting[]
   templates      meeting_agenda_template[]
+  topics         meeting_agenda_topic[]
 
   @@unique([ward_id, kind])
 }
@@ -306,7 +307,21 @@ model leadership_meeting {
   @@index([series_id, date])
 }
 
+model meeting_agenda_topic {
+  id         String @id @default(uuid())
+  series_id  String
+  notes      String @default("")
+  created_at DateTime @default(now())
+  updated_at DateTime @default(now())
+  series     leadership_meeting_series @relation(fields: [series_id], references: [id], onDelete: Cascade)
+  templates  meeting_agenda_template[]
+
+  @@index([series_id])
+}
+
 model meeting_agenda_template {
+  topic_id String
+  topic meeting_agenda_topic @relation(fields: [topic_id], references: [id], onDelete: Cascade)
   id                 String                      @id @default(uuid())
   series_id          String
   title              String
@@ -327,6 +342,7 @@ model meeting_agenda_template {
   occurrences        meeting_agenda_occurrence[]
 
   @@index([series_id, archived])
+  @@index([topic_id])
 }
 
 model meeting_agenda_occurrence {

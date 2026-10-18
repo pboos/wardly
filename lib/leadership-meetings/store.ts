@@ -1,3 +1,4 @@
+import { topicId } from "./topics";
 import "server-only";
 import { canMergeInstructions, mergedInstructions } from "./instructions";
 import { canMergeAssignments, mergedAssignment } from "./assignment";
@@ -223,11 +224,13 @@ export async function mergeAppearance(
   });
   const keeper = await db.meeting_agenda_item.findUniqueOrThrow({
     where: { id: keeperId },
+    include: { occurrences: { include: { occurrence: { include: { template: true } } } } },
   });
   const defaults = duplicate.occurrences.map(
     (o) => o.occurrence.template.instructions,
   );
   if (
+    topicId(keeper) !== topicId(duplicate) ||
     !canMergeAssignments(keeper, duplicate) ||
     !canMergeInstructions(keeper, duplicate, defaults)
   )

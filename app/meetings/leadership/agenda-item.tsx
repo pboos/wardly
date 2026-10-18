@@ -8,6 +8,7 @@ import {
   Play,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { UserAvatar } from "@/components/user-avatar";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import type { AgendaRow } from "@/lib/leadership-meetings/loaders";
@@ -40,6 +41,7 @@ export function AgendaItem({
   const target = useRef<string | null>(null);
   const running = timer.runningId === item.id;
   const unresolved = item.outcome === "pending";
+  const assignee = users.find((user) => user.id === item.assignedUserId);
   return (
     <div
       data-agenda-id={item.id}
@@ -119,12 +121,6 @@ export function AgendaItem({
           {item.title}
         </Button>
         <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
-          <span>{item.durationMinutes + timer.extension(item.id)} min</span>
-          {item.assignedUserId && (
-            <span>
-              {users.find((user) => user.id === item.assignedUserId)?.name}
-            </span>
-          )}
           {item.repeating && <span>{ruleLabel(item.recurrence)}</span>}
           {!unresolved && (
             <span>
@@ -147,35 +143,30 @@ export function AgendaItem({
           )}
         </div>
       </div>
-      {(item.canAddTasks || item.tasks.length > 0) && (
-        <Button
-          variant="ghost"
-          size="sm"
-          className="shrink-0 gap-1 px-1 sm:px-2"
-          aria-label={`${item.tasks.length} follow-up tasks for ${item.title}`}
-          onClick={(event) => {
-            event.stopPropagation();
-            onOpen();
-          }}
-        >
-          <ListTodo />
-          <span>{item.tasks.length}</span>
-        </Button>
-      )}
-      {!readOnly && unresolved && (
-        <Button
-          size="sm"
-          className="shrink-0"
-          disabled={pending}
-          onClick={(event) => {
-            event.stopPropagation();
-            onStart();
-          }}
-        >
-          <Play data-icon="inline-start" />
-          {running ? "Open" : "Start"}
-        </Button>
-      )}
+      <span className="w-10 shrink-0 text-right text-xs text-muted-foreground tabular-nums sm:w-12">
+        {item.durationMinutes + timer.extension(item.id)} min
+      </span>
+      <div className="flex w-8 shrink-0 justify-center sm:w-10">
+        {item.tasks.length > 0 && (
+          <Button variant="ghost" size="icon-sm"
+            aria-label={`${item.tasks.length} follow-up tasks for ${item.title}`}
+            onClick={(event) => { event.stopPropagation(); onOpen(); }}>
+            <span className="inline-flex items-center gap-0.5 text-xs"><ListTodo className="size-3" />{item.tasks.length}</span>
+          </Button>
+        )}
+      </div>
+      <div className="flex w-6 shrink-0 justify-center" title={assignee?.name} aria-label={assignee ? `Assigned to ${assignee.name}` : undefined}>
+        {assignee && <UserAvatar name={assignee.name} size="sm" />}
+      </div>
+      <div className="w-8 shrink-0">
+        {!readOnly && unresolved && (
+          <Button size="icon-sm" disabled={pending}
+            aria-label={`${running ? "Open" : "Start"} ${item.title}`}
+            onClick={(event) => { event.stopPropagation(); onStart(); }}>
+            <Play />
+          </Button>
+        )}
+      </div>
     </div>
   );
 }

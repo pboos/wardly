@@ -430,7 +430,8 @@ The additive migration preserves Sunday meetings and existing tasks.
 
 Dates are local YYYY-MM-DD values. JSON schedule/recurrence fields are validated
 version-1 discriminated rules. Meeting scheduled_date is the immutable generation
-key; date can be rescheduled. Completed history is immutable. Every item, including
+key; date can be rescheduled. Resolved outcomes and dates stay fixed; historical
+notes and task links remain editable. Every item, including
 one-time items, has a template and occurrence. Multiple obligations may share one
 discussion through meeting_agenda_item_occurrence without losing their due dates.
 Removed appearances retain their item/occurrence links with a removed outcome,
@@ -441,6 +442,12 @@ lifecycle. All foreign keys cascade except predecessor deletion, which sets null
 Template after_date excludes obligations already covered by a previous template;
 after_meeting_date prevents future edits appearing again in their source meeting.
 The recurrence anchor remains unchanged when replacing a template.
+Every template has a required, indexed topic parent. Future template replacements
+copy the topic ID; appearance links derive one identity without duplicating it on
+items. The topic stores current shared notes, bounded to 4000 characters by command
+validation. Meeting-specific notes remain in item.decision. Both save atomically
+using expected text for conflict detection. Backfill groups connected templates
+through shared appearances within a series, never titles or suggestion keys.
 
 Canonical SQL for these tables and indexes:
 
@@ -472,9 +479,20 @@ CREATE TABLE "leadership_meeting" (
     CONSTRAINT "leadership_meeting_series_id_fkey" FOREIGN KEY ("series_id") REFERENCES "leadership_meeting_series" ("id") ON DELETE CASCADE ON UPDATE CASCADE
 );
 
+-- Stable discussion identity survives recurring template replacement.
+CREATE TABLE "meeting_agenda_topic" (
+    "id" TEXT NOT NULL PRIMARY KEY,
+    "series_id" TEXT NOT NULL REFERENCES "leadership_meeting_series"("id") ON DELETE CASCADE ON UPDATE CASCADE,
+    "notes" TEXT NOT NULL DEFAULT '',
+    "created_at" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updated_at" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+CREATE INDEX "meeting_agenda_topic_series_id_idx" ON "meeting_agenda_topic"("series_id");
+
 -- CreateTable
 CREATE TABLE "meeting_agenda_template" (
     "id" TEXT NOT NULL PRIMARY KEY,
+    "topic_id" TEXT NOT NULL REFERENCES "meeting_agenda_topic"("id") ON DELETE CASCADE ON UPDATE CASCADE,
     "series_id" TEXT NOT NULL,
     "title" TEXT NOT NULL,
     "instructions" TEXT NOT NULL DEFAULT '',
@@ -555,6 +573,7 @@ CREATE INDEX "leadership_meeting_series_id_date_idx" ON "leadership_meeting"("se
 CREATE UNIQUE INDEX "leadership_meeting_series_id_scheduled_date_key" ON "leadership_meeting"("series_id", "scheduled_date");
 
 -- CreateIndex
+CREATE INDEX "meeting_agenda_template_topic_id_idx" ON "meeting_agenda_template"("topic_id");
 CREATE INDEX "meeting_agenda_template_series_id_archived_idx" ON "meeting_agenda_template"("series_id", "archived");
 
 -- CreateIndex

@@ -14,6 +14,8 @@ export type AgendaInput = {
   recurrence: CalendarRule;
   suggestionKey?: string;
 };
+export type SharedNotesEdit = { value: string; expected: string };
+export type HistoryCursor = { date: string; id: string };
 export type MeetingCommand =
   | {
       kind: "initialize";
@@ -58,12 +60,14 @@ export type MeetingCommand =
       outcome: ItemOutcome;
       decision: string;
       expectedDecision?: string;
+      sharedNotes?: SharedNotesEdit;
     }
   | {
       kind: "notes";
       itemId: string;
       decision: string;
       expectedDecision: string;
+      sharedNotes?: SharedNotesEdit;
     }
   | { kind: "assign"; itemId: string; assignment: AgendaAssignment }
   | { kind: "reorder"; meetingId: string; itemIds: string[] }
