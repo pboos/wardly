@@ -18,7 +18,10 @@ resolves the occurrence atomically. Continue and Move also save both drafts with
 the outcome. Closing with X, Escape, or outside the dialog saves dirty notes first.
 Discard changes closes without saving either draft. Failed saves retain both
 drafts and the selected tab. Task refreshes and setup saves preserve unsaved notes.
-Historical notes remain editable without reopening outcomes or recurrence.
+Clean note fields accept refreshed server text, including when a discussion reopens
+before its save refresh arrives. Each dirty field retains its draft and original
+conflict baseline independently. Historical notes remain editable without reopening
+outcomes or recurrence.
 
 Each edited field supplies its previously saved text. A concurrent change rejects
 the transaction and keeps the draft available to copy. An omitted shared edit

@@ -1,4 +1,5 @@
 "use client";
+import { acknowledgeNoteDraft, receiveNoteDraft, type NoteDraft } from "@/lib/leadership-meetings/note-draft";
 import { DiscussionHelp } from "./discussion-help";
 import { DiscussionNotes } from "./discussion-notes";
 import { PreviousMeetingNotes } from "./previous-meeting-notes";
@@ -51,10 +52,18 @@ export function DiscussionDialog({
   onClose: () => void;
   saveError: string;
 }) {
-  const [notes, setNotes] = useState(item.decision);
-  const [savedNotes, setSavedNotes] = useState(item.decision);
-  const [sharedNotes, setSharedNotes] = useState(item.sharedNotes);
-  const [savedSharedNotes, setSavedSharedNotes] = useState(item.sharedNotes);
+  const [meetingDraft, setMeetingDraft] = useState<NoteDraft>(() => ({
+    value: item.decision, saved: item.decision, received: item.decision,
+  }));
+  const [sharedDraft, setSharedDraft] = useState<NoteDraft>(() => ({
+    value: item.sharedNotes, saved: item.sharedNotes, received: item.sharedNotes,
+  }));
+  const nextMeetingDraft = receiveNoteDraft(meetingDraft, item.decision);
+  const nextSharedDraft = receiveNoteDraft(sharedDraft, item.sharedNotes);
+  if (nextMeetingDraft !== meetingDraft) setMeetingDraft(nextMeetingDraft);
+  if (nextSharedDraft !== sharedDraft) setSharedDraft(nextSharedDraft);
+  const { value: notes, saved: savedNotes } = nextMeetingDraft;
+  const { value: sharedNotes, saved: savedSharedNotes } = nextSharedDraft;
   const [setupOpen, setSetupOpen] = useState(false);
   const [tasksOpen, setTasksOpen] = useState(false);
   const [draft, setDraft] = useState<AgendaInput>(() => ({
@@ -83,10 +92,9 @@ export function DiscussionDialog({
       ...sharedEdit,
     });
     if (saved) {
-      setSavedNotes(notes.trim());
-      setSavedSharedNotes(sharedNotes.trim());
-      setSharedNotes((current) => (current === sharedNotes ? sharedNotes.trim() : current));
-      setNotes((current) => (current === notes ? notes.trim() : current));
+      setMeetingDraft((current) => acknowledgeNoteDraft(current, notes));
+      if (sharedNotes !== savedSharedNotes)
+        setSharedDraft((current) => acknowledgeNoteDraft(current, sharedNotes));
     } else
       setError(
         "Your notes have not been saved. Keep this dialog open and review the error above.",
@@ -165,7 +173,9 @@ export function DiscussionDialog({
         />
         <DiscussionNotes
           notes={notes} sharedNotes={sharedNotes} hasSharedNotes={item.hasSharedNotes}
-          pending={pending} dirty={dirty} onNotes={setNotes} onSharedNotes={setSharedNotes}
+          pending={pending} dirty={dirty}
+          onNotes={(value) => setMeetingDraft((current) => ({ ...current, value }))}
+          onSharedNotes={(value) => setSharedDraft((current) => ({ ...current, value }))}
         />
         <PreviousMeetingNotes itemId={item.id} />
         {(item.canAddTasks || item.tasks.length > 0) && (

@@ -33,7 +33,8 @@ The date picker includes planned, active, closed, and cancelled meetings.
 
 Compact rows align minutes, nonempty task counts, assignee initials, and an icon-only
 Start/Open control on the right. Empty task and assignee slots retain alignment.
-Agenda setup offers an optional Default assignee from the ward's users (Assigned to
+On narrow screens, reorder and completion controls stack, and task counts move
+into the title metadata to leave room for wrapping titles. Agenda setup offers an optional Default assignee from the ward's users (Assigned to
 for one-time topics). In the discussion, Assigned to changes only that meeting;
 choose Unassigned to clear it explicitly or Use recurring default to reset it.
 Different meetings can name different people for the same recurring topic.
