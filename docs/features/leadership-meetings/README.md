@@ -31,10 +31,13 @@ The date picker includes planned, active, closed, and cancelled meetings.
 
 ## Agenda and recurrence
 
-Compact rows align minutes, nonempty task counts, assignee initials, and an icon-only
-Start/Open control on the right. Empty task and assignee slots retain alignment.
-On narrow screens, reorder and completion controls stack, and task counts move
-into the title metadata to leave room for wrapping titles. Agenda setup offers an optional Default assignee from the ward's users (Assigned to
+Compact rows show nonempty task counts, minutes, an assignee, and an icon-only
+Start/Open control in that order on the right, including narrow screens. Minutes
+and assignees stay aligned across rows; titles wrap and reorder/completion controls
+stack on narrow screens. Click the assignee avatar or dashed plus to search ward
+users or choose No assignee. This changes only the selected meeting, including an
+explicit unassigned override. The discussion still offers Use recurring default.
+Historical and resolved rows keep their assignee display without the picker. Agenda setup offers an optional Default assignee from the ward's users (Assigned to
 for one-time topics). In the discussion, Assigned to changes only that meeting;
 choose Unassigned to clear it explicitly or Use recurring default to reset it.
 Different meetings can name different people for the same recurring topic.

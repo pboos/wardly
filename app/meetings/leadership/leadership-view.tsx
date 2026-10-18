@@ -277,6 +277,12 @@ export function LeadershipView({ data }: { data: LeadershipData }) {
                 timer={timer}
                 onOpen={() => setSelectedId(item.id)}
                 onStart={() => start(item)}
+                onAssign={(userId) =>
+                  void run(
+                    { kind: "assign", itemId: item.id, assignment: { kind: "override", userId } },
+                    false,
+                  )
+                }
                 onReorder={(target) => reorder(item.id, target)}
                 onComplete={() =>
                   void run(

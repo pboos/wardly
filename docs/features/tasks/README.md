@@ -134,3 +134,7 @@ Authenticated client actions use the shared [session recovery flow](../login/REA
 Components bind guarded `actions.ts` functions through `useAppMutation`;
 authentication failures retain drafts for explicit retry after login. See the
 [shared action architecture](../login/actions.md).
+
+Task assignees use the shared [user picker](../../../components/user-assignee.tsx),
+with searchable ward users and No assignee. The same picker appears on leadership
+agenda rows. Selections use user IDs, including when users have identical names.

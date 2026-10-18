@@ -8,6 +8,7 @@ import {
   Play,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { UserAssignee } from "@/components/user-assignee";
 import { UserAvatar } from "@/components/user-avatar";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
@@ -23,6 +24,7 @@ export function AgendaItem({
   onStart,
   onReorder,
   onComplete,
+  onAssign,
   today,
   users,
 }: {
@@ -32,6 +34,7 @@ export function AgendaItem({
   timer: MeetingTimer;
   onOpen: () => void;
   onComplete: () => void;
+  onAssign: (userId: string | null) => void;
   onStart: () => void;
   onReorder: (target: string | -1 | 1) => void;
   today: string;
@@ -123,11 +126,6 @@ export function AgendaItem({
           {item.title}
         </Button>
         <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
-          {item.tasks.length > 0 && (
-            <span className="inline-flex items-center gap-1 sm:hidden">
-              <ListTodo className="size-3" />{item.tasks.length} tasks
-            </span>
-          )}
           {item.repeating && <span>{ruleLabel(item.recurrence)}</span>}
           {!unresolved && (
             <span>
@@ -150,20 +148,32 @@ export function AgendaItem({
           )}
         </div>
       </div>
+      {item.tasks.length > 0 && (
+        <Button variant="ghost" size="icon-sm"
+          className="shrink-0"
+          aria-label={`${item.tasks.length} follow-up tasks for ${item.title}`}
+          onClick={(event) => { event.stopPropagation(); onOpen(); }}>
+          <span className="inline-flex items-center gap-0.5 text-xs"><ListTodo className="size-3" />{item.tasks.length}</span>
+        </Button>
+      )}
       <span className="w-10 shrink-0 text-right text-xs text-muted-foreground tabular-nums sm:w-12">
         {item.durationMinutes + timer.extension(item.id)} min
       </span>
-      <div className="hidden shrink-0 justify-center sm:flex sm:w-10">
-        {item.tasks.length > 0 && (
-          <Button variant="ghost" size="icon-sm"
-            aria-label={`${item.tasks.length} follow-up tasks for ${item.title}`}
-            onClick={(event) => { event.stopPropagation(); onOpen(); }}>
-            <span className="inline-flex items-center gap-0.5 text-xs"><ListTodo className="size-3" />{item.tasks.length}</span>
-          </Button>
-        )}
-      </div>
-      <div className="flex w-6 shrink-0 justify-center" title={assignee?.name} aria-label={assignee ? `Assigned to ${assignee.name}` : undefined}>
-        {assignee && <UserAvatar name={assignee.name} size="sm" />}
+      <div className="flex w-6 shrink-0 justify-center">
+        {!readOnly && unresolved ? (
+          <UserAssignee
+            items={users.map((user) => ({ value: user.id, label: user.name }))}
+            value={item.assignedUserId}
+            name={assignee?.name}
+            onChange={onAssign}
+            disabled={pending}
+            label={`${item.assignedUserId ? "Change assignee" : "Assign user"} for ${item.title}`}
+          />
+        ) : assignee ? (
+          <span title={assignee.name} aria-label={`Assigned to ${assignee.name}`}>
+            <UserAvatar name={assignee.name} size="sm" />
+          </span>
+        ) : null}
       </div>
       <div className="w-8 shrink-0">
         {!readOnly && unresolved && (
