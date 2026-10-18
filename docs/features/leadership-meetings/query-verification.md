@@ -9,10 +9,15 @@ meetings, coalesced dues, and preservation of existing custom content.
 
 Measurements on 2026-10-18 used the same migrated fixtures before and after the
 change, with five repetitions per case. Every repetition returned the same counts.
-They measure SQL statements, not page latency.
+They measure SQL statements, not page latency. The HTTP check reloaded the same
+selected meeting five times before and after, checked all 29 rendered items, and
+received HTTP 200 each time. A separate browser check verified bulk addition,
+duplicate-click prevention, retry after an injected failure, and automatic modal
+closure for both meeting types.
 
 | Case | Before | After |
 | --- | ---: | ---: |
+| Selected meeting HTTP reload, 29 visible items | 2993 | 31 |
 | Prepare and load, 1 recurring topic over 14 meetings | 192 | 30 |
 | Prepare and load, 20 recurring topics over 14 meetings | 2054 | 30 |
 | Add entire Bishopric agenda, 18 templates and 9 selected items | 16398 | 38 |
