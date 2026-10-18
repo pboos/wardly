@@ -130,7 +130,11 @@ changes task completion, and notes are not automatically copied into tasks.
 [Calendar rules](../../../lib/leadership-meetings/calendar.ts) are pure.
 [Services](../../../lib/leadership-meetings/service.ts) authorize ward ownership and
 apply commands transactionally. [Store](../../../lib/leadership-meetings/store.ts)
-materializes schedules and occurrences. [Read models](../../../lib/leadership-meetings/loaders.ts)
+materializes schedules. [Reconciliation](../../../lib/leadership-meetings/reconcile.ts)
+loads existing occurrence graphs in one batch and skips unchanged rows. Its snapshot
+lasts only until the first reconciliation change; repairs then read fresh graphs to
+preserve shared discussions. Schedule creation, restorations, and existing agenda
+moves still run transactionally. [Read models](../../../lib/leadership-meetings/loaders.ts)
 load only the authenticated ward. [Shared UI](../../../app/meetings/leadership/leadership-view.tsx)
 uses guarded session-recovery actions. See [schema](../../DATABASE_SCHEMA.md#leadership-meetings).
 

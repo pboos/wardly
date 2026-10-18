@@ -1,3 +1,4 @@
+import { createSuggestedAgenda } from "./suggestion-batch";
 import { randomUUID } from "node:crypto";
 import { addAgenda, requestUuid } from "./item-service";
 import { meetingForWard, type Db } from "./store";
@@ -9,6 +10,7 @@ import {
   suggestionAnchor,
   suggestionInstructions,
   suggestionsForKind,
+  type Suggestion,
 } from "./suggestions";
 
 export async function addSuggestions(
@@ -49,6 +51,7 @@ export async function addSuggestions(
     data: { id, meeting_id: meeting.id, fingerprint },
   });
   const active = await suggestionState(db, meeting.series_id, meeting.id);
+  const additions: Suggestion[] = [];
   for (const suggestion of suggestions) {
     const state = active.filter((s) => s.key === suggestion.key);
     const removed = [
@@ -69,7 +72,11 @@ export async function addSuggestions(
     let count = state.length ? 0 : 1;
     if (suggestion.repeatable)
       count = selection.kind === "one" ? 1 : Math.max(0, 2 - recurring.size);
-    for (let index = 0; index < count; index++)
+    for (let index = 0; index < count; index++) {
+      if (selection.kind === "all") {
+        additions.push(suggestion);
+        continue;
+      }
       await addAgenda(
         db,
         wardId,
@@ -84,6 +91,14 @@ export async function addSuggestions(
         },
         randomUUID(),
       );
+    }
   }
-  if (selection.kind === "all") await orderSuggestions(db, meeting);
+  if (selection.kind === "all") {
+    const closingPrayer = additions.findLastIndex(
+      (suggestion) => suggestion.key === "prayer",
+    );
+    if (closingPrayer >= 0) additions.push(...additions.splice(closingPrayer, 1));
+    await createSuggestedAgenda(db, meeting, additions);
+    await orderSuggestions(db, meeting);
+  }
 }

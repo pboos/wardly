@@ -38,11 +38,13 @@ export async function orderSuggestions(
       parseRule(JSON.parse(t.recurrence)).kind !== "once",
   );
   const sorted = catalogOrder(suggested, key);
-  for (const [index, slot] of suggested.entries())
+  for (const [index, slot] of suggested.entries()) {
+    if (sorted[index].position === slot.position) continue;
     await db.meeting_agenda_template.update({
       where: { id: sorted[index].id },
       data: { position: slot.position },
     });
+  }
   const templateRanks = new Map(
     sorted.map((template, index) => [template.id, index]),
   );
@@ -86,10 +88,12 @@ export async function orderSuggestions(
       [...slots].sort((a, b) => templateRank(a) - templateRank(b)),
       itemKey,
     );
-    for (const [index, slot] of slots.entries())
+    for (const [index, slot] of slots.entries()) {
+      if (ordered[index].position === slot.position) continue;
       await db.meeting_agenda_item.update({
         where: { id: ordered[index].id },
         data: { position: slot.position },
       });
+    }
   }
 }

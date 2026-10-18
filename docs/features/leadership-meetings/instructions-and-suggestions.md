@@ -43,6 +43,13 @@ the order. Past and other active meetings retain their order. Extra prayers keep
 their template order before the final Prayer.
 
 Suggestion commands run in one transaction, including restores and ordering.
+Add entire agenda batches fresh templates, their calendar occurrences, agenda
+appearances, and links. It uses the same due-date and target rules as reconciliation,
+groups several due dates into one discussion per template and meeting, and seeds
+the selected meeting even when active, held by notes, or in the past. Existing
+restorations and customized discussions keep their normal reconciliation path.
+Unchanged positions are not rewritten. See
+[query verification](query-verification.md) for measured SQL counts and limits.
 Clients retain each command UUID until success. Receipts bind the UUID to its
 meeting and operation, so retries do not repeat even a restore-only or no-op
 command. Reusing a UUID for a different operation is rejected.
