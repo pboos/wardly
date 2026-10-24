@@ -14,7 +14,8 @@ Read the [overview](README.md) first; schedule-specific editing is in [schedule]
   Local meetings show a leader reminder until a leader row exists; editing remains
   available. Presiding is a separate optional assignment, not inferred from leader.
 - Meeting context contains leader, presiding, organists, music conductors, visitors,
-  and meeting information. Support text and assignment history are hidden by default.
+  and meeting information. Leading mode opens a separate reading view; Edit mode
+  returns to this page. Assignment history remains available on the schedule.
 - Agenda cards use compact spacing and top-right reorder arrows. Extra entries
   keep section movement and deletion in the adjacent “More agenda item actions” menu.
   Hymns (🎵), musical numbers (🎶), prayers (🙏), talks (🎤), and sacrament
@@ -114,19 +115,18 @@ controls, task suggestions, and standard-slot movement rules are unchanged.
 - Arrows swap with the next/previous visible entry in the same section. They stop
   at boundaries. “Move to section” explicitly appends an extra entry elsewhere;
   moving into or out of `participants` is disallowed.
-- With support text hidden, `conductor_text` moves with the following visible entry;
-  trailing wording moves with the section's last entry. With text shown, each row
+- Authored `conductor_text` is always visible and editable. Each displayed row
   moves independently. Two conductor-text entries cannot be adjacent in final order.
+  The ordering service still supports hidden-text movement for other callers.
 - UI availability and server writes share `moveAgendaItems`. Requests send direction
   or destination section plus `showSupportText`; the server computes against current
   saved items in a transaction. Reorder controls disable during save/refresh.
 
 ## Support text and task presentations
 
-- Generated support blocks describe visitors/presiding and certain business items.
-  They are derived text, distinct from editable `conductor_text` agenda rows.
-  Generated wording is currently English placeholder text; `content_locale` is stored
-  but not yet used to localize it.
+- The editor suppresses generated placeholder support blocks and retains authored
+  `conductor_text`. The separate [leading mode](leading.md) produces complete
+  English or German wording from the ward content language.
 - Ward business contains an expanded-by-default “Available tasks” list with a
   collapsible heading and an immediate Add button on each compact task row.
   Available and added tasks show the resolved task type, current lifecycle status,

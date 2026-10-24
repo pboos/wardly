@@ -3,19 +3,15 @@
 import { useSundayMutation } from "./use-sunday-mutation";
 
 import Link from "next/link";
-import { useState } from "react";
 import {
   IconArrowLeft,
   IconArrowRight,
-  IconEye,
-  IconEyeOff,
 } from "@tabler/icons-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { SUNDAY_MEETING_TYPE_LABELS } from "@/lib/sunday-meetings/types";
 import { nextSunday, previousSunday } from "@/lib/sunday-meetings/calendar";
 import type { loadLeadingSundayMeeting } from "@/lib/sunday-meetings/loaders";
-import { AssignmentHistoryCard } from "./sunday-leading-cards";
 import { SundayLeadingAgenda } from "./sunday-leading-agenda";
 import { SundayLeadingParticipants } from "./sunday-leading-participants";
 
@@ -24,15 +20,8 @@ type LeadingData = Awaited<ReturnType<typeof loadLeadingSundayMeeting>>;
 export function SundayLeadingView({ data }: { data: LeadingData }) {
   const { meeting } = data;
   const { pending, run } = useSundayMutation();
-  // The agreed leading default keeps supporting wording out of the way.
-  const [showSupportText, setShowSupportText] = useState(false);
-  const [showHistory, setShowHistory] = useState(false);
-
   const previousDate = previousSunday(meeting.date);
   const nextDate = nextSunday(meeting.date);
-  const meetingSupport = data.supportText.filter(
-    (block) => block.position === "meeting",
-  );
 
   return (
     <div className="mx-auto flex w-full max-w-3xl flex-col gap-6">
@@ -60,35 +49,8 @@ export function SundayLeadingView({ data }: { data: LeadingData }) {
           </h1>
         </div>
         <div className="flex flex-wrap gap-2">
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            aria-pressed={showSupportText}
-            onClick={() => setShowSupportText((current) => !current)}
-          >
-            {showSupportText ? (
-              <IconEyeOff data-icon="inline-start" />
-            ) : (
-              <IconEye data-icon="inline-start" />
-            )}
-            {showSupportText ? "Hide support text" : "Show support text"}
-          </Button>
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            aria-pressed={showHistory}
-            onClick={() => setShowHistory((current) => !current)}
-          >
-            {showHistory
-              ? "Hide assignment history"
-              : "Show assignment history"}
-          </Button>
           <Button variant="outline" size="sm" asChild>
-            <Link href={`/meetings/sunday?anchor=${meeting.date}`}>
-              Schedule
-            </Link>
+            <Link href={`/meetings/sunday/${meeting.date}/leading`}>Leading mode</Link>
           </Button>
         </div>
       </header>
@@ -115,13 +77,9 @@ export function SundayLeadingView({ data }: { data: LeadingData }) {
           <SundayLeadingParticipants
             meeting={meeting}
             members={data.memberHistory}
-            showSupportText={showSupportText}
-            supportText={meetingSupport}
+            showSupportText={true}
+            supportText={[]}
           />
-
-          {showHistory && (
-            <AssignmentHistoryCard members={data.memberHistory} />
-          )}
 
           <section className="flex flex-col gap-3">
             <h2 className="text-lg font-medium">Agenda</h2>
@@ -130,10 +88,8 @@ export function SundayLeadingView({ data }: { data: LeadingData }) {
               pending={pending}
               meeting={meeting}
               members={data.memberHistory}
-              showSupportText={showSupportText}
-              supportText={data.supportText.filter(
-                (block) => block.position === "before_item",
-              )}
+              showSupportText={true}
+              supportText={[]}
               run={run}
             />
           </section>

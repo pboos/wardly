@@ -49,6 +49,7 @@ export async function updateWardSettings(
       revalidatePath("/admin/ward");
       revalidatePath("/meetings/sunday");
       revalidatePath("/meetings/sunday/[date]", "page");
+      revalidatePath("/meetings/sunday/[date]/leading", "page");
       revalidatePath("/meetings/sunday/upcoming");
       return { ok: true };
     },

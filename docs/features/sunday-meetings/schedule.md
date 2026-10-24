@@ -18,7 +18,8 @@ for the shared model and [agenda](agenda.md) for ordering and meeting-type trans
   fill gaps between dates. Each mutation calculates the boundary on the server.
 - “Open upcoming meeting” uses `/meetings/sunday/upcoming` to select the next
   local meeting and redirect to `/meetings/sunday/YYYY-MM-DD`. Individual date
-  links open that path directly. Details link back with `anchor=<date>`.
+  links open that path directly. The dated editor opens [leading mode](leading.md).
+  The header Meetings menu returns to the schedule.
 
 ## Editing and display
 
@@ -52,8 +53,8 @@ for the shared model and [agenda](agenda.md) for ordering and meeting-type trans
 - Information uses a text dialog. Ward settings store a validated content locale
   and time zone. Initial setup and [ward settings](../ward-settings/README.md) expose the time zone and sacrament start time;
   [task reminders](../tasks/reminders.md) use these every Sunday independently of
-  saved meetings and conference types. Dates currently display in English; support wording's locale
-  limitation is described in [agenda](agenda.md#support-text-and-task-presentations).
+  saved meetings and conference types. Schedule dates display in English; [leading mode](leading.md) uses the ward
+  content language for its dates and spoken script.
 
 ## People picker
 

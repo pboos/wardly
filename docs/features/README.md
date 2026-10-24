@@ -13,7 +13,7 @@ links identify where to verify details or make changes.
 | Members                 | [Overview](members/README.md)           | Directory filters, household grouping, member tags, and moved-out membership                                       |
 | Tasks                   | [Overview](tasks/README.md)             | Quick entry, type symbols, task list/settings · [Sunday email reminders](tasks/reminders.md)                       |
 | Leadership meetings | [Overview](leadership-meetings/README.md) | Bishopric/branch presidency and council agendas, recurrence, history, local timers, and follow-up tasks |
-| Sunday meetings         | [Overview](sunday-meetings/README.md)   | [Schedule, dates, assignments](sunday-meetings/schedule.md) · [Agenda, ordering, tasks](sunday-meetings/agenda.md) |
+| Sunday meetings         | [Overview](sunday-meetings/README.md)   | [Schedule, dates, assignments](sunday-meetings/schedule.md) · [Agenda, ordering, tasks](sunday-meetings/agenda.md) · [Leading mode](sunday-meetings/leading.md) |
 | Hymns and ward language | [Overview](hymns/README.md)             | Catalog loading, setup language, refreshing hymns, adding languages                                                |
 | Local development       | [Overview](local-development/README.md) | Demo database, fictional fixtures, email-free login, reset and automation                                          |
 | Deployment              | [Overview](deployment/README.md)        | GitHub Container Registry publishing, image tags, and running Docker images                                        |

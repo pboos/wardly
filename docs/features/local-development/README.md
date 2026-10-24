@@ -46,8 +46,8 @@ database can also use the fixed code; unknown email addresses cannot log in.
   `09:00`. Sunday task reminders remain disabled because demo mode enables
   `LOCAL_AUTH_BYPASS`; no reminder emails are sent, even with
   `TASK_REMINDERS_ENABLED=true`. See [task reminders](../tasks/reminders.md).
-- German content selects the German hymn catalog; the app interface and current
-  support-text placeholders remain English. See [hymns](../hymns/README.md).
+- German content selects the German hymn catalog; the app interface remains English, while the
+  [leading script](../sunday-meetings/leading.md) follows the ward language. See [hymns](../hymns/README.md).
 - The demo signing key is separate from normal sessions. Switching between modes
   on the same browser hostname may require logging in again. Normal and demo dev
   servers share Next's development output and should not run simultaneously.
