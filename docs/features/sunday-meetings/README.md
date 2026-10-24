@@ -8,7 +8,8 @@ Read this overview first; load the relevant topic below for details.
 | Topic | Route | Context |
 | --- | --- | --- |
 | [Schedule](schedule.md) | `/meetings/sunday` | Date navigation, creating meetings, inline assignments, history, mobile layout |
-| [Agenda and leading](agenda.md) | `/meetings/sunday/YYYY-MM-DD` | Standard entries, editing, ordering, meeting-type changes, tasks, carry-forward |
+| [Agenda editor](agenda.md) | `/meetings/sunday/YYYY-MM-DD` | Standard entries, editing, ordering, meeting-type changes, tasks, carry-forward |
+| [Leading mode](leading.md) | `/meetings/sunday/YYYY-MM-DD/leading` | Read-through script, ward language, missing assignments, return to editing |
 
 ## Shared model and lifecycle
 
@@ -48,7 +49,7 @@ lookup for English and German in the shared schedule/details hymn picker.
 | Shared types, validation, ward access | [types.ts](../../../lib/sunday-meetings/types.ts), [rules.ts](../../../lib/sunday-meetings/rules.ts) |
 
 Server actions derive the ward from the current user, call services, and
-revalidate the schedule, dated detail pages, and upcoming-meeting selector. Clients refresh after successful edits and show
+revalidate the schedule, dated detail and leading pages, and upcoming-meeting selector. Clients refresh after successful edits and show
 errors on failure. Services enforce ward ownership and domain rules inside transactions.
 See the [database schema](../../DATABASE_SCHEMA.md#5-sunday_meeting) and
 [design guidelines](../../DESIGN.md) for their respective conventions.

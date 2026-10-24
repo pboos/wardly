@@ -36,6 +36,7 @@ import type {
 function revalidateSundayMeetingRoutes(): void {
   revalidatePath("/meetings/sunday");
   revalidatePath("/meetings/sunday/[date]", "page");
+  revalidatePath("/meetings/sunday/[date]/leading", "page");
   revalidatePath("/meetings/sunday/upcoming");
 }
 

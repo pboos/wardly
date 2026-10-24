@@ -17,7 +17,8 @@ Only the authenticated user's ward row is updated. Sunday meeting dates remain
 calendar strings and never shift when changing zones. Hymn numbers remain saved
 as-is and titles resolve using the current content language, including historical
 entries; see [hymns](../hymns/README.md). Page revalidation refreshes the schedule,
-details, and upcoming selection. Time zones affect today/history classification;
+details, leading mode, and upcoming selection. The content language also selects
+the English or German [leading script](../sunday-meetings/leading.md). Time zones affect today/history classification;
 start time and zone affect subsequent [reminder scheduling](../tasks/reminders.md).
 No schema change or database reset is required.
 
