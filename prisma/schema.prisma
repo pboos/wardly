@@ -41,6 +41,9 @@ model user {
   login                login?
   task_digest_delivery task_digest_delivery[]
 
+  agenda_templates meeting_agenda_template[]
+  agenda_items meeting_agenda_item[]
+
   // Tasks assigned to this user
   task                       task[]
   // States that reassign to this user
@@ -282,6 +285,7 @@ model leadership_meeting_series {
   ward           ward                      @relation(fields: [ward_id], references: [id], onDelete: Cascade)
   meetings       leadership_meeting[]
   templates      meeting_agenda_template[]
+  topics         meeting_agenda_topic[]
 
   @@unique([ward_id, kind])
 }
@@ -297,20 +301,38 @@ model leadership_meeting {
   updated_at     DateTime                  @default(now())
   series         leadership_meeting_series @relation(fields: [series_id], references: [id], onDelete: Cascade)
   items          meeting_agenda_item[]
+  suggestion_receipts meeting_suggestion_receipt[]
 
   @@unique([series_id, scheduled_date])
   @@index([series_id, date])
 }
 
+model meeting_agenda_topic {
+  id         String @id @default(uuid())
+  series_id  String
+  notes      String @default("")
+  created_at DateTime @default(now())
+  updated_at DateTime @default(now())
+  series     leadership_meeting_series @relation(fields: [series_id], references: [id], onDelete: Cascade)
+  templates  meeting_agenda_template[]
+
+  @@index([series_id])
+}
+
 model meeting_agenda_template {
+  topic_id String
+  topic meeting_agenda_topic @relation(fields: [topic_id], references: [id], onDelete: Cascade)
   id                 String                      @id @default(uuid())
   series_id          String
   title              String
+  instructions       String @default("")
   duration_minutes   Int
   recurrence         String
   anchor_date        String
   after_date         String?
   after_meeting_date String?
+  default_assigned_user_id String?
+  default_assigned_user user? @relation(fields: [default_assigned_user_id], references: [id], onDelete: SetNull)
   suggestion_key     String?
   archived           Boolean                     @default(false)
   position           Int                         @default(0)
@@ -320,6 +342,7 @@ model meeting_agenda_template {
   occurrences        meeting_agenda_occurrence[]
 
   @@index([series_id, archived])
+  @@index([topic_id])
 }
 
 model meeting_agenda_occurrence {
@@ -340,10 +363,14 @@ model meeting_agenda_item {
   id               String                           @id @default(uuid())
   meeting_id       String
   title            String
+  instructions     String @default("")
   duration_minutes Int
   position         Int
   outcome          String                           @default("pending")
   decision         String                           @default("")
+  assigned_user_id String?
+  assignment_overridden Boolean @default(false)
+  assigned_user user? @relation(fields: [assigned_user_id], references: [id], onDelete: SetNull)
   predecessor_id   String?                          @unique
   created_at       DateTime                         @default(now())
   updated_at       DateTime                         @default(now())
@@ -380,4 +407,13 @@ model meeting_agenda_item_task {
 
   @@unique([item_id, task_id])
   @@index([task_id])
+}
+
+model meeting_suggestion_receipt {
+  id          String @id
+  meeting_id  String
+  fingerprint String
+  created_at  DateTime @default(now())
+  updated_at  DateTime @default(now())
+  meeting     leadership_meeting @relation(fields: [meeting_id], references: [id], onDelete: Cascade)
 }

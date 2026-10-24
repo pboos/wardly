@@ -17,9 +17,9 @@ export function DiscussionTimer({
   const remaining = timer.remainingMs(item.id, item.durationMinutes),
     running = timer.runningId === item.id;
   return (
-    <div className="flex flex-col items-center gap-3 rounded-lg bg-muted p-4">
+    <div className="flex flex-col items-center gap-2 rounded-lg bg-muted p-3 sm:flex-row sm:flex-wrap sm:justify-between">
       <span
-        className="font-mono text-5xl tabular-nums"
+        className="font-mono text-3xl tabular-nums"
         aria-label="Remaining discussion time"
         role="timer"
       >
@@ -31,7 +31,7 @@ export function DiscussionTimer({
         </p>
       )}
       <div className="flex flex-wrap justify-center gap-2">
-        <Button disabled={pending} onClick={running ? timer.pause : onStart}>
+        <Button size="sm" disabled={pending} onClick={running ? timer.pause : onStart}>
           {running ? (
             <Pause data-icon="inline-start" />
           ) : (
@@ -42,6 +42,7 @@ export function DiscussionTimer({
         {[1, 2, 5].map((minutes) => (
           <Button
             key={minutes}
+            size="sm"
             variant="outline"
             onClick={() => timer.extend(item.id, item.durationMinutes, minutes)}
             aria-label={`Extend by ${minutes} minutes`}

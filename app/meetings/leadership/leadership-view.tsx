@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
   CalendarClock,
@@ -42,6 +42,7 @@ export function LeadershipView({ data }: { data: LeadershipData }) {
   const [modal, setModal] = useState<Modal | null>(null);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [error, setError] = useState("");
+  const suggestionRequests = useRef(new Map<string, string>());
   const meeting = data.meeting,
     readOnly = !meeting || !["planned", "active"].includes(meeting.status);
   const selected = data.items.find((item) => item.id === selectedId);
@@ -249,7 +250,7 @@ export function LeadershipView({ data }: { data: LeadershipData }) {
                   size="sm"
                   onClick={() => setModal({ kind: "suggestions" })}
                 >
-                  Suggested items
+                  Suggested agenda
                 </Button>
                 <Button variant="ghost" size="sm" onClick={() => add()}>
                   Add recurring item
@@ -269,12 +270,19 @@ export function LeadershipView({ data }: { data: LeadershipData }) {
               <AgendaItem
                 key={item.id}
                 item={item}
+                users={data.users}
                 today={data.today}
                 readOnly={readOnly}
                 pending={mutation.isPending}
                 timer={timer}
                 onOpen={() => setSelectedId(item.id)}
                 onStart={() => start(item)}
+                onAssign={(userId) =>
+                  void run(
+                    { kind: "assign", itemId: item.id, assignment: { kind: "override", userId } },
+                    false,
+                  )
+                }
                 onReorder={(target) => reorder(item.id, target)}
                 onComplete={() =>
                   void run(
@@ -321,7 +329,8 @@ export function LeadershipView({ data }: { data: LeadershipData }) {
             )}
             <div className="ml-auto flex flex-wrap justify-end gap-x-5 gap-y-1 text-sm text-muted-foreground">
               <span>
-                <strong className="text-foreground">{planned} min</strong> planned
+                <strong className="text-foreground">{planned} min</strong>{" "}
+                planned
               </span>
               <span>
                 <strong className="text-foreground">
@@ -363,25 +372,30 @@ export function LeadershipView({ data }: { data: LeadershipData }) {
           kind={data.kind}
           activeSuggestions={data.activeSuggestions}
           pending={mutation.isPending}
-          onRestore={(itemId) => void run({ kind: "restore", itemId })}
           onClose={() => setModal(null)}
-          onChoose={(s) => {
-            let anchorDate = meeting?.date ?? data.today;
-            if (s.key === "report") {
-              const d = new Date(`${anchorDate}T12:00:00Z`);
-              d.setUTCDate(10);
-              d.setUTCMonth(Math.ceil(d.getUTCMonth() / 3) * 3);
-              if (d.toISOString().slice(0, 10) < anchorDate)
-                d.setUTCMonth(d.getUTCMonth() + 3);
-              anchorDate = d.toISOString().slice(0, 10);
-            }
-            add({
-              title: s.title,
-              durationMinutes: s.duration,
-              anchorDate,
-              recurrence: s.recurrence,
-              suggestionKey: s.key,
-            });
+          onAdd={async (key) => {
+            if (!meeting) return false;
+            const action = `${meeting.id}:${key ?? "all"}`;
+            const requestId =
+              suggestionRequests.current.get(action) ?? crypto.randomUUID();
+            suggestionRequests.current.set(action, requestId);
+            const saved = await run(
+              key
+                ? {
+                    kind: "add-suggestion",
+                    meetingId: meeting.id,
+                    suggestionKey: key,
+                    requestId,
+                  }
+                : {
+                    kind: "add-all-suggestions",
+                    meetingId: meeting.id,
+                    requestId,
+                  },
+              false,
+            );
+            if (saved) suggestionRequests.current.delete(action);
+            return saved;
           }}
         />
       )}

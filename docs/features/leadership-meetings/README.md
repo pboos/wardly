@@ -31,7 +31,21 @@ The date picker includes planned, active, closed, and cancelled meetings.
 
 ## Agenda and recurrence
 
-Compact rows show completion, title, minutes, recurrence, task count, and Start.
+Compact rows show nonempty task counts, minutes, an assignee, and an icon-only
+Start/Open control in that order on the right, including narrow screens. Minutes
+and assignees stay aligned across rows; titles wrap and reorder/completion controls
+stack on narrow screens. Click the assignee avatar or dashed plus to search ward
+users or choose No assignee. This changes only the selected meeting, including an
+explicit unassigned override. The discussion still offers Use recurring default.
+Historical and resolved rows keep their assignee display without the picker. Agenda setup offers an optional Default assignee from the ward's users (Assigned to
+for one-time topics). In the discussion, Assigned to changes only that meeting;
+choose Unassigned to clear it explicitly or Use recurring default to reset it.
+Different meetings can name different people for the same recurring topic.
+Changing a recurring default updates pending planned appearances from the edited
+meeting forward, preserving explicit choices, continuations, and historical discussions.
+Editing recurrence and rescheduling also preserve meeting-specific assignments;
+conflicting explicit assignees keep separate discussions instead of merging.
+Deleting a user clears their assignments and defaults.
 The completion circle marks a pending item Done. Clicking the title, row, or task
 count opens one discussion dialog. Quick add takes a title and a right-aligned
 duration with a visible min suffix. Agenda durations accept whole minutes from
@@ -75,22 +89,14 @@ with separate occurrence records retaining the original due dates.
   appearances in this and later planned or active meetings, including carried discussions.
   Shared historical occurrence statuses remain intact; archived templates prevent
   regeneration. Dirty notes save before removal; a failure keeps the dialog draft.
-- Edit this occurrence changes its title and allocation. Edit recurring series
-  changes the current appearance and replaces future recurrence while keeping its
-  chosen calendar anchor. Already covered due dates and the source meeting are
-  excluded from new appearances. Earlier completed history remains unchanged.
+- Edit this occurrence changes its title, Markdown instructions, and allocation.
+  Edit recurring series changes the current appearance and replaces future
+  recurrence while keeping its calendar anchor. Completed history keeps its
+  instructions snapshot. Omitted instructions in older API callers preserve the
+  appearance; an explicit empty string clears them.
 
-The compact Suggested items library is always available, including after removal.
-Active suggestions show their local title, duration, and recurrence. Restore item
-restores a removed appearance with its saved edits and existing template; it never
-creates a second recurring series or reopens completed discussions. To change a
-restored item, use its agenda editor. Already scheduled recurring suggestions cannot be
-added again until their recurrence is stopped. A one-time suggestion removed
-from a closed meeting can be chosen again without reopening the historical item.
-No defaults are inserted automatically. Handbook frequency labels distinguish
-specified responsibilities from suggested meeting rhythms. Suggested dates and
-allocations are editable. Quarterly Report suggestions start in January, April,
-July, or October. The library links each topic to its Handbook source.
+See [agenda instructions and suggested items](instructions-and-suggestions.md)
+for Markdown snapshots, direct additions, recurrence defaults, and bulk ordering.
 
 ## Timers and follow-up
 
@@ -108,16 +114,19 @@ planned minutes preserves elapsed time and adjusts the remaining allocation.
 An existing local clock keeps its allocation when another window changes the
 agenda; starting/resuming or extending it picks up the updated allocation.
 
-Discussion notes stay editable in the discussion dialog, including resolved
-items and closed/cancelled meetings. Save notes writes independently; closing the
-dialog saves dirty notes, and an outcome saves the latest notes atomically.
-A failed save retains the draft. Concurrent note edits are rejected with an error;
-Discard unsaved notes and close provides an explicit way to reopen the saved
-version. Task refreshes preserve unsaved notes and setup drafts. Historical note
-or task amendments never reopen outcomes, dates, or recurrence.
+Discussion notes include This meeting and Shared notes for recurring topics.
+Save & close saves notes without resolving the discussion; Done saves and resolves
+it. X, Escape, and outside clicks save dirty notes first. Discard changes closes
+without saving. Failed saves retain drafts and the selected tab. Previous meeting
+notes loads earlier discussions only on request. See
+[discussion notes](discussion-notes.md) for shared identity, conflicts, historical
+amendments, and pagination.
 
 Follow-up tasks can be created or linked in the same discussion, including after
-the meeting closes. Creation uses the enabled
+the meeting closes. Prayer and Spiritual thought omit task creation/linking
+controls and empty task counts, based on the original suggestion key even after
+renaming. Existing linked tasks remain visible. Custom topics allow tasks.
+Creation uses the enabled
 ordinary Task type and its configured initial state. Discussion completion never
 changes task completion, and notes are not automatically copied into tasks.
 
@@ -126,11 +135,18 @@ changes task completion, and notes are not automatically copied into tasks.
 [Calendar rules](../../../lib/leadership-meetings/calendar.ts) are pure.
 [Services](../../../lib/leadership-meetings/service.ts) authorize ward ownership and
 apply commands transactionally. [Store](../../../lib/leadership-meetings/store.ts)
-materializes schedules and occurrences. [Read models](../../../lib/leadership-meetings/loaders.ts)
+materializes schedules. [Reconciliation](../../../lib/leadership-meetings/reconcile.ts)
+loads existing occurrence graphs in one batch and skips unchanged rows. Its snapshot
+lasts only until the first reconciliation change; repairs then read fresh graphs to
+preserve shared discussions. Schedule creation, restorations, and existing agenda
+moves still run transactionally. [Read models](../../../lib/leadership-meetings/loaders.ts)
 load only the authenticated ward. [Shared UI](../../../app/meetings/leadership/leadership-view.tsx)
 uses guarded session-recovery actions. See [schema](../../DATABASE_SCHEMA.md#leadership-meetings).
 
 `npm test` includes calendar edge cases and isolated SQLite tests against all
 versioned migrations. Browser verification covers both meeting types, mobile forms,
 local timers across windows/reloads, outcomes, and linked tasks. The additive
-migration requires `prisma migrate deploy` and client regeneration; no reset.
+migration `20261017120000_agenda_assignees` now includes instructions, command
+receipts, and stable topics with shared notes. Regenerate the Prisma client. Development databases that already applied
+that migration require an explicit reset; `demo:reset` recreates only the isolated
+demo database. No new migration was added.

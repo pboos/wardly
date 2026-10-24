@@ -1,5 +1,6 @@
 "use client";
 import { Field, FieldLabel } from "@/components/ui/field";
+import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import {
   addDays,
@@ -7,7 +8,11 @@ import {
   datesBetween,
   parseRule,
 } from "@/lib/leadership-meetings/calendar";
-import { MAX_AGENDA_MINUTES, type AgendaInput } from "@/lib/leadership-meetings/types";
+import {
+  MAX_AGENDA_MINUTES,
+  MAX_INSTRUCTIONS_LENGTH,
+  type AgendaInput,
+} from "@/lib/leadership-meetings/types";
 import type { LeadershipData } from "@/lib/leadership-meetings/loaders";
 import { ChoiceField } from "./choice-field";
 import { RecurrenceFields } from "./recurrence-fields";
@@ -52,7 +57,7 @@ export function AgendaSetupFields({
       )?.date,
     }));
   } catch {
-    /* Incomplete date/number drafts have no preview. */
+    preview = [];
   }
   return (
     <>
@@ -65,6 +70,20 @@ export function AgendaSetupFields({
           maxLength={200}
           value={draft.title}
           onChange={(e) => setDraft({ ...draft, title: e.target.value })}
+        />
+      </Field>
+      <Field>
+        <FieldLabel htmlFor="agenda-instructions">
+          Instructions (Markdown)
+        </FieldLabel>
+        <Textarea
+          id="agenda-instructions"
+          rows={4}
+          maxLength={MAX_INSTRUCTIONS_LENGTH}
+          value={draft.instructions ?? ""}
+          onChange={(event) =>
+            setDraft({ ...draft, instructions: event.target.value })
+          }
         />
       </Field>
       <Field>
@@ -112,6 +131,28 @@ export function AgendaSetupFields({
               }
             />
           </Field>
+          <ChoiceField
+            id="agenda-default-assignee"
+            label={
+              draft.recurrence.kind === "once"
+                ? "Assigned to"
+                : "Default assignee"
+            }
+            value={draft.defaultAssignedUserId ?? "unassigned"}
+            onChange={(value) =>
+              setDraft({
+                ...draft,
+                defaultAssignedUserId: value === "unassigned" ? null : value,
+              })
+            }
+            options={[
+              { value: "unassigned", label: "Unassigned" },
+              ...data.users.map((user) => ({
+                value: user.id,
+                label: user.name,
+              })),
+            ]}
+          />
           <RecurrenceFields
             value={draft.recurrence}
             onChange={(recurrence) => setDraft({ ...draft, recurrence })}

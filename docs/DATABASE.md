@@ -120,6 +120,7 @@ bun run db:generate
 - The SQLite database file (`prisma/dev.db`) is **gitignored** and regenerated locally.
 - Never use `prisma db push` for production-bound changes — always go through `prisma migrate dev` so changes are versioned and reviewable.
 - To reset the local database (e.g. after a bad migration), run `bun run db:reset`. This drops all data and re-applies all migrations.
+- When working on a new feature in a worktree do not create multiple migrations. Only create a single migration and update it. Then recreate the database when testing/running.
 
 ---
 
@@ -151,3 +152,11 @@ Reset existing local and demo databases after this change. See
 Leadership meeting agendas use the additive `20261016120000_leadership_meetings`
 migration. Apply pending migrations and regenerate the client; existing data does
 not need to be reset. See [leadership meetings](features/leadership-meetings/README.md).
+
+The existing `20261017120000_agenda_assignees` development migration also adds
+agenda instructions, suggestion command receipts, and stable agenda topics with
+shared notes. Its template rebuild backfills topic identity through connected
+appearance links and adds a required indexed foreign key. Regenerate the Prisma
+client and explicitly recreate development databases that already applied this
+migration. `demo:reset` recreates only the isolated demo database. See
+[leadership meetings](features/leadership-meetings/README.md).

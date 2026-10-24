@@ -1,4 +1,8 @@
 "use client";
+import { acknowledgeNoteDraft, receiveNoteDraft, type NoteDraft } from "@/lib/leadership-meetings/note-draft";
+import { DiscussionHelp } from "./discussion-help";
+import { DiscussionNotes } from "./discussion-notes";
+import { PreviousMeetingNotes } from "./previous-meeting-notes";
 import { useState } from "react";
 import Link from "next/link";
 import { ChevronDown, ChevronUp, Settings2 } from "lucide-react";
@@ -10,8 +14,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Field, FieldGroup, FieldLabel, FieldSet } from "@/components/ui/field";
-import { Textarea } from "@/components/ui/textarea";
+import { FieldSet } from "@/components/ui/field";
 import { Separator } from "@/components/ui/separator";
 import type {
   AgendaRow,
@@ -26,6 +29,7 @@ import type { MeetingTimer } from "./use-meeting-timer";
 import { AgendaSetupFields } from "./agenda-setup-fields";
 import { DiscussionTasksForm } from "./discussion-tasks-form";
 import { RemovalChoice } from "./removal-choice";
+import { DiscussionAssignment } from "./discussion-assignment";
 import { DiscussionTimer } from "./discussion-timer";
 export function DiscussionDialog({
   item,
@@ -48,19 +52,34 @@ export function DiscussionDialog({
   onClose: () => void;
   saveError: string;
 }) {
-  const [notes, setNotes] = useState(item.decision);
-  const [savedNotes, setSavedNotes] = useState(item.decision);
+  const [meetingDraft, setMeetingDraft] = useState<NoteDraft>(() => ({
+    value: item.decision, saved: item.decision, received: item.decision,
+  }));
+  const [sharedDraft, setSharedDraft] = useState<NoteDraft>(() => ({
+    value: item.sharedNotes, saved: item.sharedNotes, received: item.sharedNotes,
+  }));
+  const nextMeetingDraft = receiveNoteDraft(meetingDraft, item.decision);
+  const nextSharedDraft = receiveNoteDraft(sharedDraft, item.sharedNotes);
+  if (nextMeetingDraft !== meetingDraft) setMeetingDraft(nextMeetingDraft);
+  if (nextSharedDraft !== sharedDraft) setSharedDraft(nextSharedDraft);
+  const { value: notes, saved: savedNotes } = nextMeetingDraft;
+  const { value: sharedNotes, saved: savedSharedNotes } = nextSharedDraft;
   const [setupOpen, setSetupOpen] = useState(false);
   const [tasksOpen, setTasksOpen] = useState(false);
   const [draft, setDraft] = useState<AgendaInput>(() => ({
     title: item.title,
+    instructions: item.instructions,
     durationMinutes: item.durationMinutes,
     recurrence: item.recurrence,
     anchorDate: item.anchorDate,
+    defaultAssignedUserId: item.defaultAssignedUserId,
   }));
   const [scope, setScope] = useState<"this" | "future">("this");
   const [error, setError] = useState("");
-  const dirty = notes !== savedNotes;
+  const dirty = notes !== savedNotes || sharedNotes !== savedSharedNotes;
+  const sharedEdit = sharedNotes !== savedSharedNotes
+    ? { sharedNotes: { value: sharedNotes, expected: savedSharedNotes } }
+    : {};
   const editableSetup = !readOnly && item.outcome === "pending";
   async function saveNotes() {
     if (!dirty) return true;
@@ -70,10 +89,12 @@ export function DiscussionDialog({
       itemId: item.id,
       decision: notes,
       expectedDecision: savedNotes,
+      ...sharedEdit,
     });
     if (saved) {
-      setSavedNotes(notes.trim());
-      setNotes((current) => (current === notes ? notes.trim() : current));
+      setMeetingDraft((current) => acknowledgeNoteDraft(current, notes));
+      if (sharedNotes !== savedSharedNotes)
+        setSharedDraft((current) => acknowledgeNoteDraft(current, sharedNotes));
     } else
       setError(
         "Your notes have not been saved. Keep this dialog open and review the error above.",
@@ -92,6 +113,7 @@ export function DiscussionDialog({
         outcome: value,
         decision: notes,
         expectedDecision: savedNotes,
+        ...sharedEdit,
       })
     )
       onClose();
@@ -108,13 +130,16 @@ export function DiscussionDialog({
       }}
     >
       <DialogContent
-        className="max-h-[92dvh] overflow-y-auto sm:max-w-xl"
+        className="max-h-[92dvh] overflow-y-auto sm:max-w-3xl"
         onInteractOutside={(event) => {
           if (pending) event.preventDefault();
         }}
       >
         <DialogHeader>
-          <DialogTitle className="pr-6 leading-snug">{item.title}</DialogTitle>
+          <div className="flex items-start justify-between gap-2 pr-5">
+            <DialogTitle className="min-w-0 break-words leading-snug">{item.title}</DialogTitle>
+            <DiscussionHelp instructions={item.instructions} />
+          </div>
           <DialogDescription>
             {item.durationMinutes} min
             {item.outcome !== "pending" ? ` · ${item.outcome}` : ""}
@@ -139,77 +164,69 @@ export function DiscussionDialog({
             {error}
           </p>
         )}
-        <FieldGroup>
-          <Field>
-            <FieldLabel htmlFor="discussion-notes">Discussion notes</FieldLabel>
-            <Textarea
-              id="discussion-notes"
-              disabled={pending}
-              rows={5}
-              maxLength={4000}
-              value={notes}
-              onChange={(event) => setNotes(event.target.value)}
-            />
-            <div className="flex items-center justify-between gap-2">
-              <span role="status" className="text-xs text-muted-foreground">
-                {pending ? "Saving…" : dirty ? "Unsaved notes" : "Notes saved"}
-              </span>
-              <Button
-                variant="outline"
-                size="sm"
-                disabled={pending || !dirty}
-                onClick={() => void saveNotes()}
-              >
-                Save notes
-              </Button>
-            </div>
-          </Field>
-        </FieldGroup>
-        <div className="flex flex-col gap-3">
-          <div className="flex flex-wrap items-center justify-between gap-2">
-            <h2 className="font-medium">
-              Follow-up tasks ({item.tasks.length})
-            </h2>
-            <Button
-              variant="ghost"
-              size="sm"
-              aria-expanded={tasksOpen}
-              onClick={() => setTasksOpen(!tasksOpen)}
-            >
-              {tasksOpen ? (
-                <ChevronUp data-icon="inline-start" />
-              ) : (
-                <ChevronDown data-icon="inline-start" />
-              )}
-              Create or link task
-            </Button>
-          </div>
-          {!!item.tasks.length && (
-            <ul className="flex flex-col gap-2">
-              {item.tasks.map((task) => (
-                <li
-                  key={task.id}
-                  className="flex items-start justify-between gap-3 text-sm"
+        <DiscussionAssignment
+          item={item}
+          data={data}
+          editable={editableSetup}
+          pending={pending}
+          onSave={onSave}
+        />
+        <DiscussionNotes
+          notes={notes} sharedNotes={sharedNotes} hasSharedNotes={item.hasSharedNotes}
+          pending={pending} dirty={dirty}
+          onNotes={(value) => setMeetingDraft((current) => ({ ...current, value }))}
+          onSharedNotes={(value) => setSharedDraft((current) => ({ ...current, value }))}
+        />
+        <PreviousMeetingNotes itemId={item.id} />
+        {(item.canAddTasks || item.tasks.length > 0) && (
+          <div className="flex flex-col gap-3">
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <h2 className="font-medium">
+                Follow-up tasks{item.tasks.length > 0 ? ` (${item.tasks.length})` : ""}
+              </h2>
+              {item.canAddTasks && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  aria-expanded={tasksOpen}
+                  onClick={() => setTasksOpen(!tasksOpen)}
                 >
-                  <Link href="/tasks" className="text-primary underline">
-                    {task.title}
-                  </Link>
-                  <span className="shrink-0 text-muted-foreground">
-                    {task.completed ? "Completed" : "Open"}
-                  </span>
-                </li>
-              ))}
-            </ul>
-          )}
-          {tasksOpen && (
-            <DiscussionTasksForm
-              item={item}
-              data={data}
-              pending={pending}
-              onSave={onSave}
-            />
-          )}
-        </div>
+                  {tasksOpen ? (
+                    <ChevronUp data-icon="inline-start" />
+                  ) : (
+                    <ChevronDown data-icon="inline-start" />
+                  )}
+                  Create or link task
+                </Button>
+              )}
+            </div>
+            {!!item.tasks.length && (
+              <ul className="flex flex-col gap-2">
+                {item.tasks.map((task) => (
+                  <li
+                    key={task.id}
+                    className="flex items-start justify-between gap-3 text-sm"
+                  >
+                    <Link href="/tasks" className="text-primary underline">
+                      {task.title}
+                    </Link>
+                    <span className="shrink-0 text-muted-foreground">
+                      {task.completed ? "Completed" : "Open"}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            )}
+            {item.canAddTasks && tasksOpen && (
+              <DiscussionTasksForm
+                item={item}
+                data={data}
+                pending={pending}
+                onSave={onSave}
+              />
+            )}
+          </div>
+        )}
         {editableSetup && (
           <>
             <Separator />
@@ -255,6 +272,8 @@ export function DiscussionDialog({
             </div>
             <Separator />
             <div className="flex flex-wrap gap-2">
+              <Button variant="outline" disabled={pending} onClick={() => void close()}>Save &amp; close</Button>
+              {dirty && <Button variant="ghost" disabled={pending} onClick={onClose}>Discard changes</Button>}
               <Button disabled={pending} onClick={() => void outcome("done")}>
                 Done
               </Button>
@@ -296,16 +315,14 @@ export function DiscussionDialog({
             </div>
           </>
         )}
-        <Button
-          variant="outline"
-          disabled={pending}
-          onClick={() => void close()}
-        >
-          Close discussion
-        </Button>
-        {dirty && (
-          <Button variant="ghost" disabled={pending} onClick={onClose}>
-            Discard unsaved notes and close
+        {!editableSetup && (
+          <Button variant="outline" disabled={pending} onClick={() => void close()}>
+            Save &amp; close
+          </Button>
+        )}
+        {dirty && !editableSetup && (
+          <Button variant="ghost" className="self-start" disabled={pending} onClick={onClose}>
+            Discard changes
           </Button>
         )}
       </DialogContent>

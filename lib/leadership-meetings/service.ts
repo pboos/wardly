@@ -1,6 +1,9 @@
+import { saveDiscussionNotes } from "./notes-service";
 import "server-only";
+import { assignAgenda } from "./assignment";
 import { saveFutureOrder } from "./ordering";
-import { removeAgenda } from "./removal";
+import { addSuggestions } from "./suggestion-service";
+import { removeAgenda, restoreAgenda } from "./removal";
 import { prisma } from "@/lib/prisma";
 import { loadTaskTypes } from "@/lib/tasks/loader";
 import { object, text } from "./calendar";
@@ -63,6 +66,24 @@ export async function executeMeetingCommand(
             input.startTime,
           );
           break;
+        case "add-suggestion":
+          await addSuggestions(
+            db,
+            wardId,
+            text(input.meetingId),
+            input.requestId,
+            { kind: "one", key: text(input.suggestionKey) },
+          );
+          break;
+        case "add-all-suggestions":
+          await addSuggestions(
+            db,
+            wardId,
+            text(input.meetingId),
+            input.requestId,
+            { kind: "all" },
+          );
+          break;
         case "add":
           object(input.input);
           await addAgenda(
@@ -83,6 +104,9 @@ export async function executeMeetingCommand(
             input.scope,
           );
           break;
+        case "assign":
+          await assignAgenda(db, wardId, text(input.itemId), input.assignment);
+          break;
         case "outcome":
           await recordOutcome(
             db,
@@ -91,29 +115,12 @@ export async function executeMeetingCommand(
             input.outcome,
             input.decision,
             input.expectedDecision,
+            input.sharedNotes,
           );
           break;
-        case "notes": {
-          if (
-            typeof input.decision !== "string" ||
-            input.decision.length > 4000 ||
-            typeof input.expectedDecision !== "string"
-          )
-            throw new Error(
-              "Discussion notes must be at most 4000 characters.",
-            );
-          const item = await itemForWard(db, wardId, text(input.itemId), false);
-          if (item.decision === input.decision.trim()) break;
-          if (item.decision !== input.expectedDecision)
-            throw new Error(
-              "Discussion notes changed in another window. Copy your draft, close and reopen this item to review the latest notes.",
-            );
-          await db.meeting_agenda_item.update({
-            where: { id: item.id },
-            data: { decision: input.decision.trim(), updated_at: new Date() },
-          });
+        case "notes":
+          await saveDiscussionNotes(db, wardId, { ...input, itemId: text(input.itemId) });
           break;
-        }
         case "reorder": {
           const meeting = await meetingForWard(
             db,
@@ -149,26 +156,9 @@ export async function executeMeetingCommand(
         case "remove":
           await removeAgenda(db, wardId, text(input.itemId), input.scope);
           break;
-        case "restore": {
-          const item = await itemForWard(db, wardId, text(input.itemId));
-          if (item.outcome === "pending") break;
-          if (item.outcome !== "removed")
-            throw new Error(
-              "Only a removed occurrence can be restored. Completed discussions remain in history.",
-            );
-          await db.meeting_agenda_occurrence.updateMany({
-            where: {
-              id: { in: item.occurrences.map((o) => o.occurrence_id) },
-              status: "removed",
-            },
-            data: { status: "pending", updated_at: new Date() },
-          });
-          await db.meeting_agenda_item.update({
-            where: { id: item.id },
-            data: { outcome: "pending", updated_at: new Date() },
-          });
+        case "restore":
+          await restoreAgenda(db, wardId, text(input.itemId));
           break;
-        }
         case "stop":
           await stopRepeating(db, wardId, text(input.itemId));
           break;

@@ -1,4 +1,7 @@
 import "server-only";
+import { topicId } from "./topics";
+import { canonicalSuggestionKey, SUGGESTIONS } from "./suggestions";
+import { suggestionState } from "./suggestion-state";
 import { prisma } from "@/lib/prisma";
 import { localToday, parseRule } from "./calendar";
 import type { MeetingKind } from "./types";
@@ -44,18 +47,37 @@ export async function loadLeadershipMeeting(
         },
       })
     : [];
-  const items = rows
-    .filter((row) => row.outcome !== "removed")
+  const visibleRows = rows.filter((row) => row.outcome !== "removed");
+  const topicIds = [...new Set(visibleRows.flatMap((row) =>
+    row.occurrences.length ? [topicId(row)] : [],
+  ))];
+  const topics = await prisma.meeting_agenda_topic.findMany({
+    where: { id: { in: topicIds } },
+    select: { id: true, notes: true },
+  });
+  const topicsById = new Map(topics.map((topic) => [topic.id, topic]));
+  const items = visibleRows
     .map((row) => {
+      const sharedNotes = row.occurrences.length
+        ? topicsById.get(topicId(row))?.notes ?? ""
+        : "";
       const template =
         row.occurrences.find((o) => !o.occurrence.template.archived)?.occurrence
           .template ?? row.occurrences[0]?.occurrence.template;
       return {
         id: row.id,
         title: row.title,
+        instructions: row.instructions,
+        assignedUserId: row.assigned_user_id,
+        assignmentOverridden: row.assignment_overridden,
+        defaultAssignedUserId: template?.default_assigned_user_id ?? null,
         durationMinutes: row.duration_minutes,
         outcome: row.outcome,
         decision: row.decision,
+        sharedNotes,
+        hasSharedNotes: !!sharedNotes || row.occurrences.some((link) =>
+          parseRule(JSON.parse(link.occurrence.template.recurrence)).kind !== "once",
+        ),
         predecessorId: row.predecessor_id,
         dueDates: [
           ...new Set(row.occurrences.map((o) => o.occurrence.due_date)),
@@ -68,6 +90,12 @@ export async function loadLeadershipMeeting(
           !!template &&
           !template.archived &&
           parseRule(JSON.parse(template.recurrence)).kind !== "once",
+        canAddTasks:
+          SUGGESTIONS.find(
+            (suggestion) =>
+              suggestion.key ===
+              canonicalSuggestionKey(template?.suggestion_key ?? null),
+          )?.supportsTasks !== false,
         tasks: row.tasks.map((t) => ({
           id: t.task.id,
           title: t.task.title ?? "Member task",
@@ -75,56 +103,9 @@ export async function loadLeadershipMeeting(
         })),
       };
     });
-  const suggestionTemplates = series
-    ? await prisma.meeting_agenda_template.findMany({
-        where: {
-          series_id: series.id,
-          archived: false,
-          suggestion_key: { not: null },
-        },
-        include: {
-          occurrences: {
-            where: {
-              OR: [
-                { status: "pending" },
-                {
-                  status: "removed",
-                  appearances: {
-                    some: {
-                      item: {
-                        meeting: { status: { in: ["planned", "active"] } },
-                      },
-                    },
-                  },
-                },
-              ],
-            },
-            select: { status: true },
-          },
-        },
-      })
+  const activeSuggestions = series
+    ? await suggestionState(prisma, series.id, meeting?.id)
     : [];
-  const activeSuggestions = suggestionTemplates
-    .filter(
-      (template) =>
-        parseRule(JSON.parse(template.recurrence)).kind !== "once" ||
-        template.occurrences.some(
-          (o) => o.status === "pending" || o.status === "removed",
-        ),
-    )
-    .map((template) => {
-      const current = rows.find((row) =>
-        row.occurrences.some((o) => o.occurrence.template_id === template.id),
-      );
-      return {
-        key: template.suggestion_key!,
-        title: current?.title ?? template.title,
-        durationMinutes: current?.duration_minutes ?? template.duration_minutes,
-        recurrence: parseRule(JSON.parse(template.recurrence)),
-        restoreItemId: current?.outcome === "removed" ? current.id : null,
-        onAgenda: !!current && current.outcome !== "removed",
-      };
-    });
   const tasks = await prisma.task.findMany({
     where: { ward_id: wardId, completed_at: null },
     select: {
