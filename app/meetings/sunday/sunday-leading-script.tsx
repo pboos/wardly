@@ -13,9 +13,17 @@ export function SundayLeadingScript({ date, script }: { date: string; script: Le
   return (
     <article lang={script.locale} className="mx-auto flex w-full max-w-3xl flex-col gap-8 pb-16">
       <header className="flex flex-col items-start gap-3">
-        <Button variant="outline" asChild>
-          <Link href={`/meetings/sunday/${date}`}>{script.editLabel}</Link>
-        </Button>
+        <div className="flex flex-wrap gap-2">
+          <Button variant="outline" asChild>
+            <Link href={`/meetings/sunday/${date}`}>{script.editLabel}</Link>
+          </Button>
+          <Button variant="outline" asChild>
+            <Link href={`/meetings/sunday/${date}/leading${script.mode === "notes" ? "?mode=detailed" : ""}`}>
+              {script.toggleLabel}
+            </Link>
+          </Button>
+        </div>
+        <p className="text-sm text-muted-foreground">{script.modeLabel}</p>
         <p className="text-sm text-muted-foreground">{formattedDate}</p>
         <h1 className="text-2xl font-semibold sm:text-3xl">{script.title}</h1>
       </header>

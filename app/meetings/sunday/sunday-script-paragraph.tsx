@@ -6,6 +6,7 @@ function renderSpans(spans: readonly ScriptSpan[]) {
   return spans.map((span, index) => {
     switch (span.kind) {
       case "name":
+      case "emphasis":
         return <strong key={index} className="rounded bg-accent px-1 font-semibold text-accent-foreground">{span.text}</strong>;
       case "missing":
         return <span key={index} className="font-semibold text-destructive">{span.text}</span>;

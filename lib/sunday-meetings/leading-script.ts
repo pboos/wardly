@@ -4,9 +4,16 @@ import { expandCopy, leadingCopy, type ScriptCopyKey, type ScriptParagraph, type
 import { isLocalMeetingType, type SundayMeeting, type SundayMeetingItem } from "./types.ts";
 
 export type { ScriptParagraph, ScriptSpan } from "./leading-copy.ts";
+export type LeadingMode = "notes" | "detailed";
+export function parseLeadingMode(value: string | string[] | undefined): LeadingMode {
+  return value === "detailed" ? "detailed" : "notes";
+}
 export type LeadingBlock = { id: string; paragraphs: ScriptParagraph[] };
 export type LeadingScript = {
   title: string;
+  mode: LeadingMode;
+  modeLabel: string;
+  toggleLabel: string;
   editLabel: string;
   locale: string;
   notice: string | null;
@@ -15,16 +22,27 @@ export type LeadingScript = {
   | { kind: "local"; introduction: ScriptParagraph[]; sections: { section: string; title: string; blocks: LeadingBlock[] }[] }
 );
 
-export function buildLeadingScript({ meeting, contentLocale, hymns }: {
+export function buildLeadingScript({ meeting, contentLocale, hymns, mode = "notes" }: {
   meeting: SundayMeeting;
   contentLocale: string;
   hymns: readonly Hymn[];
+  mode?: LeadingMode;
 }): LeadingScript {
   const { copy, locale, fallback } = leadingCopy(contentLocale);
-  const common = { title: copy[`${meeting.type}Title`], editLabel: copy.edit, locale, notice: fallback ? copy.fallback : null };
+  const detailed = mode === "detailed";
+  const common = {
+    mode,
+    modeLabel: detailed ? copy.detailedLabel : copy.notesLabel,
+    toggleLabel: detailed ? copy.showNotes : copy.showDetailed,
+    title: copy[`${meeting.type}Title`],
+    editLabel: copy.edit,
+    locale,
+    notice: fallback ? copy.fallback : null,
+  };
   if (!isLocalMeetingType(meeting.type)) return { ...common, kind: "nonlocal", message: copy.nonlocal };
 
   const text = (value: string): ScriptSpan[] => [{ kind: "text", text: value }];
+  const hymnText = (value: string): ScriptSpan[] => [{ kind: detailed ? "emphasis" : "text", text: value }];
   const missing = (value: string): ScriptSpan[] => [{ kind: "missing", text: value }];
   const people = (items: readonly SundayMeetingItem[]): ScriptSpan[] => items.flatMap((item, index) => [
     ...(index ? text(index === items.length - 1 ? copy.and : ", ") : []),
@@ -43,8 +61,8 @@ export function buildLeadingScript({ meeting, contentLocale, hymns }: {
     const number = item.metadata?.hymnNumber;
     const title = hymns.find(entry => entry.number === number)?.title;
     return {
-      number: number ? text(String(number)) : missing(copy.missingHymn),
-      title: title ? text(title) : missing(copy.unknownHymn),
+      number: number ? hymnText(String(number)) : missing(copy.missingHymn),
+      title: title ? hymnText(title) : missing(copy.unknownHymn),
     };
   };
   const hymn = (item: SundayMeetingItem): ScriptSpan[] => item.metadata?.hymnNumber
@@ -66,13 +84,15 @@ export function buildLeadingScript({ meeting, contentLocale, hymns }: {
     });
   }
   if (meeting.information) introduction.push(literal(meeting.information));
-  const musicThanks: ScriptParagraph[] = [];
+  const musicRows: ScriptSpan[][] = [];
   for (const role of ["organist", "music_conductor"] as const) {
     const musicians = assigned(role).filter(item => item.personNameResolved);
     if (musicians.length) {
-      musicThanks.push(spoken(role, { people: people(musicians) }));
+      musicRows.push(expandCopy(copy[role], { people: people(musicians) }));
     }
   }
+
+  const musicThanks: ScriptParagraph[] = musicRows.length ? [heading("musicHeading"), { kind: "list", rows: musicRows }] : [];
 
   const rows = buildAgendaRows(meeting, true);
   const rowParagraphs = (row: SundayAgendaRow, prayerAlreadyAnnounced: boolean): ScriptParagraph[] => {
@@ -80,29 +100,34 @@ export function buildLeadingScript({ meeting, contentLocale, hymns }: {
     const values = { people: people(row.people) };
     const saved = details(row.people);
     switch (item.type) {
-      case "hymn":
-        if (item.slot === "interlude" || item.section === "program") {
-          if (item.slot === "interlude" && !item.metadata?.hymnNumber && !item.content) return [];
-          return [spoken("intermediateHymn", hymnValues(item))];
+      case "hymn": {
+        if (item.slot === "interlude" && !item.metadata?.hymnNumber && !item.content) return [];
+        if (item.slot === "sacrament_hymn") {
+          return detailed
+            ? [spoken("sacramentHymn", { hymn: hymn(item) }), { kind: "rule" }]
+            : [spoken("sacramentHymnNotes", hymnValues(item)), spoken("sacramentDistribution"), { kind: "rule" }];
         }
-        return [spoken(item.slot === "sacrament_hymn" ? "sacramentHymn"
-          : item.slot === "closing_hymn" ? "closingHymn" : "hymn", { hymn: hymn(item) }), ...saved];
-      case "prayer":
-        return [
-          ...(prayerAlreadyAnnounced ? [] : [spoken("prayer", values)]), ...saved,
-          ...(item.slot === "closing_prayer" || item.section === "closing" ? [] : [spoken("prayerThanks", values)]),
-        ];
+        if (item.slot === "interlude" || item.section === "program") {
+          return [detailed ? spoken("hymn", { hymn: hymn(item) }) : spoken("intermediateHymn", hymnValues(item))];
+        }
+        const key = item.slot === "closing_hymn" ? "closingHymnNotes" : item.slot === "opening_hymn" ? "openingHymnNotes" : "hymnNotes";
+        return [detailed ? spoken(item.slot === "closing_hymn" ? "closingHymn" : "hymn", { hymn: hymn(item) }) : spoken(key, hymnValues(item)), ...saved];
+      }
+      case "prayer": {
+        const key = detailed ? "prayer" : item.slot === "opening_prayer" ? "openingPrayerNotes" : item.slot === "closing_prayer" ? "closingPrayerNotes" : "prayerNotes";
+        return [...(prayerAlreadyAnnounced ? [] : [spoken(key, values)]), ...saved];
+      }
       case "sacrament_blessing":
         return [];
       case "sacrament_passing":
-        return [spoken("sacramentThanks")];
+        return detailed ? [spoken("sacramentThanks")] : [];
       case "musical_number": {
         const detail = item.content || item.task?.title;
         const performers = row.people.filter(person => person.personNameResolved);
         return [{
           kind: "spoken",
           spans: [
-            ...expandCopy(copy.musical_number, { detail: detail ? text(detail) : performers.length ? people(performers) : missing(copy.missingDetail) }),
+            ...expandCopy(copy[detailed ? "musicalNumberDetailed" : "musical_number"], { detail: detail ? text(detail) : performers.length ? people(performers) : missing(copy.missingDetail) }),
             ...(detail && performers.length ? [...text(", "), ...people(performers)] : []),
           ],
         }, ...(performers.length ? [spoken("musicThanks", { people: people(performers) })] : [])];
@@ -188,10 +213,11 @@ export function buildLeadingScript({ meeting, contentLocale, hymns }: {
         }
         const speakers = run.flatMap(entry => entry.people);
         blocks.push({ id: row.item.id, paragraphs: [
-          ...run.map(entry => spoken("talk", { people: people(entry.people) })),
-          spoken(speakers.length > 1 ? "talksThanks" : "talkThanks", { people: people(speakers) }),
+          ...(detailed
+            ? [spoken(speakers.length > 1 ? "talksDetailed" : "talkDetailed", { people: people(speakers) })]
+            : run.map(entry => spoken("talk", { people: people(entry.people) }))),
         ] });
-      } else if (row.item.type === "hymn"
+      } else if (detailed && row.item.type === "hymn"
         && (row.item.slot === "opening_hymn" || row.item.slot === "closing_hymn")
         && next?.item.type === "prayer"
         && next.item.slot === (row.item.slot === "opening_hymn" ? "opening_prayer" : "closing_prayer")) {
@@ -215,6 +241,7 @@ export function buildLeadingScript({ meeting, contentLocale, hymns }: {
       blocks.unshift({ id: "musician-thanks", paragraphs: musicThanks });
       thankedMusicians = true;
     }
+    if (section === "closing") blocks.push({ id: "final-wish", paragraphs: [spoken("finalWish")] });
     return { section, title: copy[section], blocks: blocks.filter(block => block.paragraphs.length > 0) };
   });
   return { ...common, kind: "local", introduction, sections };

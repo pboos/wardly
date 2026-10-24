@@ -7,6 +7,7 @@ export type ScriptCopyKey = keyof ScriptCopy;
 export type ScriptSpan =
   | { kind: "text"; text: string }
   | { kind: "name"; text: string }
+  | { kind: "emphasis"; text: string }
   | { kind: "missing"; text: string };
 export type ScriptParagraph =
   | { kind: "spoken"; spans: readonly ScriptSpan[] }
