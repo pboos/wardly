@@ -9,7 +9,6 @@ Read this overview first; load the relevant topic below for details.
 | --- | --- | --- |
 | [Schedule](schedule.md) | `/meetings/sunday` | Date navigation, creating meetings, inline assignments, history, mobile layout |
 | [Agenda editor](agenda.md) | `/meetings/sunday/YYYY-MM-DD` | Standard entries, editing, ordering, meeting-type changes, tasks, carry-forward |
-
 | [Leading mode](leading.md) | `/meetings/sunday/YYYY-MM-DD/leading` | Read-through script, ward language, missing assignments, return to editing |
 
 ## Shared model and lifecycle

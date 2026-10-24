@@ -6,41 +6,50 @@ Both routes authenticate the user, validate the Sunday date, and use the existin
 ward-scoped loader, which creates a missing meeting with its normal defaults.
 Conference dates show a no-local-agenda message.
 
-The reading view uses large responsive text, bold participant names, explicit
-missing-assignment prompts, and visually distinct pause instructions. It has no
-editing controls and does not advance tasks or record completion.
+The reading view uses large responsive text, bold participant names, simple lists,
+subheadings and horizontal separators. It has no editing controls and does not
+advance tasks or record completion. It generates no waiting instructions.
 
 ## Script rules
 
 - The ward content language selects bundled English or German wording and dates.
   Regional English/German locales resolve to their language. Unsupported locales
-  use English speech with a visible notice. Hymn lookup never substitutes another
-  language's numbering; unavailable titles and assignments stay explicit.
-- The script follows `buildAgendaRows(meeting, true)`, including saved section/order
-  and sacrament-person grouping. Authored conductor text, meeting information,
-  content, task titles and descriptions retain literal text and line breaks.
-  Person names come from structured assignments, not guesses from prose.
-- Opening/closing hymn and prayer introductions combine only when the corresponding
-  slots are adjacent. The prayer remains at its saved position and receives thanks
-  after its pause. Empty optional interludes are omitted; required empty slots remain.
-- Consecutive talks share an introduction and final thanks. A different item ends
-  the run. Each talk's saved topic/details stays with its own pause.
-- The sacrament hymn introduces preparation, blessing and passing. Assignment rows
-  retain their saved position. Completion thanks follows the passing pause only.
-- Sustainings include support and opposition votes; releases invite appreciation.
-  Aaronic calling information describes prior quorum sustaining without adding a
-  ward vote or claiming an ordination or setting-apart time.
-- `member_welcome` linked to `child_baptism` recognizes baptism and confirmation
-  without a welcome vote. Ordinary member welcomes invite support. Confirmations,
-  child blessings, musical numbers and children's presentations have separate
-  introductions and pauses. Fast/testimony meetings automatically place the
-  testimony invitation, pause and thanks after all saved program rows and before
-  the closing section. Saved rows keep their order. Place introductions in the
-  program section and text to read after testimonies in the closing section.
+  use English with a visible notice. Hymn lookup never substitutes another
+  language's numbering; unavailable titles and required assignments stay explicit.
+- The introduction starts with presiding/conducting rows, then the welcome.
+  Visitors have their own heading and one row per person, including an optional
+  saved role. Named organists/pianists and music conductors are thanked once before
+  the first closing hymn/prayer, or at the start of closing if neither exists.
+- The script follows `buildAgendaRows(meeting, true)` and saved section/order.
+  Authored conductor text, meeting information and ordinary free text remain
+  literal, including line breaks. Names come from structured assignments.
+- Adjacent standard opening/closing hymn and prayer slots share an introduction.
+  Prayers keep their position. Opening prayers receive thanks; closing-prayer
+  slots anywhere and all prayers in the closing section never receive thanks.
+- Each talk has a compact speaker line without topic/task details. Consecutive
+  talks share final thanks with singular/plural wording; other items end the run.
+  Intermediate hymns show number and title. Musical numbers show saved content or
+  task title and optional named performers, with thanks only for named performers.
+  Empty optional interludes are omitted. Transitions render a horizontal separator.
+- The sacrament hymn introduces preparation, blessing and passing. Blessing and
+  passing names, missing-name prompts and details are omitted. Sacrament thanks
+  remains at the saved passing position.
+- Contiguous calling-only runs become release and sustaining blocks, releases
+  first. Each has a heading, introduction, one bold name plus office per list row,
+  and vote wording. Offices use content, falling back to task title; task
+  descriptions are omitted. Sustainings include opposition and thanks. Custom,
+  unrelated and Aaronic-information rows end the run. Aaronic information adds no
+  ward vote, ordination claim, or setting-apart location/time.
+- Contiguous announcements receive one localized heading. A different item starts
+  a new announcement group. Ordinary member welcomes invite support; child-baptism
+  welcomes instead recognize baptism and confirmation. Confirmations, child
+  blessings and children's presentations retain their introductions.
+- Fast/testimony meetings place the testimony invitation and thanks after saved
+  program rows and before closing. Put introductions in program and text to read
+  after testimonies in closing.
 
-The script does not infer gender, baptism dates, calling offices, or class times.
-Missing calling details remain a prompt. Saved free text can use any language;
-only generated wording follows the ward language.
+Generated wording does not infer gender, baptism dates, offices, or class times.
+Saved free text can use any language; generated wording follows the ward language.
 
 ## Implementation and verification
 
@@ -51,10 +60,11 @@ only generated wording follows the ward language.
   [German](../../../lib/sunday-meetings/leading-copy/de.json) JSON templates.
 - [Route](../../../app/meetings/sunday/[date]/leading/page.tsx) loads the meeting
   and bundled hymn catalog. [Reader](../../../app/meetings/sunday/sunday-leading-script.tsx)
-  renders spoken spans and pause cues without HTML interpolation.
+  renders spoken spans, headings, rich list rows and separators without HTML interpolation.
 - [Behavior tests](../../../lib/sunday-meetings/leading-script.test.mjs) cover both
   languages, ordering and adjacency, missing names/titles, sacrament thanks,
-  task details, child baptism, meeting types, and key/placeholder parity.
+  calling lists, compact program rows, closing prayer exclusions, musician thanks,
+  announcements, task details, child baptism, meeting types, and copy parity.
 
 Sunday mutations and ward settings revalidate the reading route. Verify the
 editor/reader round trip and long names/content on desktop and mobile.

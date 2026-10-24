@@ -1,25 +1,38 @@
-import type { ScriptParagraph } from "@/lib/sunday-meetings/leading-script";
 import { cn } from "@/lib/utils";
+import { Separator } from "@/components/ui/separator";
+import type { ScriptParagraph, ScriptSpan } from "@/lib/sunday-meetings/leading-script";
+
+function renderSpans(spans: readonly ScriptSpan[]) {
+  return spans.map((span, index) => {
+    switch (span.kind) {
+      case "name":
+        return <strong key={index} className="rounded bg-accent px-1 font-semibold text-accent-foreground">{span.text}</strong>;
+      case "missing":
+        return <span key={index} className="font-semibold text-destructive">{span.text}</span>;
+      case "text":
+        return <span key={index}>{span.text}</span>;
+    }
+  });
+}
 
 export function SundayScriptParagraph({ paragraph }: { paragraph: ScriptParagraph }) {
-  const isCue = paragraph.kind === "cue";
-  return (
-    <p className={cn(
-      "whitespace-pre-wrap break-words",
-      isCue ? "text-base italic text-muted-foreground" : "text-lg leading-relaxed sm:text-xl",
-    )}>
-      {isCue && "("}
-      {paragraph.spans.map((span, index) => {
-        switch (span.kind) {
-          case "name":
-            return <strong key={index} className="rounded bg-accent px-1 font-semibold text-accent-foreground">{span.text}</strong>;
-          case "missing":
-            return <span key={index} className="font-semibold text-destructive">{span.text}</span>;
-          case "text":
-            return <span key={index}>{span.text}</span>;
-        }
-      })}
-      {isCue && ")"}
-    </p>
-  );
+  const textClass = "whitespace-pre-wrap break-words text-lg leading-relaxed sm:text-xl";
+  switch (paragraph.kind) {
+    case "rule":
+      return <Separator />;
+    case "heading":
+      return <h3 className="text-lg font-semibold sm:text-xl">{renderSpans(paragraph.spans)}</h3>;
+    case "list":
+      return (
+        <ul className={cn(textClass, "flex flex-col gap-2")}>
+          {paragraph.rows.map((row, index) => <li key={index}>{renderSpans(row)}</li>)}
+        </ul>
+      );
+    case "spoken":
+      return <p className={textClass}>{renderSpans(paragraph.spans)}</p>;
+    default: {
+      const exhaustive: never = paragraph;
+      return exhaustive;
+    }
+  }
 }

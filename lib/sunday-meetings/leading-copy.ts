@@ -10,7 +10,9 @@ export type ScriptSpan =
   | { kind: "missing"; text: string };
 export type ScriptParagraph =
   | { kind: "spoken"; spans: readonly ScriptSpan[] }
-  | { kind: "cue"; spans: readonly ScriptSpan[] };
+  | { kind: "heading"; spans: readonly ScriptSpan[] }
+  | { kind: "list"; rows: readonly (readonly ScriptSpan[])[] }
+  | { kind: "rule" };
 
 const german: ScriptCopy = de;
 export function leadingCopy(locale: string) {
