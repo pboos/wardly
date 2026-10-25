@@ -101,7 +101,9 @@ function mapItem(item: ItemRecord): SundayMeetingItem {
     personMemberId: item.person_member_id,
     personName: item.person_name,
     personNameResolved:
-      memberDisplayName(item.member) ?? item.person_name ?? null,
+      memberDisplayName(item.member) ??
+      item.person_name ??
+      memberDisplayName(item.task?.member ?? null),
     taskId: item.task_id,
     task: mapTask(item.task),
     createdAt: item.created_at.toISOString(),
