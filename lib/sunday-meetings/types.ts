@@ -121,7 +121,7 @@ export type SundayMeetingItem = {
   metadata: SundayItemMetadata | null;
   personMemberId: string | null;
   personName: string | null;
-  /** Member display name or free-text person; null when the row has no person. */
+  /** Explicit agenda person, falling back to the linked task's current member. */
   personNameResolved: string | null;
   taskId: string | null;
   task: SundayMeetingTaskSummary | null;

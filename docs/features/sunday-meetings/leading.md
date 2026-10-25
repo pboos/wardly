@@ -28,7 +28,10 @@ advance tasks or record completion. It generates no waiting instructions.
   or at the start of closing if neither exists. Unassigned musicians are omitted.
 - The script follows `buildAgendaRows(meeting, true)` and saved section/order.
   Authored conductor text, meeting information and ordinary free text remain
-  literal, including line breaks. Names come from structured assignments.
+  literal, including line breaks. Names come from structured assignments,
+  falling back to the linked task's current member when the agenda item has no
+  explicit person. This applies to existing and newly linked tasks; changes to
+  the task's member appear when the meeting reloads.
 - Notes show separate labeled opening/closing hymn and prayer lines. Detailed
   text pairs adjacent standard opening/closing hymn and prayer slots only.
   Prayers keep their position. Neither mode generates prayer or talk thanks.
