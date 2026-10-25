@@ -15,7 +15,7 @@ Read the [overview](README.md) first; schedule-specific editing is in [schedule]
   available. Presiding is a separate optional assignment, not inferred from leader.
 - Meeting context contains leader, presiding, organists, music conductors, visitors,
   and meeting information. Leading mode opens a separate reading view; Edit mode
-  returns to this page. Assignment history remains available on the schedule.
+  returns to this page. Assignment history opens a read-only modal beside Leading mode. The editor stays mounted, preserving local drafts. See [assignment history](schedule.md#assignment-history) for eligibility and sorting.
 - Agenda cards use compact spacing and top-right reorder arrows. Extra entries
   keep section movement and deletion in the adjacent “More agenda item actions” menu.
   Hymns (🎵), musical numbers (🎶), prayers (🙏), talks (🎤), and sacrament
