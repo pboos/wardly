@@ -1,6 +1,5 @@
 {
   "title": "Leading mode",
-  "edit": "Edit mode",
   "nonlocal": "This conference has no local agenda.",
   "fallback": "The configured language is unavailable. This script uses English.",
   "opening": "Opening",
@@ -58,8 +57,6 @@
   "announcements": "Announcements",
   "notesLabel": "Short notes",
   "detailedLabel": "Detailed reading text",
-  "showDetailed": "Show detailed reading text",
-  "showNotes": "Show short notes",
   "musicHeading": "Thanks",
   "openingHymnNotes": "Opening hymn: {number} - {title}",
   "closingHymnNotes": "Closing hymn: {number} - {title}",

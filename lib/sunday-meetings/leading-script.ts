@@ -13,8 +13,6 @@ export type LeadingScript = {
   title: string;
   mode: LeadingMode;
   modeLabel: string;
-  toggleLabel: string;
-  editLabel: string;
   locale: string;
   notice: string | null;
 } & (
@@ -33,9 +31,7 @@ export function buildLeadingScript({ meeting, contentLocale, hymns, mode = "note
   const common = {
     mode,
     modeLabel: detailed ? copy.detailedLabel : copy.notesLabel,
-    toggleLabel: detailed ? copy.showNotes : copy.showDetailed,
     title: copy[`${meeting.type}Title`],
-    editLabel: copy.edit,
     locale,
     notice: fallback ? copy.fallback : null,
   };

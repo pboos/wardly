@@ -13,13 +13,13 @@ export function SundayLeadingScript({ date, script }: { date: string; script: Le
   return (
     <article lang={script.locale} className="mx-auto flex w-full max-w-3xl flex-col gap-8 pb-16">
       <header className="flex flex-col items-start gap-3">
-        <div className="flex flex-wrap gap-2">
+        <div lang="en" className="flex flex-wrap gap-2">
           <Button variant="outline" asChild>
-            <Link href={`/meetings/sunday/${date}`}>{script.editLabel}</Link>
+            <Link href={`/meetings/sunday/${date}`}>Edit mode</Link>
           </Button>
           <Button variant="outline" asChild>
             <Link href={`/meetings/sunday/${date}/leading${script.mode === "notes" ? "?mode=detailed" : ""}`}>
-              {script.toggleLabel}
+              {script.mode === "notes" ? "Show detailed reading text" : "Show short notes"}
             </Link>
           </Button>
         </div>
