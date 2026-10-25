@@ -10,6 +10,8 @@ The reader defaults to short notes. Its top button switches to detailed reading
 text with `?mode=detailed`; switching back removes the query. Only the exact
 `detailed` value selects detailed text, including after reload. Both modes keep
 the same dated meeting and use no client mode state.
+The edit and mode-switch buttons use English UI labels, independent of the ward
+content language. Their labels live in the reader component, outside the script copy.
 
 The reading view uses large responsive text, bold participant names, simple lists,
 subheadings and horizontal separators. It has no editing controls and does not

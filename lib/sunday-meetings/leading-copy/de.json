@@ -1,6 +1,5 @@
 {
   "title": "Versammlungsleitung",
-  "edit": "Bearbeiten",
   "nonlocal": "Für diese Konferenz gibt es keinen örtlichen Ablauf.",
   "fallback": "Die eingestellte Sprache ist nicht verfügbar. Dieser Text verwendet Englisch.",
   "opening": "Eröffnung",
@@ -58,8 +57,6 @@
   "announcements": "Bekanntmachungen",
   "notesLabel": "Kurznotizen",
   "detailedLabel": "Ausführlicher Lesetext",
-  "showDetailed": "Ausführlichen Lesetext anzeigen",
-  "showNotes": "Kurznotizen anzeigen",
   "musicHeading": "Dank",
   "openingHymnNotes": "Anfangslied: {number} - {title}",
   "closingHymnNotes": "Schlusslied: {number} - {title}",
