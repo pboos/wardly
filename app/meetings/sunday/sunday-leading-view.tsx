@@ -14,6 +14,7 @@ import { nextSunday, previousSunday } from "@/lib/sunday-meetings/calendar";
 import type { loadLeadingSundayMeeting } from "@/lib/sunday-meetings/loaders";
 import { SundayLeadingAgenda } from "./sunday-leading-agenda";
 import { SundayLeadingParticipants } from "./sunday-leading-participants";
+import { SundayAssignmentHistoryDialog } from "./sunday-assignment-history-dialog";
 
 type LeadingData = Awaited<ReturnType<typeof loadLeadingSundayMeeting>>;
 
@@ -49,6 +50,10 @@ export function SundayLeadingView({ data }: { data: LeadingData }) {
           </h1>
         </div>
         <div className="flex flex-wrap gap-2">
+          <SundayAssignmentHistoryDialog
+            members={data.memberHistory}
+            today={data.today}
+          />
           <Button variant="outline" size="sm" asChild>
             <Link href={`/meetings/sunday/${meeting.date}/leading`}>Leading mode</Link>
           </Button>

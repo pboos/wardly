@@ -84,8 +84,22 @@ independent of the selected meeting or schedule page. Free-text people have no
 member history. Member read models carry `is_moved_out` rather than the former
 status string; history still includes all ward members. “Last” is the latest date before ward-local today; “next” is the
 earliest date on/after today. The details view and person picker can use this data.
-The history list sorts by last-talk date, falling back to last-prayer date,
-with no history first; it does not compute a combined most-recent assignment.
+The dated agenda editor exposes **Assignment history** beside Leading mode.
+Its modal shows separate prayer and talk lists, each sorted by its latest saved
+assignment across all dates, including future bookings. With several future
+assignments, the furthest date controls the rank. Dates on or after ward-local
+today carry an Upcoming badge. Tied dates sort by displayed name, then member ID.
+
+The lists include only current members without any Exclude by default tag.
+A searchable member dropdown filters both lists to the selected member. Its
+choices include only eligible current members, including those with no history.
+Select All members to restore both lists. The shared toggle starts off, hiding
+members with no recorded assignment independently in each list. Turning it on
+places them first with “Never recorded”. “Never recorded” means no saved member-linked item
+for that category, not a claim about participation outside Wardly. Free-text
+names cannot contribute to a member's history. Opening and closing the modal
+does not navigate or save editor drafts. The underlying picker history still
+contains moved-out and default-excluded members and retains its last/next rules.
 
 ## Implementation map
 
@@ -96,6 +110,7 @@ with no history first; it does not compute a combined most-recent assignment.
 | Calendar arithmetic and creation defaults | [calendar.ts](../../../lib/sunday-meetings/calendar.ts), [meeting-service.ts](../../../lib/sunday-meetings/meeting-service.ts) |
 | Schedule composition and responsive layouts | [sunday-schedule-view.tsx](../../../app/meetings/sunday/sunday-schedule-view.tsx), [table row](../../../app/meetings/sunday/sunday-schedule-table-row.tsx), [mobile card](../../../app/meetings/sunday/sunday-schedule-mobile-card.tsx) |
 | Shared editors and slot lookup | [people picker](../../../app/meetings/sunday/sunday-people-picker.tsx), [picker modal](../../../app/meetings/sunday/sunday-person-picker-dialog.tsx), [hymn editor](../../../app/meetings/sunday/sunday-hymn-picker.tsx), [slots.ts](../../../lib/sunday-meetings/slots.ts) |
+| Detail history modal | [modal](../../../app/meetings/sunday/sunday-assignment-history-dialog.tsx), [category list](../../../app/meetings/sunday/sunday-assignment-history-list.tsx) |
 | History calculation | [history.ts](../../../lib/sunday-meetings/history.ts) |
 
 ## Verification

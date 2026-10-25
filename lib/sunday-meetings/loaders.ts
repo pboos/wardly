@@ -416,6 +416,7 @@ export async function loadLeadingSundayMeeting(
 
   return {
     meeting,
+    today: localToday(settings.time_zone),
     contentLocale: settings.content_locale,
     timeZone: settings.time_zone,
     isLocal: isLocalMeetingType(meeting.type),

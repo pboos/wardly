@@ -170,6 +170,8 @@ export type SundayMeetingMemberHistory = {
   nextTalk: AssignmentDate | null;
   lastPrayer: AssignmentDate | null;
   nextPrayer: AssignmentDate | null;
+  latestTalk: AssignmentDate | null;
+  latestPrayer: AssignmentDate | null;
 };
 
 export type SundayMeetingSupportText = {
