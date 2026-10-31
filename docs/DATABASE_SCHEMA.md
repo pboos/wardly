@@ -297,6 +297,7 @@ CREATE TABLE task (
   title             TEXT,
   description       TEXT,
   assigned_user_id  TEXT REFERENCES user (id) ON DELETE SET NULL,
+  owner_user_id     TEXT REFERENCES user (id) ON DELETE SET NULL,
   member_id         TEXT REFERENCES member (id) ON DELETE SET NULL,
   due_date          TEXT,
   priority          TEXT NOT NULL DEFAULT 'normal',
@@ -309,6 +310,7 @@ CREATE TABLE task (
 CREATE INDEX idx_task_ward_id ON task (ward_id);
 CREATE INDEX idx_task_ward_type_state ON task (ward_id, type, state);
 CREATE INDEX idx_task_assigned_user_id ON task (assigned_user_id);
+CREATE INDEX idx_task_owner_user_id ON task (owner_user_id);
 CREATE INDEX idx_task_member_id ON task (member_id);
 CREATE INDEX idx_task_due_date ON task (due_date);
 CREATE INDEX idx_task_completed_at ON task (completed_at);
@@ -316,6 +318,12 @@ CREATE INDEX idx_task_ward_completed ON task (ward_id, completed_at);
 ```
 
 ---
+
+Ownership is independent of the current workflow assignee. New tasks copy their
+initial assignee into `owner_user_id`; later assignment and state changes preserve
+ownership. Either reference can be null, and deleting its user clears that
+reference. The additive `20261031120000_task_owner` migration backfills existing
+owners from their current assignees without changing task IDs or links.
 
 ## 8. `task_type`
 

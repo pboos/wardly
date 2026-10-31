@@ -1,6 +1,6 @@
 # Tasks
 
-`/tasks` manages ward tasks, their assignees, members, and lifecycle states.
+`/tasks` manages ward tasks, their owners, assignees, members, and lifecycle states.
 The page retains its Tasks heading and Settings link; a + beside the filters
 opens the add dialog. Active tasks can be filtered by All, Mine, or enabled type.
 Past tasks are collapsible and load the latest 50 completed records.
@@ -13,10 +13,23 @@ The type filter uses a wider selector and a viewport-constrained dropdown.
 Type labels stay on one line, with ellipsis for names that exceed the available
 width; filter controls wrap onto another row on narrow screens.
 
-[Sunday reminders](reminders.md) email each user's unfinished assigned tasks
-one hour before the ward's configured sacrament time. The email's
-`/tasks?filter=mine` link selects Mine after normal login. Mine also filters the
-displayed past tasks to the current assignee.
+[Sunday reminders](reminders.md) email each user's unfinished assigned or owned
+tasks one hour before the ward's configured sacrament time. The email links to
+`/tasks` after normal login. Mine filters active and displayed past tasks to the
+current assignee.
+
+## Owner and assignee
+
+The owner stays responsible for the task as its workflow assignee changes.
+Creation sets the owner to the initial assignee, or no owner for an unassigned task.
+Edit task offers separate **Assignee** and **Owner** selectors. Choose **No owner**
+to clear ownership. Owner changes save independently, including alongside a status
+change. State-driven reassignment, direct reassignment, completion, and reopening
+preserve the owner. Deleting a user clears references to that user.
+Mine and the list's Assignee column use the current assignee. Sunday reminders
+also include unfinished owned tasks, showing delegated work muted with its current
+assignee and identifying unassigned owned tasks. Meeting follow-up tasks use the same
+initial ownership rule.
 
 ## Quick entry
 

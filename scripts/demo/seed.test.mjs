@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { mkdtempSync, readFileSync, rmSync } from "node:fs";
+import { mkdtempSync, readFileSync, readdirSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import Database from "better-sqlite3";
@@ -13,15 +13,10 @@ test("demo fixture is atomic, relationally valid, and preserves edits on restart
   const directory = mkdtempSync(join(tmpdir(), "wardly-demo-test-"));
   const path = join(directory, "demo.db");
   const db = new Database(path);
-  db.exec(
-    readFileSync(
-      new URL(
-        "../../prisma/migrations/20260627162827_init/migration.sql",
-        import.meta.url,
-      ),
-      "utf8",
-    ),
-  );
+  const migrations = new URL("../../prisma/migrations/", import.meta.url);
+  for (const name of readdirSync(migrations).filter((name) => /^\d/.test(name)).sort()) {
+    db.exec(readFileSync(new URL(`${name}/migration.sql`, migrations), "utf8"));
+  }
   db.close();
   const prisma = new PrismaClient({
     adapter: new PrismaBetterSqlite3({ url: `file:${path}` }),
@@ -95,6 +90,10 @@ test("demo fixture is atomic, relationally valid, and preserves edits on restart
       );
     }
     assert.equal(await prisma.task.count(), 10);
+    const seededTasks = await prisma.task.findMany();
+    assert.ok(seededTasks.some((task) => task.assigned_user_id === null));
+    assert.ok(seededTasks.some((task) => task.assigned_user_id !== null));
+    assert.ok(seededTasks.every((task) => task.owner_user_id === task.assigned_user_id));
     const meetings = await prisma.sunday_meeting.findMany({
       include: { sunday_meeting_item: true },
       orderBy: { date: "asc" },

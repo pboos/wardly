@@ -7,7 +7,7 @@ import {
   renewDelivery,
   retryDelivery,
 } from "./reminder-delivery";
-import type { TaskDigest } from "./reminder-email";
+import type { DigestTask, TaskDigest } from "./reminder-email";
 
 export async function sendDueTaskDigests(options: {
   send: (digest: TaskDigest) => Promise<void>;
@@ -15,7 +15,7 @@ export async function sendDueTaskDigests(options: {
   now?: () => Date;
 }) {
   const clock = options.now ?? (() => new Date());
-  const url = new URL("/tasks?filter=mine", options.baseUrl);
+  const url = new URL("/tasks", options.baseUrl);
   if (!["http:", "https:"].includes(url.protocol))
     throw new Error("APP_URL must use HTTP or HTTPS.");
   const stats = { sent: 0, failed: 0 };
@@ -33,7 +33,10 @@ export async function sendDueTaskDigests(options: {
     const users = await prisma.user.findMany({
       where: {
         ward_id: ward.id,
-        task: { some: { ward_id: ward.id, completed_at: null } },
+        OR: [
+          { task: { some: { ward_id: ward.id, completed_at: null } } },
+          { owned_tasks: { some: { ward_id: ward.id, completed_at: null } } },
+        ],
       },
     });
     for (const user of users) {
@@ -53,14 +56,14 @@ export async function sendDueTaskDigests(options: {
       }, 60000);
       heartbeat.unref();
       try {
-        // Read assignments after claiming so retries use current unfinished tasks.
         const tasks = await prisma.task.findMany({
           where: {
             ward_id: ward.id,
-            assigned_user_id: user.id,
+            OR: [{ assigned_user_id: user.id }, { owner_user_id: user.id }],
             completed_at: null,
           },
           include: {
+            assigned_user: { select: { name: true } },
             member: { select: { first_name: true, last_name: true } },
           },
           orderBy: [{ created_at: "desc" }, { id: "asc" }],
@@ -87,13 +90,19 @@ export async function sendDueTaskDigests(options: {
           meetingTime: ward.sacrament_start_time!,
           timeZone: ward.time_zone,
           tasksUrl: url.href,
-          tasks: tasks.map((task) => {
+          tasks: tasks.map((task): DigestTask => {
             const type = taskTypes.find((type) => type.type === task.type);
             const state = type?.states.find(
               (state) => state.state === task.state,
             );
             return {
               ...task,
+              assignment:
+                task.assigned_user_id === user.id
+                  ? { kind: "self", name: user.name }
+                  : task.assigned_user
+                    ? { kind: "other", name: task.assigned_user.name }
+                    : { kind: "unassigned" },
               typeKey: task.type,
               typeColor: type?.color ?? "#71717a",
               stateColor: state?.color ?? "#71717a",

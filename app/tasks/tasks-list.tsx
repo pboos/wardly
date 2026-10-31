@@ -19,6 +19,7 @@ import {
   updateTaskAssignee as updateTaskAssigneeAction,
   updateTaskDescription as updateTaskDescriptionAction,
   updateTaskMember as updateTaskMemberAction,
+  updateTaskOwner as updateTaskOwnerAction,
   updateTaskTitle as updateTaskTitleAction,
 } from "./actions";
 import { useAppMutation } from "@/lib/actions/use-app-mutation";
@@ -46,6 +47,7 @@ export function TasksList({
   const { execute: updateTaskAssignee } = useAppMutation(
     updateTaskAssigneeAction,
   );
+  const { execute: updateTaskOwner } = useAppMutation(updateTaskOwnerAction);
   const { execute: updateTaskDescription } = useAppMutation(
     updateTaskDescriptionAction,
   );
@@ -249,6 +251,10 @@ export function TasksList({
             } else if (draft.assignedUserId !== editTask.assigned_user_id) {
               localPatch.assigned_user_id = draft.assignedUserId;
               ops.push(updateTaskAssignee(id, draft.assignedUserId));
+            }
+            if (draft.ownerUserId !== editTask.owner_user_id) {
+              localPatch.owner_user_id = draft.ownerUserId;
+              ops.push(updateTaskOwner(id, draft.ownerUserId));
             }
             if (draft.description !== editTask.description) {
               localPatch.description = draft.description;

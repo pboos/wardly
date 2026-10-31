@@ -138,6 +138,7 @@ export async function seedDemo(
       index,
       [type, state, title, memberIndex, days, priority],
     ] of taskSpecs.entries()) {
+      const assignedUserId = index === 7 ? null : users[index % users.length].id;
       tasks.push(
         await tx.task.create({
           data: {
@@ -148,8 +149,8 @@ export async function seedDemo(
             priority,
             description: "Fiktive Aufgabe zum Ausprobieren und Bearbeiten.",
             member_id: members[memberIndex].id,
-            assigned_user_id:
-              index === 7 ? null : users[index % users.length].id,
+            assigned_user_id: assignedUserId,
+            owner_user_id: assignedUserId,
             due_date: addDays(today, days),
             duration_minutes: 15,
             completed_at: state === "done" ? addDays(today, -3) : null,

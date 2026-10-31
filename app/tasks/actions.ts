@@ -70,6 +70,7 @@ export async function createTask(
         title,
         description,
         assigned_user_id: assignedUserId,
+        owner_user_id: assignedUserId,
         member_id: memberId,
         duration_minutes: durationMinutes,
         completed_at:
@@ -143,6 +144,31 @@ export async function updateTaskAssignee(
       where: { id: taskId, ward_id: user.ward_id },
       data: { assigned_user_id: assignedUserId, updated_at: new Date() },
     });
+
+    revalidatePath("/tasks");
+  });
+}
+
+export async function updateTaskOwner(
+  identity: SessionIdentity | null,
+  taskId: string,
+  ownerUserId: string | null,
+) {
+  return authenticatedAction(identity, async (user) => {
+    const ownerId = ownerUserId || null;
+    if (ownerId) {
+      const owner = await prisma.user.findFirst({
+        where: { id: ownerId, ward_id: user.ward_id },
+        select: { id: true },
+      });
+      if (!owner) throw new Error("Invalid owner.");
+    }
+
+    const result = await prisma.task.updateMany({
+      where: { id: taskId, ward_id: user.ward_id },
+      data: { owner_user_id: ownerId, updated_at: new Date() },
+    });
+    if (result.count === 0) throw new Error("Task not found.");
 
     revalidatePath("/tasks");
   });

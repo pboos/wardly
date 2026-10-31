@@ -51,6 +51,7 @@ export type Task = {
   description: string | null;
   assigned_user_id: string | null;
   assigned_user_name: string | null;
+  owner_user_id: string | null;
   member_id: string | null;
   member_first_name: string | null;
   member_last_name: string | null;
@@ -61,7 +62,7 @@ export type Task = {
   created_at: string;
 };
 
-/** Client shape of a ward user (for assignee autocomplete). */
+/** Client shape of a ward user (for assignee and owner autocomplete). */
 export type WardUser = {
   id: string;
   name: string;

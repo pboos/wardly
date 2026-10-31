@@ -207,7 +207,7 @@ export async function executeMeetingCommand(
             throw new Error(
               "Enable the Task type with a title and initial state in task settings first.",
             );
-          const assignee = input.assignedUserId;
+          const assignee = input.assignedUserId || null;
           if (
             assignee &&
             !(await db.user.findFirst({
@@ -223,6 +223,7 @@ export async function executeMeetingCommand(
               state: initial.state,
               title,
               assigned_user_id: assignee,
+              owner_user_id: assignee,
               duration_minutes:
                 definition.configuration.durationMinutes ?? null,
               completed_at:
