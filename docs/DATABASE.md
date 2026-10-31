@@ -160,3 +160,8 @@ appearance links and adds a required indexed foreign key. Regenerate the Prisma
 client and explicitly recreate development databases that already applied this
 migration. `demo:reset` recreates only the isolated demo database. See
 [leadership meetings](features/leadership-meetings/README.md).
+
+Task ownership uses the additive `20261031120000_task_owner` migration. Apply
+pending migrations and regenerate the Prisma client. Existing tasks retain their
+data and links, with their current assignee copied to the new nullable owner
+reference. No reset is required. See [tasks](features/tasks/README.md).

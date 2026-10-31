@@ -1,6 +1,10 @@
 import { digestProgress, groupDigestTasks } from "./reminder-groups";
 
 export type DigestTask = {
+  assignment:
+    | { kind: "self"; name: string }
+    | { kind: "other"; name: string }
+    | { kind: "unassigned" };
   type: string;
   typeKey?: string;
   typeColor?: string;
@@ -69,17 +73,26 @@ function taskDetails(task: DigestTask): string {
   return task.due_date ? `Due: ${task.due_date}` : "";
 }
 
+function taskAssignment(task: DigestTask): string {
+  return task.assignment.kind === "unassigned"
+    ? "Unassigned"
+    : `Assigned to ${task.assignment.name}`;
+}
+
 function renderTask(task: DigestTask, index: number): string {
   const percent = Math.round(digestProgress(task) * 100);
-  const stateColor = safeColor(task.stateColor);
-  const typeColor = safeColor(task.typeColor);
-  const badgeStyle = `display:inline-block;padding:1px 8px;border-radius:5px;background:${palette.secondary};color:${palette.foreground};font-size:12px;line-height:1.7;vertical-align:top;margin:2px 4px 2px 0`;
+  const delegated = task.assignment.kind === "other";
+  const foreground = delegated ? palette.muted : palette.foreground;
+  const stateColor = delegated ? palette.muted : safeColor(task.stateColor);
+  const typeColor = delegated ? palette.muted : safeColor(task.typeColor);
+  const badgeStyle = `display:inline-block;padding:1px 8px;border-radius:5px;background:${palette.secondary};color:${foreground};font-size:12px;line-height:1.7;vertical-align:top;margin:2px 4px 2px 0`;
   return `<tr><td style="padding:12px 16px;${index ? `border-top:1px solid ${palette.border};` : ""}">
-    <p style="margin:0 0 4px;font-size:15px;font-weight:600;color:${palette.foreground}">${escapeHtml(taskHeading(task))}</p>
+    <p style="margin:0 0 4px;font-size:15px;font-weight:600;color:${foreground}">${escapeHtml(taskHeading(task))}</p>
     <p style="margin:0;font-size:12px;line-height:1.7">
       <span style="${badgeStyle}"><span style="color:${typeColor}">●</span> ${escapeHtml(task.type)}</span>
       <span style="${badgeStyle}"><span style="color:${stateColor}">${percent === 100 ? "✓" : percent === 0 ? "◌" : "●"}</span> ${escapeHtml(task.state)} <span style="color:${palette.muted}">· ${percent}%</span></span>
     </p>
+    <p style="margin:6px 0 0;font-size:12px;color:${palette.muted}">${escapeHtml(taskAssignment(task))}</p>
     ${task.description ? `<p style="margin:6px 0 0;font-size:13px;color:${palette.muted};white-space:pre-wrap">${escapeHtml(task.description)}</p>` : ""}
     ${task.due_date ? `<p style="margin:6px 0 0;font-size:12px;color:${palette.muted}">${escapeHtml(taskDetails(task))}</p>` : ""}
   </td></tr>`;
@@ -89,7 +102,7 @@ export function renderTaskDigest(digest: TaskDigest) {
   const groups = groupDigestTasks(digest.tasks);
   const count = digest.tasks.length;
   const intro = `${digest.wardName} — Sunday ${digest.sundayDate}. Sacrament meeting starts at ${digest.meetingTime} (${digest.timeZone}).`;
-  const summary = `${count} unfinished assigned ${count === 1 ? "task" : "tasks"}`;
+  const summary = `${count} unfinished ${count === 1 ? "task" : "tasks"}`;
   const cards = groups
     .map(
       (
@@ -112,6 +125,7 @@ export function renderTaskDigest(digest: TaskDigest) {
           ...group.tasks.map((task) =>
             [
               taskHeading(task),
+              taskAssignment(task),
               `Type: ${task.type}`,
               `Status: ${task.state} (${Math.round(digestProgress(task) * 100)}%)`,
               taskDetails(task),
@@ -122,7 +136,7 @@ export function renderTaskDigest(digest: TaskDigest) {
           ),
         ].join("\n\n"),
       ),
-      `View my tasks: ${digest.tasksUrl}`,
+      `View tasks: ${digest.tasksUrl}`,
     ].join("\n\n"),
     html: `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
     <body style="margin:0;padding:0;background:${palette.background};font-family:Arial,Helvetica,sans-serif;line-height:1.5;color:${palette.foreground};overflow-wrap:anywhere;word-break:break-word">
@@ -133,7 +147,7 @@ export function renderTaskDigest(digest: TaskDigest) {
           <p style="margin:0 0 18px;font-size:13px;color:${palette.muted}">Sunday ${escapeHtml(digest.sundayDate)} · ${escapeHtml(digest.meetingTime)} (${escapeHtml(digest.timeZone)})</p>
           <p style="margin:0 0 4px">Hi ${escapeHtml(digest.name)},</p>
           <p style="margin:0 0 18px;font-size:14px;color:${palette.muted}">You have ${summary}. Sacrament meeting starts at ${escapeHtml(digest.meetingTime)}.</p>
-          <p style="margin:0 0 24px"><a href="${escapeHtml(digest.tasksUrl)}" style="display:inline-block;background:${palette.primary};color:#ffffff;padding:10px 18px;border-radius:6px;font-size:14px;font-weight:600;text-decoration:none">View my tasks</a></p>
+          <p style="margin:0 0 24px"><a href="${escapeHtml(digest.tasksUrl)}" style="display:inline-block;background:${palette.primary};color:#ffffff;padding:10px 18px;border-radius:6px;font-size:14px;font-weight:600;text-decoration:none">View tasks</a></p>
           ${cards}
           <p style="margin:0;font-size:12px;color:${palette.muted}">Tasks are grouped by topic, with the most progress first in each group.</p>
         </td></tr></table>

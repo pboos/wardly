@@ -35,6 +35,7 @@ export function EditTaskModal({
     title: string | null;
     memberId: string | null;
     assignedUserId: string | null;
+    ownerUserId: string | null;
     state: string;
     description: string | null;
   }) => void;
@@ -45,6 +46,7 @@ export function EditTaskModal({
   const [title, setTitle] = useState(task.title ?? "");
   const [memberId, setMemberId] = useState(task.member_id);
   const [assignedUserId, setAssignedUserId] = useState(task.assigned_user_id);
+  const [ownerUserId, setOwnerUserId] = useState(task.owner_user_id);
   const [state, setState] = useState(task.state);
   const [description, setDescription] = useState(task.description ?? "");
 
@@ -54,6 +56,7 @@ export function EditTaskModal({
       title: title.trim() || null,
       memberId,
       assignedUserId,
+      ownerUserId,
       state,
       description: description.trim() || null,
     });
@@ -66,7 +69,7 @@ export function EditTaskModal({
         if (!open) onClose();
       }}
     >
-      <DialogContent className="sm:max-w-lg">
+      <DialogContent className="max-h-[calc(100dvh-2rem)] overflow-y-auto sm:max-w-lg">
         <DialogHeader>
           <DialogTitle>Edit task</DialogTitle>
         </DialogHeader>
@@ -86,6 +89,7 @@ export function EditTaskModal({
           <div className="flex flex-col gap-1.5">
             <Label htmlFor="edit-member">Member</Label>
             <Combobox
+              id="edit-member"
               items={memberItems}
               value={memberId}
               onChange={setMemberId}
@@ -126,10 +130,13 @@ export function EditTaskModal({
                 </TableCell>
               </TableRow>
               <TableRow>
-                <TableCell className="font-medium">Assignee</TableCell>
+                <TableCell className="font-medium">
+                  <Label htmlFor="edit-assignee">Assignee</Label>
+                </TableCell>
                 <TableCell>
                   <Combobox
                     items={userItems}
+                    id="edit-assignee"
                     value={assignedUserId}
                     onChange={setAssignedUserId}
                     placeholder="Select assignee"
@@ -137,6 +144,24 @@ export function EditTaskModal({
                     emptyText="No users found."
                     clearable
                     clearLabel="No assignee"
+                  />
+                </TableCell>
+              </TableRow>
+              <TableRow>
+                <TableCell className="font-medium">
+                  <Label htmlFor="edit-owner">Owner</Label>
+                </TableCell>
+                <TableCell>
+                  <Combobox
+                    id="edit-owner"
+                    items={userItems}
+                    value={ownerUserId}
+                    onChange={setOwnerUserId}
+                    placeholder="Select owner"
+                    searchPlaceholder="Search users…"
+                    emptyText="No users found."
+                    clearable
+                    clearLabel="No owner"
                   />
                 </TableCell>
               </TableRow>

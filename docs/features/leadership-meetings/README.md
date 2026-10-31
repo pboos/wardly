@@ -127,7 +127,9 @@ the meeting closes. Prayer and Spiritual thought omit task creation/linking
 controls and empty task counts, based on the original suggestion key even after
 renaming. Existing linked tasks remain visible. Custom topics allow tasks.
 Creation uses the enabled
-ordinary Task type and its configured initial state. Discussion completion never
+ordinary Task type and its configured initial state. The initial assignee also
+becomes the task owner; later workflow assignments preserve that owner. Retrying
+creation reuses the task and preserves any owner edits. Discussion completion never
 changes task completion, and notes are not automatically copied into tasks.
 
 ## Implementation and verification

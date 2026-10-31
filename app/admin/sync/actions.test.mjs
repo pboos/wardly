@@ -2,7 +2,7 @@ import { bindActionsForTest } from "@/lib/actions/test-support.mjs";
 import assert from "node:assert/strict";
 import test from "node:test";
 import { registerHooks } from "node:module";
-import { mkdtempSync, readFileSync, rmSync } from "node:fs";
+import { mkdtempSync, readFileSync, readdirSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import Database from "better-sqlite3";
@@ -29,15 +29,10 @@ test("sync matches UUIDs, persists households, isolates wards, and preserves unk
   const directory = mkdtempSync(join(tmpdir(), "wardly-sync-test-"));
   process.env.DATABASE_URL = `file:${join(directory, "test.db")}`;
   const db = new Database(join(directory, "test.db"));
-  db.exec(
-    readFileSync(
-      new URL(
-        "../../../prisma/migrations/20260627162827_init/migration.sql",
-        import.meta.url,
-      ),
-      "utf8",
-    ),
-  );
+  const migrations = new URL("../../../prisma/migrations/", import.meta.url);
+  for (const name of readdirSync(migrations).filter((name) => /^\d/.test(name)).sort()) {
+    db.exec(readFileSync(new URL(`${name}/migration.sql`, migrations), "utf8"));
+  }
   db.close();
   const { prisma } = await import("../../../lib/prisma.ts");
   const { parseSync, commitSync } = bindActionsForTest(

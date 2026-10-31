@@ -101,6 +101,7 @@ function mapTask(t: {
   title: string | null;
   description: string | null;
   assigned_user_id: string | null;
+  owner_user_id: string | null;
   member_id: string | null;
   due_date: string | null;
   priority: string;
@@ -118,6 +119,7 @@ function mapTask(t: {
     title: t.title,
     description: t.description,
     assigned_user_id: t.assigned_user_id,
+    owner_user_id: t.owner_user_id,
     assigned_user_name: t.assigned_user?.name ?? null,
     member_id: t.member_id,
     member_first_name: t.member?.first_name ?? null,

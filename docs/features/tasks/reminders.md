@@ -1,8 +1,10 @@
 # Sunday task reminders
 
-Every Sunday, each user with unfinished assigned tasks receives one email with
+Every Sunday, each user with unfinished assigned or owned tasks receives one email with
 all those tasks, including future-dated tasks and tasks of disabled types.
-Completed/unassigned tasks and users with no unfinished tasks are excluded.
+A task assigned to and owned by the recipient appears once. Completed tasks,
+unassigned tasks without an owner, and users with no unfinished assigned or owned
+tasks are excluded.
 Conference Sundays send normally; no saved Sunday meeting is required.
 
 ## Setup and links
@@ -20,7 +22,7 @@ Conference Sundays send normally; no saved Sunday meeting is required.
 - Emails include type/state labels, title, member name, description,
   and due date. Priority is currently omitted. HTML values are escaped; a plain-text version is also sent.
   Email wording is currently English regardless of ward content language.
-- “View my tasks” opens `/tasks?filter=mine`, using `APP_URL` as the public origin.
+- “View tasks” opens `/tasks`, using `APP_URL` as the public origin.
   Normal authentication applies and preserves that destination through login.
   Mine filters active and displayed past tasks; past tasks still come from the
   latest 50 ward-wide completed records, so older personal history can be absent.
@@ -44,6 +46,11 @@ Within each family, tasks sort by resolved lifecycle progress descending, then
 by type display name A–Z; equal ties retain newest-created-first order. Unknown
 states have 0% progress. Completion filtering still uses `completed_at`, so an
 unfinished task at a 100% state can appear first. Empty families are omitted.
+
+Tasks show the current assignee name or **Unassigned**. Owned tasks assigned to
+someone else use muted gray headings, badges and markers; self-assigned and
+unassigned owned tasks retain normal emphasis. Recipient/assignee comparisons use
+user IDs, including when names match.
 
 Compact rows emphasize member/title, with equally sized type and status badges
 together beneath the heading. Status includes a colored marker, label and
@@ -84,7 +91,7 @@ after midnight can have its reminder on Saturday evening.
 claims a five-minute lease, renewed every minute while working. Only its claim
 token can finalize or reschedule the delivery. Expired leases can be reclaimed.
 Failures retry after 1, 2, 4, 8, then 15 minutes, capped by the meeting start.
-Retries reload the current unfinished assignments. SMTP acceptance marks `sent`;
+Retries reload the current unfinished owned and assigned tasks. SMTP acceptance marks `sent`;
 normal polls, concurrent workers, and restarts then skip that week's delivery.
 Changing time/zone does not resend an already-sent user/date.
 
