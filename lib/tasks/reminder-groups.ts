@@ -12,7 +12,7 @@ const GROUPS = [
   },
   {
     name: "Priesthood",
-    types: ["priesthood_aaronic", "priesthood_melchizedek"],
+    types: ["priesthood_aaronic", "priesthood_aaronic_adult", "priesthood_melchizedek"],
   },
   { name: "Callings", types: ["calling", "calling_release"] },
   {

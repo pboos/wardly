@@ -139,7 +139,9 @@ controls, task suggestions, and standard-slot movement rules are unchanged.
   types are `calling_sustain`, `calling_release`, `priesthood_aaronic_inform`,
   `child_naming_blessing`, and `member_welcome`. The automatic child-blessing
   workflow maps its Blessing state to `child_naming_blessing`; the child-baptism
-  workflow maps its In front of ward state to `member_welcome`.
+  workflow maps its In front of ward state to `member_welcome`. Aaronic Priesthood
+  (Adult) maps Sustain in front of ward to `calling_sustain` and uses the existing
+  calling sustain grouping and wording in Leading mode.
 - Unselected candidates have no agenda row. Tasks already in this meeting are
   excluded; tasks on other Sundays show “Moves from [date]”. Each added task saves
   atomically as a separate business entry with the mapped type, task member/title,

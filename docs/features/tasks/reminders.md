@@ -35,7 +35,7 @@ family, in this fixed order:
 | Group                        | Types                                                                            |
 | ---------------------------- | -------------------------------------------------------------------------------- |
 | Temple                       | Full/limited recommends, living endowment and living sealing                     |
-| Priesthood                   | Aaronic and Melchizedek Priesthood                                               |
+| Priesthood                   | Aaronic Priesthood, Aaronic Priesthood (Adult), and Melchizedek Priesthood        |
 | Callings                     | Callings and releases                                                            |
 | Interviews & recommendations | Youth interviews, check-ins, patriarchal blessing and missionary recommendations |
 | Children & ordinances        | Child baptism, naming and blessing                                               |

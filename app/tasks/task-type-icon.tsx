@@ -16,6 +16,7 @@ import { YouthInterviewIcon } from "./youth-interview-icon";
 const icons = {
   todo: IconClipboardList,
   priesthood_aaronic: IconBook,
+  priesthood_aaronic_adult: IconBook,
   priesthood_melchizedek: IconBook,
   check_in: IconMessages,
   temple_endowment_living: IconBuildingChurch,
@@ -27,6 +28,7 @@ const icons = {
 };
 const markers: Record<string, string> = {
   priesthood_aaronic: "AP",
+  priesthood_aaronic_adult: "AP",
   priesthood_melchizedek: "MP",
 };
 
