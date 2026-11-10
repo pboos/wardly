@@ -47,8 +47,9 @@ by type display name A–Z; equal ties retain newest-created-first order. Unknow
 states have 0% progress. Completion filtering still uses `completed_at`, so an
 unfinished task at a 100% state can appear first. Empty families are omitted.
 
-Tasks show the current assignee name or **Unassigned**. Owned tasks assigned to
-someone else use muted gray headings, badges and markers; self-assigned and
+Tasks show the current assignee name only when assigned to someone other than the
+recipient, or **Unassigned** when no assignee exists. Owned tasks assigned to
+someone else use muted gray headings, badge text and status markers; self-assigned and
 unassigned owned tasks retain normal emphasis. Recipient/assignee comparisons use
 user IDs, including when names match.
 
@@ -58,8 +59,11 @@ percentage; there is no progress bar. Descriptions and due dates appear only
 when present. Colors and labels come from resolved ward definitions;
 unsupported/non-hex colors use a neutral fallback. The email uses inline styles,
 sRGB surface colors and presentation tables rather than shadcn/Tailwind or SVG,
-for email-client compatibility. Website type SVGs are represented by colored
-markers and visible labels. Plain text uses the same groups and ordering.
+for email-client compatibility. Type labels have Unicode icons based on stable
+type keys, with a tag fallback for custom or unknown types. These symbols work
+without remote images; their appearance depends on the email client's fonts.
+Plain text uses the same icons, groups and ordering. Descriptions contain only
+the task's saved text; the renderer adds no generic next-step reminder.
 Browser previews do not establish rendering in Gmail, Outlook or Apple Mail.
 
 ## Scheduling and operation

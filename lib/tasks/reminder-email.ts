@@ -54,6 +54,24 @@ const palette = {
   primary: "#17658b",
 };
 
+const taskTypeIcons = new Map([
+  ["todo", "📋"],
+  ["calling", "💼 +"],
+  ["calling_release", "💼 −"],
+  ["temple_recommend", "🪪"],
+  ["temple_recommend_limited", "🪪 L"],
+  ["priesthood_aaronic", "📖 AP"],
+  ["priesthood_melchizedek", "📖 MP"],
+  ["youth_interview", "👤"],
+  ["check_in", "💬"],
+  ["temple_endowment_living", "⛪"],
+  ["temple_sealing_living", "⛪"],
+  ["patriarchal_blessing_recommend", "📜"],
+  ["child_baptism", "💧"],
+  ["child_naming_blessing", "👶"],
+  ["missionary_recommendation", "🌐"],
+]);
+
 function safeColor(value: string | undefined): string {
   return value && /^#[0-9a-f]{6}$/i.test(value) ? value : "#71717a";
 }
@@ -74,6 +92,7 @@ function taskDetails(task: DigestTask): string {
 }
 
 function taskAssignment(task: DigestTask): string {
+  if (task.assignment.kind === "self") return "";
   return task.assignment.kind === "unassigned"
     ? "Unassigned"
     : `Assigned to ${task.assignment.name}`;
@@ -89,10 +108,10 @@ function renderTask(task: DigestTask, index: number): string {
   return `<tr><td style="padding:12px 16px;${index ? `border-top:1px solid ${palette.border};` : ""}">
     <p style="margin:0 0 4px;font-size:15px;font-weight:600;color:${foreground}">${escapeHtml(taskHeading(task))}</p>
     <p style="margin:0;font-size:12px;line-height:1.7">
-      <span style="${badgeStyle}"><span style="color:${typeColor}">●</span> ${escapeHtml(task.type)}</span>
+      <span style="${badgeStyle}"><span aria-hidden="true" style="color:${typeColor}">${taskTypeIcons.get(task.typeKey ?? "") ?? "🏷️"}</span> ${escapeHtml(task.type)}</span>
       <span style="${badgeStyle}"><span style="color:${stateColor}">${percent === 100 ? "✓" : percent === 0 ? "◌" : "●"}</span> ${escapeHtml(task.state)} <span style="color:${palette.muted}">· ${percent}%</span></span>
     </p>
-    <p style="margin:6px 0 0;font-size:12px;color:${palette.muted}">${escapeHtml(taskAssignment(task))}</p>
+    ${task.assignment.kind !== "self" ? `<p style="margin:6px 0 0;font-size:12px;color:${palette.muted}">${escapeHtml(taskAssignment(task))}</p>` : ""}
     ${task.description ? `<p style="margin:6px 0 0;font-size:13px;color:${palette.muted};white-space:pre-wrap">${escapeHtml(task.description)}</p>` : ""}
     ${task.due_date ? `<p style="margin:6px 0 0;font-size:12px;color:${palette.muted}">${escapeHtml(taskDetails(task))}</p>` : ""}
   </td></tr>`;
@@ -126,7 +145,7 @@ export function renderTaskDigest(digest: TaskDigest) {
             [
               taskHeading(task),
               taskAssignment(task),
-              `Type: ${task.type}`,
+              `Type: ${taskTypeIcons.get(task.typeKey ?? "") ?? "🏷️"} ${task.type}`,
               `Status: ${task.state} (${Math.round(digestProgress(task) * 100)}%)`,
               taskDetails(task),
               task.description,
