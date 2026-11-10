@@ -56,12 +56,12 @@ initial ownership rule.
 
 ## Initial statuses
 
-Both temple recommend types, youth interviews, Aaronic Priesthood, and
-Melchizedek Priesthood start with **Interview**. This is the display label for
+Both temple recommend types, youth interviews, and all priesthood types start with **Interview**. This is the display label for
 the internal `todo` state: it remains `not_started`, with 0% progress and the
 same color and dashed status icon as before. Priesthood workflows have a single
-initial Interview step, followed by Sustain (Aaronic) or Stake interview
-(Melchizedek); active progress is spaced evenly across the remaining steps.
+initial Interview step, followed by a sustaining step for Aaronic Priesthood
+or Stake interview for Melchizedek Priesthood. Active progress is spaced evenly
+across the remaining steps.
 Other types still start with **To do**.
 
 These are code defaults. Stored ward lifecycle overrides retain their own labels
@@ -70,6 +70,12 @@ removed `interview` key need those mapped to `todo` before using the new default
 lifecycle (or a development database reset).
 
 ## Automatic ordinance and recommendation workflows
+
+**Aaronic Priesthood (Adult)** follows Interview → Sustain in front of ward →
+Confer & Ordain → Record in LCR → Done. The sustaining step is available in
+[Sunday Ward business](../sunday-meetings/agenda.md) as a sustaining item. The
+existing **Aaronic Priesthood** type sustains in front of the quorum and has a
+separate ward announcement after recording.
 
 The automatic task catalog also includes these member-oriented workflows:
 

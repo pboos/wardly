@@ -1,3 +1,4 @@
+import { AARONIC_TASK_TYPES } from "./aaronic-defaults";
 import type { TaskType, TaskTypeConfiguration } from "./types";
 import { withDefaultStateValues } from "./utils";
 
@@ -466,60 +467,7 @@ export const DEFAULT_TASK_TYPES: TaskType[] = withDefaultStateValues([
       },
     ],
   },
-  {
-    type: "priesthood_aaronic",
-    name: "Aaronic Priesthood",
-    name_short: "AP",
-    color: "#1d4ed8",
-    configuration: { durationMinutes: 30, showTaskTitle: true },
-    enabled: true,
-    source: "default",
-    states: [
-      {
-        state: "todo",
-        label: "Interview",
-        color: "#475569",
-        state_group: "not_started",
-        assign_to_user_id: null,
-      },
-      {
-        state: "sustain",
-        label: "Sustain in front of quorum",
-        color: "#7e22ce",
-        state_group: "active",
-        assign_to_user_id: null,
-      },
-      {
-        state: "confer_ordain",
-        label: "(Confer &) Ordain",
-        color: "#b45309",
-        state_group: "active",
-        assign_to_user_id: null,
-      },
-      {
-        state: "record",
-        label: "Record in LCR",
-        color: "#0f766e",
-        state_group: "active",
-        assign_to_user_id: null,
-      },
-      {
-        state: "in_front_of_ward",
-        label: "In front of ward",
-        color: "#7e22ce",
-        state_group: "active",
-        assign_to_user_id: null,
-        sunday_meeting_item_type: "priesthood_aaronic_inform",
-      },
-      {
-        state: "done",
-        label: "Done",
-        color: "#15803d",
-        state_group: "closed",
-        assign_to_user_id: null,
-      },
-    ],
-  },
+  ...AARONIC_TASK_TYPES,
   {
     type: "priesthood_melchizedek",
     name: "Melchizedek Priesthood",
